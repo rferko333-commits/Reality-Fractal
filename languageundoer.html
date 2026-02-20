@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Language Undoer // Reality Fractal</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --text-color: #b0b0b0;
+            --highlight-color: #d4a373; /* Bronze/Gold */
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            overflow-x: hidden;
+            transition: background-color 2s ease;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            position: relative;
+            z-index: 10;
+            margin-top: 5vh;
+            margin-bottom: 5vh;
+            transition: opacity 1s ease;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            opacity: 0.6;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        /* Input Area */
+        textarea {
+            width: 100%;
+            height: 250px;
+            background: rgba(20, 20, 20, 0.5);
+            border: 1px solid #333;
+            color: #eee;
+            padding: 20px;
+            font-family: var(--font-main);
+            font-size: 1.1rem;
+            resize: none;
+            outline: none;
+            border-radius: 4px;
+            box-sizing: border-box;
+            transition: border 0.3s ease;
+        }
+
+        textarea:focus {
+            border-color: #666;
+            background: rgba(30, 30, 30, 0.8);
+        }
+
+        /* The Output Area */
+        #output-stage {
+            width: 100%;
+            min-height: 300px;
+            font-size: 1.2rem;
+            line-height: 2.2;
+            white-space: pre-wrap; 
+            color: #eee;
+            padding: 10px;
+            box-sizing: border-box;
+            border-bottom: 1px solid #222;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: transparent;
+            border: 1px solid #444;
+            color: #888;
+            padding: 10px 18px;
+            cursor: pointer;
+            font-family: var(--font-main);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            color: #fff;
+            border-color: #fff;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .btn-dissolve-all {
+            border-color: var(--highlight-color);
+            color: var(--highlight-color);
+        }
+        .btn-dissolve-all:hover {
+            background: rgba(212, 163, 115, 0.1);
+        }
+
+        /* Toggle Switch */
+        .toggle-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            border: 1px solid #333;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        .toggle-box {
+            width: 26px;
+            height: 14px;
+            border: 1px solid #555;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-indicator {
+            width: 10px;
+            height: 10px;
+            background-color: #555;
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-active .toggle-box { border-color: var(--highlight-color); }
+        .toggle-active .toggle-indicator {
+            background-color: var(--highlight-color);
+            transform: translateX(12px);
+        }
+        .toggle-active { color: #fff; border-color: #666; }
+
+        /* Illusion Highlighting */
+        .illusion {
+            color: var(--highlight-color);
+            border-bottom: 1px dashed var(--highlight-color);
+            cursor: pointer;
+            position: relative;
+            display: inline-block;
+            transition: all 0.2s ease;
+        }
+
+        .illusion:hover {
+            color: #fff;
+            text-shadow: 0 0 8px var(--highlight-color);
+        }
+
+        /* Animation: The Dissolve Effect */
+        .dissolved {
+            opacity: 0;
+            transition: opacity 0.8s ease;
+            cursor: default;
+        }
+
+        .container-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Floating Inquiry Text */
+        .floater {
+            position: absolute; 
+            font-size: 0.85rem;
+            color: #fff;
+            background-color: rgba(10, 10, 10, 0.95);
+            border: 1px solid #555;
+            padding: 10px 14px;
+            border-radius: 6px;
+            pointer-events: none;
+            opacity: 0;
+            animation: popIn 0.3s forwards, fadeOut 0.5s forwards 4s;
+            width: max-content;
+            max-width: 250px; 
+            text-align: center;
+            z-index: 9999;
+            box-shadow: 0 5px 20px rgba(0,0,0,1);
+        }
+
+        @keyframes popIn {
+            0% { opacity: 0; transform: translateY(5px); }
+            100% { opacity: 1; transform: translateY(-5px); }
+        }
+        
+        @keyframes fadeOut {
+            to { opacity: 0; }
+        }
+
+        /* Dissolution History Log */
+        #history-section {
+            margin-top: 40px;
+            width: 100%;
+            display: none;
+            border-top: 1px solid #222;
+            padding-top: 20px;
+            padding-bottom: 50px;
+        }
+
+        .log-title {
+            font-size: 0.8rem;
+            color: #555;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .log-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .log-entry {
+            font-size: 0.8rem;
+            color: #888;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid #222;
+            padding: 12px;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .log-word {
+            color: var(--highlight-color);
+            font-weight: bold;
+            text-decoration: line-through;
+            font-size: 0.9rem;
+        }
+        
+        .log-count {
+            background: #333;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+        }
+
+        .log-insight {
+            font-size: 0.75rem;
+            color: #666;
+            font-style: italic;
+            border-top: 1px solid #1a1a1a;
+            padding-top: 5px;
+            margin-top: 5px;
+        }
+
+        /* Void Overlay */
+        #void-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            background-color: transparent;
+            transition: background-color 2s ease;
+        }
+        
+        #void-overlay.active {
+            background-color: #000;
+            pointer-events: auto;
+        }
+
+        #void-message {
+            color: #333;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 3s ease;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        #return-btn {
+            border-color: #333;
+            color: #333;
+            opacity: 0;
+            transition: opacity 2s ease;
+            cursor: pointer;
+        }
+        
+        #return-btn:hover { color: #666; border-color: #666; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container" id="main-container">
+        <header>
+            Language Undoer // Reality Fractal
+        </header>
+
+        <!-- Input View -->
+        <div id="input-view">
+            <textarea id="user-input" placeholder="Paste your narrative here."></textarea>
+            <div class="controls">
+                <button onclick="analyzeText()">Locate Bifurcations</button>
+            </div>
+        </div>
+
+        <!-- Analysis View -->
+        <div id="output-view" style="display:none;">
+            <div id="output-stage"></div>
+            
+            <div class="controls">
+                <div class="toggle-wrapper toggle-active" id="insight-toggle" onclick="toggleInsights()">
+                    <div class="toggle-box"><div class="toggle-indicator"></div></div>
+                    <span>Insights</span>
+                </div>
+
+                <button class="btn-dissolve-all" onclick="dissolveAll()">Dissolve All</button>
+                <button onclick="toggleLog()">History</button>
+                <button onclick="resetApp()">Reset</button>
+                <button onclick="enterVoid()">Silence</button>
+            </div>
+
+            <!-- The Log -->
+            <div id="history-section">
+                <div class="log-title">Dissolution Record</div>
+                <div id="history-content" class="log-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- The Void Overlay -->
+    <div id="void-overlay">
+        <div id="void-message">Observe what remains without the story.</div>
+        <button id="return-btn" onclick="exitVoid()">Return to Form</button>
+    </div>
+
+    <script>
+        // --- State ---
+        let showInsights = true;
+        let isLogVisible = false;
+        let historyData = {}; 
+
+        // --- Configuration ---
+        const patterns = [
+            // 1. Identity Phrases (Multi-word)
+            { regex: /\b(I am|I'm|I've|I'll|my own|myself|kind of person)\b/gi, insight: "Who observes this definition?" },
+            
+            // 2. Separation (The Other)
+            { regex: /\b(you|your|other|others|yours|he|him|his|himself|herself|themself|themselves|she|her|hers|they|them|man|men|woman|women|their|theirs|we|our|us|husband|boyfriend|wife|girlfriend|boy|girl|daughter|son|people|person)\b/gi, insight: "Defining 'them' creates the 'me'. There is only one Observer." },
+
+            // 3. Emotions (New Comprehensive List)
+            { regex: /\b(happy|sad|angry|anger|rage|angst|upset|frustrated|frustration|frustrating|worthless|disappointed|disappointment|anxious|anxiety|depressed|depression|excited|excitement|bored|boredom|lonely|loneliness|fear|afraid|scared|joy|joyful|grief|grieving|guilty|guilt|shame|ashamed|jealous|jealousy|envy|envious|disgusted|disgust|surprised|surprise)\b/gi, insight: "Temporary appearance within awareness." },
+
+            // 4. Mental Activities (Thinking/Mind)
+            { regex: /\b(think|thinking|thought|thoughts|imagine|imagining|imagination|wonder|wondering|believe|believing|belief|guess|guessing|assume|assuming|assumption|mental|mind|analyze|analyzing|consider|considering)\b/gi, insight: "Thoughts are temporary arisings and passings." },
+
+            // 5. Sensations / Impermanence
+            { regex: /\b(pain|painful|pleasure|pleasurable|hurt|hurts|hurting|ache|aching|comfort|comfortable|discomfort|sensation|sensations|feeling|feelings|felt)\b/gi, insight: "This too shall pass. Sensations arise and dissolve." },
+
+            // 6. Time Units
+            { regex: /\b(second|seconds|minute|minutes|hour|hours|day|days|week|weeks|month|months|year|years|decade|decades|time|times|moment|moments|later|soon)\b/gi, insight: "Time units measure a distance that doesn't exist. Only Now." },
+
+            // 7. Memory/Recency
+            { regex: /\b(memory|memories|remember|remembers|recent|recently)\b/gi, insight: "Memory is a current thought about the past." },
+
+            // 8. Conditional
+            { regex: /\b(if|then|when|or)\b/gi, insight: "Conditions create time. Awareness is unconditional." },
+
+            // 9. Distinction / Duality
+            { regex: /\b(difference|between|both|friend|enemy|friends|enemies|old|new)\b/gi, insight: "Distinction splits the seamless whole." },
+
+            // 10. Numbers & Ordinals
+            { regex: /\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten|hundred|thousand|million|first|second|third|last|final)\b/gi, insight: "Quantification creates separation. Reality is One." },
+
+            // 11. Quantity 
+            { regex: /\b(more|less|fewer|extra|many|much)\b/gi, insight: "Quantity is a concept. Awareness has no size." },
+
+            // 12. Difficulty / Intellect
+            { regex: /\b(hard|harder|easy|easier|difficult|struggle|simple|complex|effort|effortless|smart|dumb|genius|idiot|intelligent|stupid)\b/gi, insight: "Intellect and difficulty are judgments on what IS." },
+
+            // 13. Limiting Language
+            { regex: /\b(can't|cannot|won't|will not|couldn't|could not|unable|impossible|incapable|never able)\b/gi, insight: "Who defines this limit? Potential is unknown." },
+
+            // 14. Competition / Result
+            { regex: /\b(win|lose|won|lost|winning|losing|success|succeeding|failing|failed|succeeded|failure|succeed|fail|achieve)\b/gi, insight: "Outcomes are narrative points. The process is continuous." },
+
+            // 15. Judgment, Polarity (Removed specific emotions moved to #3)
+            { regex: /\b(good|bad|nice|mean|boring|bore|exciting|mess|incompetent|evil|right|wrong|terrible|awful|great|horrible|worst|best|kind|cruel|nasty|pleasant|unpleasant|secure|insecure|lazy|stupid|lame|dumb|asinine|worthless|useless|productive|busy|problem|mistake|mistakes|perfect)\b/gi, insight: "Labels on a seamless process. Reality just IS." },
+
+            // 16. Craving & Striving
+            { regex: /\b(want|wants|wanted|need|needs|needed|crave|craving|desire|desires|wish|wishing|hope|hopes|cling|clinging|grasp|grasping|attach|attached|attachment|like|likes|liked|try|trying|tried|get|getting|got)\b/gi, insight: "Striving affirms a gap between you and the goal." },
+
+            // 17. Aversion (Removed fear, moved to emotions)
+            { regex: /\b(hate|hates|hated|dislike|dislikes|reject|rejecting|avoid|avoiding|loathe|detest|resist|resisting|dread|dreading|suffer|suffering|suffered|unfair|fault|blame|made me|ignored|ignore)\b/gi, insight: "Resistance creates the story of suffering." },
+
+            // 18. Material / Survival
+            { regex: /\b(money|work|job|career|rich|poor)\b/gi, insight: "Survival is the body's program. Awareness needs nothing." },
+
+            // 19. Abstract Narratives
+            { regex: /\b(dream|dreams|situation|timeline|reality|recognition|attention|listens)\b/gi, insight: "A mental construct projected onto Now." },
+
+            // 20. Modals
+            { regex: /\b(should|shouldn't|should not|must|must not|have to|need to|ought to|supposed to)\b/gi, insight: "Arguing with what IS creates the illusion of separation." },
+
+            // 21. Causality
+            { regex: /\b(because|so that|therefore|means that|implies|caused|reason|since|but|however|although|except)\b/gi, insight: "This is the glue holding the story together." },
+            
+            // 22. Doership
+            { regex: /\b(did|do|doing|done|make|made|making|create|created)\b/gi, insight: "Events happen. Who is the doer?" },
+
+            // 23. To Be Verbs
+            { regex: /\b(is|are|was|were|be|been)\b/gi, insight: "Defining 'is-ness' limits the unlimited. Awareness is formless." },
+
+            // 24. Identity Words (including "im" typo)
+            { regex: /\b(I|me|my|mine|im)\b/gi, insight: "Where is this 'I' located exactly?" },
+
+            // 25. Absolutes
+            { regex: /\b(always|never|everyone|no one|no matter what|everything|nothing|forever|constantly|every time)\b/gi, insight: "Concepts fluctuate. Only Awareness is absolute." },
+
+            // 26. Comparison
+            { regex: /\b(better|worse|greater|behind|worthless|unworthy|compared|as|too much|not enough)\b/gi, insight: "Comparison requires two. There is only one." },
+
+            // 27. Time (Future/Past)
+            { regex: /\b(will|going to|used to|stuck|someday|eventually|regret|future|past|yesterday|tomorrow)\b/gi, insight: "Time is memory or projection. Only Now exists." }
+        ];
+
+        // --- Core Functions ---
+
+        function toggleInsights() {
+            showInsights = !showInsights;
+            const toggleEl = document.getElementById('insight-toggle');
+            if (showInsights) {
+                toggleEl.classList.add('toggle-active');
+            } else {
+                toggleEl.classList.remove('toggle-active');
+            }
+        }
+
+        function toggleLog() {
+            isLogVisible = !isLogVisible;
+            const logEl = document.getElementById('history-section');
+            if (isLogVisible) {
+                logEl.style.display = 'block';
+                renderLog();
+                window.scrollTo(0, document.body.scrollHeight);
+            } else {
+                logEl.style.display = 'none';
+            }
+        }
+
+        function analyzeText() {
+            const inputField = document.getElementById('user-input');
+            const rawText = inputField.value;
+            
+            if (!rawText.trim()) return;
+
+            document.getElementById('input-view').style.display = 'none';
+            document.getElementById('output-view').style.display = 'block';
+            document.getElementById('output-stage').innerHTML = '';
+
+            let workingText = escapeHtml(rawText);
+            let replacements = []; 
+
+            patterns.forEach((p) => {
+                workingText = workingText.replace(p.regex, (match) => {
+                    const placeholder = `___BIFURCATION_${replacements.length}___`;
+                    replacements.push({
+                        id: placeholder,
+                        html: `<span class="illusion" data-insight="${escapeQuotes(p.insight)}" data-word="${escapeQuotes(match)}" onclick="dissolve(this, '${escapeQuotes(p.insight)}', '${escapeQuotes(match)}')">${match}</span>`
+                    });
+                    return placeholder;
+                });
+            });
+
+            replacements.forEach(rep => {
+                workingText = workingText.replace(rep.id, rep.html);
+            });
+
+            document.getElementById('output-stage').innerHTML = workingText;
+        }
+
+        function dissolve(element, insight, word) {
+            if (element.classList.contains('dissolved')) return;
+
+            // 1. Visual Dissolution
+            element.classList.add('dissolved');
+
+            // 2. Track Data
+            trackHistory(word, insight);
+
+            // 3. Show Contextual Insight
+            if (showInsights) {
+                spawnFixedFloater(element, insight);
+            }
+        }
+
+        function dissolveAll() {
+            const illusions = document.querySelectorAll('.illusion:not(.dissolved)');
+            if (illusions.length === 0) return;
+
+            illusions.forEach(el => {
+                el.classList.add('dissolved');
+                const word = el.getAttribute('data-word');
+                const insight = el.getAttribute('data-insight');
+                trackHistory(word, insight);
+            });
+
+            if (isLogVisible) renderLog();
+        }
+
+        function spawnFixedFloater(element, text) {
+            const rect = element.getBoundingClientRect();
+            const floater = document.createElement('div');
+            floater.className = 'floater';
+            floater.innerText = text;
+            document.body.appendChild(floater);
+
+            const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+            const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+
+            const floatWidth = floater.offsetWidth;
+            const floatHeight = floater.offsetHeight;
+
+            let left = rect.left + scrollX + (rect.width / 2) - (floatWidth / 2);
+            let top = rect.top + scrollY - floatHeight - 10;
+
+            const viewportWidth = window.innerWidth;
+            const padding = 10;
+
+            if (left < padding) {
+                left = padding;
+            } else if (left + floatWidth > viewportWidth - padding) {
+                left = viewportWidth - floatWidth - padding;
+            }
+
+            floater.style.left = left + 'px';
+            floater.style.top = top + 'px';
+
+            setTimeout(() => { floater.remove(); }, 4000); 
+        }
+
+        function trackHistory(word, insight) {
+            const key = word.toLowerCase();
+            
+            if (!historyData[key]) {
+                historyData[key] = {
+                    display: word, 
+                    count: 1, 
+                    insight: insight
+                };
+            } else {
+                historyData[key].count++;
+            }
+            
+            if(isLogVisible) renderLog();
+        }
+
+        function renderLog() {
+            const container = document.getElementById('history-content');
+            container.innerHTML = '';
+            
+            const sortedKeys = Object.keys(historyData).sort((a,b) => historyData[b].count - historyData[a].count);
+
+            sortedKeys.forEach(key => {
+                const item = historyData[key];
+                const div = document.createElement('div');
+                div.className = 'log-entry';
+                div.innerHTML = `
+                    <div class="log-header">
+                        <span class="log-word">${item.display}</span>
+                        <span class="log-count">x${item.count}</span>
+                    </div>
+                    <div class="log-insight">${item.insight}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function enterVoid() {
+            const container = document.getElementById('main-container');
+            const voidOverlay = document.getElementById('void-overlay');
+            const voidMsg = document.getElementById('void-message');
+            const returnBtn = document.getElementById('return-btn');
+            
+            container.classList.add('container-hidden');
+
+            setTimeout(() => {
+                voidOverlay.classList.add('active'); 
+                voidMsg.style.opacity = "1";
+                setTimeout(() => {
+                    returnBtn.style.opacity = "1";
+                }, 3000);
+            }, 1500);
+        }
+
+        function exitVoid() {
+            const container = document.getElementById('main-container');
+            const voidOverlay = document.getElementById('void-overlay');
+            const voidMsg = document.getElementById('void-message');
+            const returnBtn = document.getElementById('return-btn');
+
+            voidMsg.style.opacity = "0";
+            returnBtn.style.opacity = "0";
+            voidOverlay.classList.remove('active');
+
+            setTimeout(() => {
+                container.classList.remove('container-hidden');
+            }, 2000);
+        }
+
+        function resetApp() {
+            document.getElementById('user-input').value = '';
+            document.getElementById('input-view').style.display = 'block';
+            document.getElementById('output-view').style.display = 'none';
+            document.getElementById('output-stage').innerHTML = '';
+            
+            historyData = {}; 
+            renderLog();
+            document.getElementById('history-section').style.display = 'none'; 
+            isLogVisible = false;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function escapeQuotes(text) {
+            return text.replace(/'/g, "\\'");
+        }
+    </script>
+</body>
+</html>

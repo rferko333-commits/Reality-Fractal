@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integral Level Locator</title>
+    <!-- Chart.js Library for the Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+       :root {
+            --red: #ff4d4d;
+            --amber: #d35400;
+            --orange: #f39c12;
+            --green: #27ae60;
+            --teal: #1abc9c;
+            --turquoise: #16a085;
+            --bg: #121212;       /* Changed to Dark Gray/Black */
+            --card: #1e1e1e;     /* Changed to Dark Gray Card */
+            --text: #ecf0f1;     /* Changed to Light White Text */
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; background: var(--card); padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        h1, h2 { text-align: center; color: var(--text); }
+        .intro { text-align: center; margin-bottom: 30px; font-style: italic; color: #7f8c8d; }
+
+        /* Selection Screen */
+        .line-selector { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .line-checkbox { display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        /* Update the .line-checkbox:hover style */
+.line-checkbox:hover { 
+    background-color: #ecf0f1; 
+    color: #121212; /* This makes text dark when hovering */
+}
+
+        .line-checkbox input { margin-right: 10px; transform: scale(1.2); }
+        
+        .start-btn, .next-btn { display: block; width: 100%; padding: 15px; background-color: var(--teal); color: white; border: none; border-radius: 6px; font-size: 1.2rem; cursor: pointer; margin-top: 20px; transition: background 0.3s; }
+        .start-btn:hover, .next-btn:hover { background-color: var(--turquoise); }
+        .start-btn:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+
+        /* Quiz Interface */
+        #quiz-section { display: none; }
+        .progress-bar { width: 100%; height: 10px; background: #ddd; border-radius: 5px; margin-bottom: 20px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--teal); width: 0%; transition: width 0.3s; }
+        .question-card { margin-bottom: 20px; }
+        .question-text { font-size: 1.3rem; font-weight: 600; margin-bottom: 20px; }
+        .options-list { list-style: none; padding: 0; }
+        .option-item { padding: 15px; margin-bottom: 10px; border: 2px solid #ecf0f1; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        /* Update the .option-item:hover style */
+.option-item:hover { 
+    border-color: var(--teal); 
+    background-color: #e8f8f5; 
+    color: #121212; /* This makes text dark when hovering */
+}
+        .option-item.selected { border-color: var(--teal); background-color: var(--teal); color: white; }
+
+        /* Results Interface */
+        #results-section { display: none; }
+        .chart-container { position: relative; height: 400px; width: 100%; margin-bottom: 40px; }
+        .level-bars { margin-top: 30px; }
+        .level-bar-row { display: flex; align-items: center; margin-bottom: 10px; }
+        .level-label { width: 120px; font-weight: bold; }
+        .level-track { flex-grow: 1; height: 20px; background: #eee; border-radius: 10px; overflow: hidden; position: relative; }
+        .level-fill { height: 100%; border-radius: 10px; }
+        .level-score { width: 50px; text-align: right; font-weight: bold; }
+
+        /* Utility */
+        .hidden { display: none; }
+        .time-estimate { text-align: center; margin-top: 10px; font-weight: bold; color: var(--amber); }
+/* NEW STYLES FOR UPGRADE */
+        .cog-box { 
+            background: rgba(26, 188, 156, 0.1); 
+            border: 2px solid var(--teal); 
+            padding: 20px; 
+            border-radius: 8px; 
+            text-align: center; 
+            margin-bottom: 30px; 
+        }
+        .cog-title { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: var(--teal); }
+        .cog-value { font-size: 2rem; font-weight: bold; margin: 10px 0; }
+        
+        .insight-card { 
+            background: #2c3e50; /* Darker background for contrast */
+            border-left: 5px solid var(--orange); 
+            padding: 15px; 
+            margin-bottom: 10px; 
+            font-size: 0.95rem;
+            color: #ecf0f1;
+        }
+
+        .legend-container { margin-top: 40px; border-top: 1px solid #333; padding-top: 20px; }
+        .legend-item { margin-bottom: 15px; }
+        .legend-title { font-weight: bold; color: var(--teal); cursor: pointer; }
+        .legend-desc { font-size: 0.9rem; color: #bdc3c7; margin-top: 5px; }
+        .higher-levels { border: 1px dashed var(--orange); padding: 15px; margin-top: 20px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Integral Level Locator</h1>
+    
+    <!-- STEP 1: SELECT LINES -->
+    <div id="setup-section">
+        <h3>Select Lines to Test:</h3>
+        <div class="line-selector" id="lineCheckboxes">
+            <!-- Populated by JS -->
+        </div>
+        <p class="time-estimate" id="timeEstimate">Estimated Time: 0 mins</p>
+        <button class="start-btn" id="startBtn" onclick="startQuiz()" disabled>Begin Assessment</button>
+    </div>
+
+    <!-- STEP 2: QUIZ INTERFACE -->
+    <div id="quiz-section">
+        <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
+        <h3 id="currentLineTitle" style="color: var(--teal); text-transform: uppercase; letter-spacing: 1px;"></h3>
+        <div class="question-card">
+            <div class="question-text" id="questionText"></div>
+            <ul class="options-list" id="optionsList">
+                <!-- Options populated by JS -->
+            </ul>
+        </div>
+        <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Next Question</button>
+    </div>
+
+    <!-- STEP 3: RESULTS -->
+    <div id="results-section">
+        
+        <!-- NEW WRAPPER STARTS HERE -->
+        <div id="results-capture" style="padding: 20px; background-color: var(--card); border-radius: 12px;">
+            <h2>Your Integral Psychograph</h2>
+            <!-- 1. Center of Gravity Display -->
+            <div class="cog-box">
+                <div class="cog-title">Your Center of Gravity</div>
+                <div class="cog-value" id="cogResult">Calculating...</div>
+                <div id="cogDescription" style="font-size: 0.9rem; opacity: 0.8;"></div>
+            </div>
+
+            <!-- 2. Imbalance Insights -->
+            <div id="insightContainer">
+                <!-- Insights populated by JS -->
+            </div>
+            <!-- Radar Chart -->
+            <div class="chart-container">
+                <canvas id="radarChart"></canvas>
+            </div>
+
+            <!-- Bar Breakdown -->
+            <h3>Detailed Levels</h3>
+            <div class="level-bars" id="barContainer">
+                <!-- Bars populated by JS -->
+            </div>
+        </div>
+        <!-- NEW WRAPPER ENDS HERE -->
+<!-- 3. Legend (Excluded from PNG) -->
+        <div class="legend-container">
+            <h3>Level Descriptions</h3>
+            
+            <div class="legend-item">
+                <div class="legend-title" style="color: var(--red);">1 Red (Egocentric)</div>
+                <div class="legend-desc">Impulsive, power-oriented, survival-focused. "My way or the highway."</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-title" style="color: var(--amber);">2 Amber (Ethnocentric)</div>
+                <div class="legend-desc">Conformist, rule-oriented, disciplined. Values order, tradition, and "us vs. them."</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-title" style="color: var(--orange);">3 Orange (Worldcentric-Rational)</div>
+                <div class="legend-desc">Achievement-oriented, scientific, strategic. Values logic, meritocracy, and individual success.</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-title" style="color: var(--green);">4 Green (Worldcentric-Pluralistic)</div>
+                <div class="legend-desc">Sensitive, egalitarian, relativistic. Values diversity, feelings, and deconstructing hierarchies.</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-title" style="color: var(--teal);">5 Teal (Integral-Systemic)</div>
+                <div class="legend-desc">Flex-flow, systemic, multi-perspectival. Integrates previous stages and manages complexity without judgment.</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-title" style="color: var(--turquoise);">6 Turquoise (Integral-Holistic)</div>
+                <div class="legend-desc">Global mind, union of feeling and knowing. Sees the world as a single, living organism.</div>
+            </div>
+
+            <!-- HIGHER LEVELS -->
+            <div class="higher-levels">
+                <h4 style="margin-top:0; color: var(--orange);">Higher Levels (Not Tested)</h4>
+                <p style="font-size: 0.85rem; color: #999;">These are the transpersonal/spiritual stages beyond standard development. They are difficult to test via multiple choice as they represent states of being rather than conceptual frameworks.</p>
+                
+                <div class="legend-item">
+                    <div class="legend-title" style="color: #8e44ad;">Indigo (Para-Mind)</div>
+                    <div class="legend-desc">The beginning of true trans-rational awareness. Intuition becomes a reliable mode of cognition.</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-title" style="color: #9b59b6;">Violet (Meta-Mind)</div>
+                    <div class="legend-desc">Subtle-level awareness. Perception of energy, archetypes, and the "soul" dimension beyond the physical.</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-title" style="color: #ffffff;">Ultraviolet (Over-Mind)</div>
+                    <div class="legend-desc">Causal-level awareness. The Witness. Resting in the pure, empty screen on which reality is projected.</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-title" style="color: #ecf0f1; text-shadow: 0 0 5px white;">Clear Light (Super-Mind)</div>
+                    <div class="legend-desc">Non-dual. The collapse of the Witness and the Witnessed. Form is Emptiness, Emptiness is Form. Pure Is-ness.</div>
+                </div>
+            </div>
+        </div>
+        <!-- Buttons represent the stuff being excluded from the image -->
+        <button class="next-btn" style="background-color: var(--orange); margin-bottom: 15px;" onclick="downloadResults()">Download Results as PNG</button>
+        <button class="start-btn" onclick="location.reload()">Retake Assessment</button>
+        
+        <p style="text-align: center; font-size: 0.8rem; margin-top: 20px; color: #999;">
+            Note: Results are estimates based on self-reporting.
+        </p>
+    </div>
+<script>
+// ==========================================
+// DATA MATRIX (The Content)
+// ==========================================
+// Values: 1=Red, 2=Amber, 3=Orange, 4=Green, 5=Teal, 6=Turquoise
+const ALL_LINES = {
+    "Cognitive": [
+        { q: "Homelessness persists despite funding. What is your assessment?", options: [
+            { t: "They need discipline. Enforce laws strictly.", v: 2 },
+            { t: "Lack of discipline; only help those who deserve it.", v: 1 },
+            { t: "Programs are inefficient. Fund only those with ROI.", v: 3 },
+            { t: "Society failed them. Provide unconditional support.", v: 4 },
+            { t: "Systemic flow problem. Manage polarity of care vs order.", v: 5 },
+            { t: "Symptom of collective shadow. Heal cultural disconnection.", v: 6 }
+        ]},
+        { q: "How do you determine which news story is 'true'?", options: [
+            { t: "I trust my gut instinct.", v: 1 },
+            { t: "I trust the source that is on my side.", v: 2 },
+            { t: "I fact-check and look for logical fallacies.", v: 3 },
+            { t: "I look for bias and marginalized voices.", v: 4 },
+            { t: "I look for the meta-truth explaining why both differ.", v: 5 },
+            { t: "I see the event and the reporting as a single unfolding process.", v: 6 }
+        ]},
+        { q: "How far out do you plan your life?", options: [
+            { t: "I focus on getting what I need right now.", v: 1 },
+            { t: "I follow the traditional path (school, job, retirement).", v: 2 },
+            { t: "I have a 5-10 year strategic plan.", v: 3 },
+            { t: "Focus on the journey/authenticity, not the destination.", v: 4 },
+            { t: "Directional vision, iterating rapidly based on feedback.", v: 5 },
+            { t: "Residing in the timeless now, allowing future to unfold.", v: 6 }
+        ]},
+        { q: "You hold two contradictory beliefs. What do you do?", options: [
+            { t: "Ignore the one I don't like.", v: 1 },
+            { t: "Find an authority to tell me which is right.", v: 2 },
+            { t: "Analyze to find the logical error.", v: 3 },
+            { t: "Accept that everyone has their own truth.", v: 4 },
+            { t: "Find the context where both are valid but partial.", v: 5 },
+            { t: "I embrace the paradox, knowing opposite truths often define a larger reality.", v: 6 }
+        ]},
+        { q: "A project you are leading is failing. Why?", options: [
+            { t: "Someone is sabotaging me.", v: 1 },
+            { t: "People aren't following standard procedures.", v: 2 },
+            { t: "We didn't optimize resources correctly.", v: 3 },
+            { t: "Toxic team dynamic; people don't feel safe.", v: 4 },
+            { t: "Structure is misaligned with environmental complexity.", v: 5 },
+            { t: "The project has reached its natural end; it is time to compost it for what comes next.", v: 6 }
+        ]}
+    ],
+    "Emotional": [
+        { q: "Someone insults your deepest insecurity. Reaction?", options: [
+            { t: "Rage. I want to hurt them back.", v: 1 },
+            { t: "Shame. I wonder if I lost status.", v: 2 },
+            { t: "Defensiveness. I list reasons they are wrong.", v: 3 },
+            { t: "Hurt. I try to understand their pain.", v: 4 },
+            { t: "Curiosity. Separate data from emotion.", v: 5 },
+            { t: "Compassion. Holding both my pain and their aggression.", v: 6 }
+        ]},
+        { q: "A friend is suffering from a problem they created.", options: [
+            { t: "Not my problem.", v: 1 },
+            { t: "They should have followed the rules.", v: 2 },
+            { t: "I offer a logical solution.", v: 3 },
+            { t: "I validate their feelings completely.", v: 4 },
+            { t: "Validate feelings, but point out systemic patterns.", v: 5 },
+            { t: "Feel their suffering, yet remain unattached.", v: 6 }
+        ]},
+        { q: "You feel 'bad'. How do you label it?", options: [
+            { t: "Just bad/angry.", v: 1 },
+            { t: "Guilty or ashamed.", v: 2 },
+            { t: "Stressed about an outcome.", v: 3 },
+            { t: "Melancholy and disappointment.", v: 4 },
+            { t: "I can pinpoint exactly where the feeling sits and identify the specific blend of emotions.", v: 5 },
+            { t: "Witnessing energy of contraction.", v: 6 }
+        ]},
+        { q: "Admitting failure to a superior.", options: [
+            { t: "Lie or blame someone else.", v: 1 },
+            { t: "Apologize profusely.", v: 2 },
+            { t: "Explain external factors and mitigation plan.", v: 3 },
+            { t: "Share feelings and ask for connection.", v: 4 },
+            { t: "Own it, share learning, model transparency.", v: 5 },
+            { t: "Present it as necessary evolution of the work.", v: 6 }
+        ]},
+        { q: "Feeling intense anger. What do you do?", options: [
+            { t: "Yell or break something.", v: 1 },
+            { t: "Suppress it; it's not polite.", v: 2 },
+            { t: "Channel it into work/exercise.", v: 3 },
+            { t: "Talk it out with a therapist.", v: 4 },
+            { t: "Address the boundary violation assertively.", v: 5 },
+            { t: "Transmute the raw energy into clarity.", v: 6 }
+        ]}
+    ],
+    "Moral": [
+        { q: "Friend breaks a rule that helps them but hurts no one.", options: [
+            { t: "Help them so they owe me.", v: 1 },
+            { t: "Report them. Rules are rules.", v: 2 },
+            { t: "Ignore it. Doesn't affect the bottom line.", v: 3 },
+            { t: "Discuss impact on community trust.", v: 4 },
+            { t: "Evaluate if the rule is just, then decide.", v: 5 },
+            { t: "I act based on the highest good for the whole system, even if it contradicts the rule.", v: 6 }
+        ]},
+        { q: "Who to save on a sinking lifeboat?", options: [
+            { t: "The one who likes me best.", v: 1 },
+            { t: "The one from my country.", v: 2 },
+            { t: "The doctor/scientist (contribution).", v: 3 },
+            { t: "The most vulnerable (child).", v: 4 },
+            { t: "The one with highest potential for future evolution.", v: 5 },
+            { t: "Act spontaneously without hierarchical judgment.", v: 6 }
+        ]},
+        { q: "When is it okay to break the law?", options: [
+            { t: "When I won't get caught.", v: 1 },
+            { t: "Never.", v: 2 },
+            { t: "When it restricts my success unduly.", v: 3 },
+            { t: "When it is oppressive.", v: 4 },
+            { t: "When it violates universal human rights.", v: 5 },
+            { t: "When action aligns with the Tao.", v: 6 }
+        ]},
+        { q: "Appropriate justice for a violent crime?", options: [
+            { t: "Hurt them back.", v: 1 },
+            { t: "Standard legal punishment.", v: 2 },
+            { t: "Rehabilitate if cost-effective.", v: 3 },
+            { t: "Heal the trauma; Restorative Justice.", v: 4 },
+            { t: "Protect society but address systemic causes.", v: 5 },
+            { t: "Justice with love; no separation of sinner/saint.", v: 6 }
+        ]},
+        { q: "Why are 'good' things good?", options: [
+            { t: "Because they feel good to me.", v: 1 },
+            { t: "God/Authority said so.", v: 2 },
+            { t: "Greatest happiness for greatest number.", v: 3 },
+            { t: "They honor the marginalized.", v: 4 },
+            { t: "Align with evolutionary impulse.", v: 5 },
+            { t: "Intrinsic nature of Reality.", v: 6 }
+        ]}
+    ],
+    "Interpersonal": [
+        { q: "Two factions in your community are fighting.", options: [
+            { t: "Join the strongest side.", v: 1 },
+            { t: "Call for order to be restored.", v: 2 },
+            { t: "Negotiate a compromise.", v: 3 },
+            { t: "Facilitate a circle to vent feelings.", v: 4 },
+            { t: "Translate value-hierarchies to find synthesis.", v: 5 },
+            { t: "Hold space for conflict to burn through karma.", v: 6 }
+        ]},
+        { q: "Leader tells you to do something you disagree with.", options: [
+            { t: "Do it if scared, rebel if not.", v: 1 },
+            { t: "Do it out of respect for rank.", v: 2 },
+            { t: "Challenge with data/logic.", v: 3 },
+            { t: "Share feelings about impact.", v: 4 },
+            { t: "Propose modification honoring both goals.", v: 5 },
+            { t: "Speak truth without attachment.", v: 6 }
+        ]},
+        { q: "Partner wants 'more space'.", options: [
+            { t: "Get jealous/cling.", v: 1 },
+            { t: "Worry about breaking commitment.", v: 2 },
+            { t: "Negotiate a schedule.", v: 3 },
+            { t: "Support their emotional needs despite hurt.", v: 4 },
+            { t: "Recognize autonomy aids communion.", v: 5 },
+            { t: "Honor spaciousness as ground of connection.", v: 6 }
+        ]},
+        { q: "Needy friend keeps calling.", options: [
+            { t: "Ghost them.", v: 1 },
+            { t: "Answer; it's my duty.", v: 2 },
+            { t: "Screen calls for efficiency.", v: 3 },
+            { t: "Answer but feel drained.", v: 4 },
+            { t: "Set kind, clear boundaries.", v: 5 },
+            { t: "Permeable boundary; love without taking energy.", v: 6 }
+        ]},
+        { q: "Goal of team collaboration.", options: [
+            { t: "Be the star.", v: 1 },
+            { t: "Know my specific role.", v: 2 },
+            { t: "Win with smart people.", v: 3 },
+            { t: "Everyone feels included.", v: 4 },
+            { t: "Leverage unique strengths for systemic outcome.", v: 5 },
+            { t: "Flow state; collective mind.", v: 6 }
+        ]}
+    ],
+    "Values": [
+        { q: "What is a 'successful life'?", options: [
+            { t: "Rich, famous, feared.", v: 1 },
+            { t: "Respected citizen, good family.", v: 2 },
+            { t: "Financial independence, mastery.", v: 3 },
+            { t: "Living authentically, helping others.", v: 4 },
+            { t: "Self-actualizing contribution to evolution.", v: 5 },
+            { t: "Dissolving self into service.", v: 6 }
+        ]},
+        { q: "How would you spend lottery winnings?", options: [
+            { t: "Cars and parties.", v: 1 },
+            { t: "Family security and church.", v: 2 },
+            { t: "Invest to grow capital.", v: 3 },
+            { t: "Charities fighting inequality.", v: 4 },
+            { t: "Foundation targeting systemic leverage points.", v: 5 },
+            { t: "Support initiatives that heal the relationship between humanity and the biosphere.", v: 6 }
+        ]},
+        { q: "Why save the rainforest?", options: [
+            { t: "Don't care.", v: 1 },
+            { t: "Stewardship of God's earth.", v: 2 },
+            { t: "Resources/Medicines.", v: 3 },
+            { t: "Animals have rights.", v: 4 },
+            { t: "Critical organ in biosphere system.", v: 5 },
+            { t: "Earth is my own body.", v: 6 }
+        ]},
+        { q: "Why is diversity important?", options: [
+            { t: "It's not.", v: 1 },
+            { t: "Tolerate if they follow rules.", v: 2 },
+            { t: "Creates better products/profit.", v: 3 },
+            { t: "Include marginalized voices.", v: 4 },
+            { t: "Creates resilience and novelty.", v: 5 },
+            { t: "Refraction of the One light.", v: 6 }
+        ]},
+        { q: "Best governance model.", options: [
+            { t: "Strongest decides.", v: 1 },
+            { t: "Chain of command.", v: 2 },
+            { t: "Majority vote.", v: 3 },
+            { t: "Consensus (everyone agrees).", v: 4 },
+            { t: "Dynamic governance (Holacracy).", v: 5 },
+            { t: "Tune into collective wisdom field.", v: 6 }
+        ]}
+    ],
+    "Self-Identity": [
+        { q: "Theme of your memoir?", options: [
+            { t: "Me against the world.", v: 1 },
+            { t: "Finding my place in order.", v: 2 },
+            { t: "Overcoming obstacles to achieve.", v: 3 },
+            { t: "Self-discovery and healing.", v: 4 },
+            { t: "Integration of many selves.", v: 5 },
+            { t: "Universe experiencing itself.", v: 6 }
+        ]},
+        { q: "What do you do with your shadow (disliked parts)?", options: [
+            { t: "Deny they exist.", v: 1 },
+            { t: "Pray to remove them.", v: 2 },
+            { t: "Fix them.", v: 3 },
+            { t: "Accept/Love them.", v: 4 },
+            { t: "Reintegrate the energy.", v: 5 },
+            { t: "See them as passing clouds.", v: 6 }
+        ]},
+        { q: "Looking back at yourself 10 years ago.", options: [
+            { t: "I was weaker.", v: 1 },
+            { t: "Less responsible.", v: 2 },
+            { t: "Less successful.", v: 3 },
+            { t: "Less authentic.", v: 4 },
+            { t: "Different stage; I honor and transcend.", v: 5 },
+            { t: "Previous ripple in the stream.", v: 6 }
+        ]},
+        { q: "Relationship to culture.", options: [
+            { t: "I do what I want.", v: 1 },
+            { t: "Defined by my culture.", v: 2 },
+            { t: "I choose parts to adopt.", v: 3 },
+            { t: "Identity is a social construct.", v: 4 },
+            { t: "I rewrite cultural scripts.", v: 5 },
+            { t: "I witness the culture.", v: 6 }
+        ]},
+        { q: "Who is reading this?", options: [
+            { t: "I am [My Name], a person with a history.", v: 1 },
+            { t: "My soul.", v: 2 },
+            { t: "My brain.", v: 3 },
+            { t: "My heart.", v: 4 },
+            { t: "The Observer.", v: 5 },
+            { t: "The open clearing of Awareness.", v: 6 }
+        ]}
+    ],
+    "Kinesthetic": [
+        { q: "You have a persistent ache.", options: [
+            { t: "Makes me angry.", v: 1 },
+            { t: "Take medicine.", v: 2 },
+            { t: "Fix mechanical issue.", v: 3 },
+            { t: "Listen to emotional message.", v: 4 },
+            { t: "Release somatic holding.", v: 5 },
+            { t: "Experience as pure vibration.", v: 6 }
+        ]},
+        { q: "Focus during exercise.", options: [
+            { t: "Winning/Toughness.", v: 1 },
+            { t: "Following instructions.", v: 2 },
+            { t: "Metrics/Performance.", v: 3 },
+            { t: "Flow and feeling good.", v: 4 },
+            { t: "Integration of breath/intention.", v: 5 },
+            { t: "Stillness inside motion.", v: 6 }
+        ]},
+        { q: "Diet strategy.", options: [
+            { t: "Whatever tastes good.", v: 1 },
+            { t: "Cultural staples.", v: 2 },
+            { t: "Macros/Calories.", v: 3 },
+            { t: "Organic/Ethical.", v: 4 },
+            { t: "Bio-hacking experiments.", v: 5 },
+            { t: "Conscious eating.", v: 6 }
+        ]},
+        { q: "You are exhausted.", options: [
+            { t: "Drink caffeine.", v: 1 },
+            { t: "Rest (earned).", v: 2 },
+            { t: "Push through.", v: 3 },
+            { t: "Self-care day.", v: 4 },
+            { t: "Audit energy leaks.", v: 5 },
+            { t: "Drop into source energy.", v: 6 }
+        ]},
+        { q: "Body image.", options: [
+            { t: "I look strong/sexy.", v: 1 },
+            { t: "I look presentable.", v: 2 },
+            { t: "Need to fix flaws.", v: 3 },
+            { t: "Body positivity.", v: 4 },
+            { t: "Vehicle for purpose.", v: 5 },
+            { t: "Luminous, fleeting form.", v: 6 }
+        ]}
+    ],
+    "Spiritual": [
+        { q: "What happens when you die?", options: [
+            { t: "I don't know / I cease to be.", v: 1 },
+            { t: "Heaven/Hell.", v: 2 },
+            { t: "Biological cessation. My consciousness ends.", v: 3 },
+            { t: "Energy returns to universe.", v: 4 },
+            { t: "Consciousness transitions.", v: 5 },
+            { t: "Drop returns to ocean.", v: 6 }
+        ]},
+        { q: "Purpose of prayer/meditation.", options: [
+            { t: "Asking for things.", v: 1 },
+            { t: "Repeating holy words.", v: 2 },
+            { t: "Reducing stress.", v: 3 },
+            { t: "Connecting to inner guidance.", v: 4 },
+            { t: "Witnessing phenomena.", v: 5 },
+            { t: "Resting as Awareness.", v: 6 }
+        ]},
+        { q: "Why does suffering exist?", options: [
+            { t: "People are mean.", v: 1 },
+            { t: "Sin/Karma.", v: 2 },
+            { t: "Biological feedback.", v: 3 },
+            { t: "Lost connection to love.", v: 4 },
+            { t: "Friction of evolution.", v: 5 },
+            { t: "Illusion of separate self.", v: 6 }
+        ]},
+        { q: "Definition of Divine.", options: [
+            { t: "Powerful wish-granter.", v: 1 },
+            { t: "Creator/Judge.", v: 2 },
+            { t: "Laws of Physics.", v: 3 },
+            { t: "Love/Spirit within.", v: 4 },
+            { t: "Evolutionary impulse.", v: 5 },
+            { t: "Suchness of this moment.", v: 6 }
+        ]},
+        { q: "Peak experience.", options: [
+            { t: "Winning.", v: 1 },
+            { t: "Church/Holy Spirit.", v: 2 },
+            { t: "Scientific awe.", v: 3 },
+            { t: "Oneness with nature.", v: 4 },
+            { t: "Flow state.", v: 5 },
+            { t: "Non-dual cessation.", v: 6 }
+        ]}
+    ],
+    "Aesthetic": [
+        { q: "What makes art 'good'?", options: [
+            { t: "Cool colors.", v: 1 },
+            { t: "Realistic skill.", v: 2 },
+            { t: "Compositional balance.", v: 3 },
+            { t: "Emotional reaction.", v: 4 },
+            { t: "Shifts perspective.", v: 5 },
+            { t: "Transmits the Sublime.", v: 6 }
+        ]},
+        { q: "Watching a sunset.", options: [
+            { t: "It's pretty.", v: 1 },
+            { t: "God's glory.", v: 2 },
+            { t: "I appreciate the scientific complexity (light refraction).", v: 3 },
+            { t: "Peaceful feeling.", v: 4 },
+            { t: "Interplay of light/shadow.", v: 5 },
+            { t: "I am the sunset.", v: 6 }
+        ]},
+        { q: "Can ugliness be beautiful?", options: [
+            { t: "No.", v: 1 },
+            { t: "No, sign of evil.", v: 2 },
+            { t: "If it serves a function.", v: 3 },
+            { t: "If it tells true story.", v: 4 },
+            { t: "Essential part of life cycle.", v: 5 },
+            { t: "Yes, in non-dual awareness.", v: 6 }
+        ]},
+        { q: "Function of music.", options: [
+            { t: "Get hyped.", v: 1 },
+            { t: "Tradition.", v: 2 },
+            { t: "Stimulation.", v: 3 },
+            { t: "Express feelings.", v: 4 },
+            { t: "Alter consciousness.", v: 5 },
+            { t: "Resonance with universe.", v: 6 }
+        ]},
+        { q: "Source of creativity.", options: [
+            { t: "Me.", v: 1 },
+            { t: "Talent I was given.", v: 2 },
+            { t: "Brain synthesis.", v: 3 },
+            { t: "Muse/Heart.", v: 4 },
+            { t: "Collective unconscious.", v: 5 },
+            { t: "I get out of the way.", v: 6 }
+        ]}
+    ],
+    "Psychosexual": [
+        { q: "What creates attraction?", options: [
+            { t: "Hot body.", v: 1 },
+            { t: "Shared values.", v: 2 },
+            { t: "Intellect.", v: 3 },
+            { t: "Emotional connection.", v: 4 },
+            { t: "Polarity play.", v: 5 },
+            { t: "Soul recognition.", v: 6 }
+        ]},
+        { q: "Masculine/Feminine views.", options: [
+            { t: "Men are men, women are women.", v: 1 },
+            { t: "Strict roles.", v: 2 },
+            { t: "Social constructs.", v: 3 },
+            { t: "Fluid spectrum.", v: 4 },
+            { t: "Distinct energetic poles.", v: 5 },
+            { t: "Shiva/Shakti dance.", v: 6 }
+        ]},
+        { q: "Goal of sex.", options: [
+            { t: "Release.", v: 1 },
+            { t: "Procreation.", v: 2 },
+            { t: "Fun/Relief.", v: 3 },
+            { t: "Intimacy.", v: 4 },
+            { t: "Energetic exchange.", v: 5 },
+            { t: "Dissolution into bliss.", v: 6 }
+        ]},
+        { q: "Taboo thoughts.", options: [
+            { t: "Hide them.", v: 1 },
+            { t: "Feel guilty.", v: 2 },
+            { t: "Explore if safe.", v: 3 },
+            { t: "Accept without shame.", v: 4 },
+            { t: "Explore shadow energy.", v: 5 },
+            { t: "Just energy play.", v: 6 }
+        ]},
+        { q: "Sexuality and Spirituality.", options: [
+            { t: "Unrelated.", v: 1 },
+            { t: "Opposites.", v: 2 },
+            { t: "Bio vs Psych.", v: 3 },
+            { t: "Expression of love.", v: 4 },
+            { t: "Tantric practice.", v: 5 },
+            { t: "No difference.", v: 6 }
+        ]}
+    ]
+};
+
+// ==========================================
+// LOGIC
+// ==========================================
+
+const COLOR_MAP = ["#ff4d4d", "#d35400", "#f39c12", "#27ae60", "#1abc9c", "#16a085"];
+const LEVEL_NAMES = ["Red (Egocentric)", "Amber (Ethnocentric)", "Orange (Rational)", "Green (Pluralistic)", "Teal (Integral)", "Turquoise (Holistic)"];
+
+let selectedLines = [];
+let quizQueue = [];
+let currentQIndex = 0;
+let results = {}; // Stores { LineName: [scores...] }
+
+// Initialize Line Selector
+const selectorContainer = document.getElementById('lineCheckboxes');
+Object.keys(ALL_LINES).forEach(line => {
+    const div = document.createElement('div');
+    div.className = 'line-checkbox';
+    div.innerHTML = `<input type="checkbox" value="${line}" onchange="updateTimeEstimate()" checked> <label>${line}</label>`;
+    selectorContainer.appendChild(div);
+});
+updateTimeEstimate();
+
+function updateTimeEstimate() {
+    const checkboxes = document.querySelectorAll('#lineCheckboxes input:checked');
+    const count = checkboxes.length * 5; // 5 questions per line
+    const minutes = Math.ceil(count * 0.75); // approx 45 sec per question
+    document.getElementById('timeEstimate').innerText = `Estimated Time: ${minutes} - ${minutes+5} mins (${count} questions)`;
+    document.getElementById('startBtn').disabled = checkboxes.length === 0;
+}
+
+function startQuiz() {
+    selectedLines = Array.from(document.querySelectorAll('#lineCheckboxes input:checked')).map(cb => cb.value);
+    
+    // Build Queue
+    quizQueue = [];
+    selectedLines.forEach(line => {
+        results[line] = []; // Init score array
+        ALL_LINES[line].forEach(qObj => {
+            quizQueue.push({ line: line, ...qObj });
+        });
+    });
+
+    document.getElementById('setup-section').classList.add('hidden');
+    document.getElementById('quiz-section').style.display = 'block';
+    renderQuestion();
+}
+
+function renderQuestion() {
+    if (currentQIndex >= quizQueue.length) {
+        showResults();
+        return;
+    }
+
+    const qData = quizQueue[currentQIndex];
+    
+    // Update Progress
+    const pct = ((currentQIndex) / quizQueue.length) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    
+    document.getElementById('currentLineTitle').innerText = `${qData.line} Line`;
+    document.getElementById('questionText').innerText = qData.q;
+
+    const list = document.getElementById('optionsList');
+    list.innerHTML = '';
+
+    // Shuffle options so the order (1-6) isn't obvious to the user
+    const shuffledOptions = [...qData.options].sort(() => Math.random() - 0.5);
+
+    shuffledOptions.forEach(opt => {
+        const li = document.createElement('li');
+        li.className = 'option-item';
+        li.innerText = opt.t;
+        li.onclick = () => selectOption(li, qData.line, opt.v);
+        list.appendChild(li);
+    });
+
+    document.getElementById('nextBtn').disabled = true;
+}
+
+let currentSelection = null;
+
+function selectOption(el, line, val) {
+    // UI Highlight
+    document.querySelectorAll('.option-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    
+    currentSelection = { line, val };
+    document.getElementById('nextBtn').disabled = false;
+}
+
+function nextQuestion() {
+    if (currentSelection) {
+        results[currentSelection.line].push(currentSelection.val);
+        currentQIndex++;
+        currentSelection = null;
+        renderQuestion();
+    }
+}
+
+// ==========================================
+// SCORING & VISUALIZATION
+// ==========================================
+
+function showResults() {
+    document.getElementById('quiz-section').style.display = 'none';
+    document.getElementById('results-section').style.display = 'block';
+
+    const labels = [];
+    const averages = [];
+    const colors = [];
+    
+    // Variables for Center of Gravity
+    let totalScoreSum = 0;
+    let totalQuestionsCount = 0;
+
+    const barContainer = document.getElementById('barContainer');
+    barContainer.innerHTML = ''; // Clear previous results
+
+    Object.keys(results).forEach(line => {
+        const scores = results[line];
+        if(scores.length > 0) {
+            const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+            
+            // Add to Grand Total
+            totalScoreSum += scores.reduce((a, b) => a + b, 0);
+            totalQuestionsCount += scores.length;
+
+            labels.push(line);
+            averages.push(avg);
+            
+            const colorIndex = Math.min(Math.floor(avg) - 1, 5);
+            const color = COLOR_MAP[Math.max(0, colorIndex)];
+            colors.push(color);
+
+            const widthPct = (avg / 6) * 100;
+            const html = `
+                <div class="level-bar-row">
+                    <div class="level-label">${line}</div>
+                    <div class="level-track">
+                        <div class="level-fill" style="width: ${widthPct}%; background-color: ${color};"></div>
+                    </div>
+                    <div class="level-score">${avg.toFixed(1)}</div>
+                </div>
+            `;
+            barContainer.innerHTML += html;
+        }
+    });
+
+    // ------------------------------------------
+    // 1. CALCULATE CENTER OF GRAVITY
+    // ------------------------------------------
+    const grandAvg = totalScoreSum / totalQuestionsCount;
+    let cogLabel = "";
+    if (grandAvg < 1.5) cogLabel = "Red (Egocentric)";
+    else if (grandAvg < 2.5) cogLabel = "Amber (Ethnocentric)";
+    else if (grandAvg < 3.5) cogLabel = "Orange (Rational)";
+    else if (grandAvg < 4.5) cogLabel = "Green (Pluralistic)";
+    else if (grandAvg < 5.5) cogLabel = "Teal (Integral)";
+    else cogLabel = "Turquoise (Holistic)";
+
+    document.getElementById('cogResult').innerText = cogLabel;
+    document.getElementById('cogDescription').innerText = `Aggregate Score: ${grandAvg.toFixed(2)}`;
+
+   // ------------------------------------------
+    // 2. GENERATE INSIGHTS (IMBALANCE DETECTOR)
+    // ------------------------------------------
+    const insightContainer = document.getElementById('insightContainer');
+    insightContainer.innerHTML = ''; // Clear old
+
+    // 1. Find Max and Min lines to determine the "Spread"
+    let maxVal = -1;
+    let minVal = 10; // Start higher than max possible score (6)
+    let maxLine = "";
+    let minLine = "";
+
+    labels.forEach((label, index) => {
+        const val = averages[index];
+        if (val > maxVal) { maxVal = val; maxLine = label; }
+        if (val < minVal) { minVal = val; minLine = label; }
+    });
+
+    const spread = maxVal - minVal;
+    let hasInsight = false;
+
+    // 2. Check for Specific Integral Traps (Hardcoded Logic)
+    const getScore = (name) => {
+        const idx = labels.indexOf(name);
+        return idx !== -1 ? averages[idx] : null;
+    };
+    
+    const cogScore = getScore("Cognitive");
+    const emoScore = getScore("Emotional");
+    const morScore = getScore("Moral");
+    const spiScore = getScore("Spiritual");
+    const valScore = getScore("Values");
+
+    // Trap A: Head/Heart Gap (Specific check)
+    if (cogScore && emoScore && (cogScore - emoScore > 1.2)) {
+        insightContainer.innerHTML += `<div class="insight-card"><strong>⚠️ Head/Heart Gap:</strong> Your Cognitive development (${cogScore.toFixed(1)}) is significantly ahead of your Emotional line (${emoScore.toFixed(1)}). You may be intellectualizing your feelings rather than processing them.</div>`;
+        hasInsight = true;
+    }
+    
+    // Trap B: Spiritual Bypassing (Specific check)
+    if (spiScore && morScore && (spiScore - morScore > 1.5)) {
+        insightContainer.innerHTML += `<div class="insight-card"><strong>⚠️ Spiritual Bypassing Risk:</strong> Your Spiritual line is much higher than your Moral line. Be careful not to use spiritual concepts to avoid dealing with ethical responsibilities.</div>`;
+        hasInsight = true;
+    }
+
+    // 3. General "Trailing Line" Detector (Dynamic Logic)
+    // If the spread is huge (> 1.5) and we haven't already flagged it above
+    if (spread > 1.5) {
+        // We only show this if it wasn't already covered by the specific traps above
+        // OR if the trailing line is different than the ones caught above.
+        const isNewInsight = (minLine !== "Emotional" || !hasInsight) && (minLine !== "Moral" || !hasInsight);
+        
+        if (isNewInsight) {
+            insightContainer.innerHTML += `<div class="insight-card" style="border-left-color: var(--red);"><strong>⚠️ Significant Asymmetry:</strong> There is a large gap (${spread.toFixed(1)} levels) between your leading line (${maxLine}) and your trailing line (${minLine}). <br><br>In Integral Theory, we often "anchor" at our lowest line under stress. Consider focusing your development practices specifically on <strong>${minLine}</strong>.</div>`;
+            hasInsight = true;
+        }
+    }
+
+    // 4. Balanced Fallback
+    if (!hasInsight) {
+        insightContainer.innerHTML = `<div class="insight-card" style="border-left-color: var(--green);"><strong>✅ Balanced Growth:</strong> Your lines of development are tight (Spread: ${spread.toFixed(1)}). You are growing in a healthy, integrated way across the selected domains.</div>`;
+    }
+
+    // ------------------------------------------
+    // 3. RENDER CHART
+    // ------------------------------------------
+    // Destroy old chart if exists to prevent glitching on retake
+    if(window.myRadarChart) window.myRadarChart.destroy();
+
+    const ctx = document.getElementById('radarChart').getContext('2d');
+    window.myRadarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Integral Psychograph',
+                data: averages,
+                backgroundColor: 'rgba(26, 188, 156, 0.2)',
+                borderColor: '#1abc9c',
+                pointBackgroundColor: colors,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            scales: {
+                r: {
+                    min: 0,
+                    max: 6,
+                    ticks: { stepSize: 1, showLabelBackdrop: false, color: '#666' },
+                    pointLabels: { font: { size: 14 }, color: '#ccc' },
+                    grid: { color: '#444' },
+                    angleLines: { color: '#444' }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+}
+
+// ==========================================
+// BACKEND INTEGRATION (Placeholder)
+// ==========================================
+
+function sendDataToBackend(rawResults, computedAverages) {
+    const payload = {
+        timestamp: new Date().toISOString(),
+        raw: rawResults,
+        averages: computedAverages
+    };
+
+    console.log("Data ready to send:", payload);
+
+    // ---------------------------------------------------------
+    // INSTRUCTIONS TO CONNECT TO GOOGLE SHEETS:
+    // 1. Create a Google Form or Google Sheet + Apps Script Web App.
+    // 2. Get the Web App URL (e.g., https://script.google.com/macros/s/..../exec).
+    // 3. Uncomment the code below and insert your URL.
+    // ---------------------------------------------------------
+
+    /*
+    fetch('YOUR_GOOGLE_APPS_SCRIPT_URL', {
+        method: 'POST',
+        mode: 'no-cors', // standard for Google Scripts
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    }).then(() => {
+        console.log("Data sent successfully");
+    }).catch(err => console.error("Error sending data", err));
+    */
+}
+function downloadResults() {
+    const filename = prompt("Enter a name for your file:", "My_Integral_Profile");
+    if (!filename) return;
+
+    // Scroll to top to ensure capture isn't cut off
+    window.scrollTo(0,0);
+    
+    // TARGET THE NEW ID HERE
+    const element = document.getElementById("results-capture");
+    
+    html2canvas(element, {
+        backgroundColor: "#1e1e1e", // Matches your dark card color
+        scale: 2 // Higher resolution
+    }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = filename + '.png';
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    });
+}
+</script>
+</body>
+</html>
