@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My App Hub</title>
+    <style>
+        /* DARK MODE STYLING */
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --accent-color: #3b82f6; /* Blue */
+            --donate-color: #10b981; /* Green */
+            --substack-color: #f97316; /* Orange */
+            --discord-color: #5865F2; /* Discord Blurple */
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden; /* Prevent double scrollbars */
+        }
+
+        /* HEADER & NAVIGATION */
+        header {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid #333;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            position: relative;
+            z-index: 10;
+        }
+
+        #back-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 24px;
+            cursor: pointer;
+            margin-right: 15px;
+            display: none; /* Hidden by default */
+            padding: 5px;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        #back-btn:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        h1 {
+            font-size: 20px;
+            margin: 0;
+        }
+
+        /* MAIN MENU LAYOUT */
+        #menu-container {
+            padding: 20px;
+            height: calc(100% - 60px);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 40px;
+        }
+
+        .app-card {
+            background-color: var(--card-bg);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .app-card:hover {
+            transform: translateY(-5px);
+            background-color: #2c2c2c;
+            border-color: var(--accent-color);
+        }
+
+        .app-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .app-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        /* EXTERNAL LINKS SECTION */
+        .external-links {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn-donate { background-color: var(--donate-color); }
+        .btn-substack { background-color: var(--substack-color); }
+        .btn-discord { background-color: var(--discord-color); }
+
+        /* APP VIEWER (IFRAME) */
+        #app-viewer {
+            display: none; /* Hidden by default */
+            width: 100%;
+            height: calc(100% - 60px);
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Bar -->
+    <header>
+        <button id="back-btn" onclick="goBack()">&#8592;</button>
+        <h1 id="page-title">Main Menu</h1>
+    </header>
+
+    <!-- Main Menu View -->
+    <div id="menu-container">
+        
+        <!-- The 4 App Launchers -->
+        <div class="grid">
+            <!-- Replace 'app1.html' with your actual filenames -->
+            <div class="app-card" onclick="launchApp('app1.html', 'App One')">
+                <span class="app-icon">🚀</span>
+                <span class="app-title">Launch App 1</span>
+            </div>
+            
+            <div class="app-card" onclick="launchApp('app2.html', 'App Two')">
+                <span class="app-icon">📊</span>
+                <span class="app-title">Launch App 2</span>
+            </div>
+
+            <div class="app-card" onclick="launchApp('app3.html', 'App Three')">
+                <span class="app-icon">🎨</span>
+                <span class="app-title">Launch App 3</span>
+            </div>
+
+            <div class="app-card" onclick="launchApp('app4.html', 'App Four')">
+                <span class="app-icon">🎮</span>
+                <span class="app-title">Launch App 4</span>
+            </div>
+        </div>
+
+        <!-- External & Community Links -->
+        <div class="external-links">
+            <!-- Discord (Community) -->
+            <a href="https://discord.gg/your-invite-code" target="_blank" class="btn btn-discord">
+                Join Community Chat (Discord)
+            </a>
+
+            <!-- Substack -->
+            <a href="https://yourname.substack.com" target="_blank" class="btn btn-substack">
+                Read on Substack
+            </a>
+
+            <!-- Donate -->
+            <a href="https://paypal.me/yourname" target="_blank" class="btn btn-donate">
+                ❤️ Donate
+            </a>
+        </div>
+    </div>
+
+    <!-- The Container for the Apps -->
+    <iframe id="app-viewer" src=""></iframe>
+
+    <script>
+        const menuContainer = document.getElementById('menu-container');
+        const appViewer = document.getElementById('app-viewer');
+        const backBtn = document.getElementById('back-btn');
+        const pageTitle = document.getElementById('page-title');
+
+        // Function to hide menu and show the app
+        function launchApp(url, title) {
+            menuContainer.style.display = 'none'; // Hide Menu
+            appViewer.style.display = 'block';    // Show Iframe
+            appViewer.src = url;                  // Load App URL
+            backBtn.style.display = 'block';      // Show Back Arrow
+            pageTitle.innerText = title;          // Update Title
+        }
+
+        // Function to return to menu
+        function goBack() {
+            menuContainer.style.display = 'flex'; // Show Menu
+            appViewer.style.display = 'none';     // Hide Iframe
+            appViewer.src = '';                   // Unload App (saves memory/stops sound)
+            backBtn.style.display = 'none';       // Hide Back Arrow
+            pageTitle.innerText = 'Main Menu';    // Reset Title
+        }
+    </script>
+</body>
+</html>
