@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ego Finder</title>
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Screenshot Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --text-color: #e0e0e0;
+            --accent-color: #00ffcc; /* Neon Cyan */
+            --secondary-color: #333;
+            --panel-bg: #111;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            overflow-y: auto;
+            user-select: none;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 700px;
+            text-align: center;
+            padding: 40px 20px;
+            margin: 0 auto;
+        }
+
+        /* LANDING PAGE */
+        #landing-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            z-index: 999;
+        }
+
+        .init-btn {
+            background: transparent;
+            border: 2px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 20px 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            border-radius: 4px;
+        }
+
+        .init-btn:hover {
+            background: var(--accent-color);
+            color: var(--bg-color);
+            box-shadow: 0 0 20px var(--accent-color);
+        }
+
+        /* QUIZ SECTION */
+        #quiz-section {
+            display: none;
+            padding: 30px;
+            background: var(--panel-bg);
+            border: 1px solid var(--secondary-color);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-top: 5vh;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--secondary-color);
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-color);
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 50px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* SLIDER LAYOUT */
+        .slider-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 40px 0;
+            gap: 20px;
+        }
+
+        .slider-label {
+            flex: 1;
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            line-height: 1.2;
+            font-weight: bold;
+        }
+        
+        .slider-label.left { text-align: right; }
+        .slider-label.right { text-align: left; }
+
+        .range-container {
+            flex: 4;
+            position: relative;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ticks-overlay {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            transform: translateY(-50%);
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 0;
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+
+        .tick {
+            width: 2px;
+            height: 10px;
+            background: #444;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: #333;
+            outline: none;
+            border-radius: 2px;
+            z-index: 1;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--accent-color);
+            border: 2px solid #fff;
+        }
+
+        input[type=range]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border: none;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--accent-color);
+            border: 2px solid #fff;
+        }
+
+        input[type=range]:focus {
+            outline: none;
+        }
+
+        .next-btn {
+            background: var(--accent-color);
+            color: #000;
+            border: none;
+            padding: 14px 40px;
+            cursor: pointer;
+            font-family: inherit;
+            text-transform: uppercase;
+            font-size: 1rem;
+            letter-spacing: 2px;
+            font-weight: bold;
+            margin-top: 20px;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
+            transition: transform 0.1s ease;
+            outline: none;
+        }
+
+        .next-btn:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.6);
+        }
+
+        .next-btn:active {
+            transform: scale(0.96);
+            background: var(--accent-color);
+        }
+
+        /* RESULTS SECTION */
+        #results-section {
+            display: none;
+            padding-bottom: 50px;
+            animation: fadeIn 1s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .result-header {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .ego-zone {
+            font-size: 1.1rem;
+            color: #bbb;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--secondary-color);
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 50vh; 
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .pattern-break-container {
+            text-align: left;
+            background: transparent;
+            padding: 15px 0;
+            margin-top: 20px;
+        }
+
+        .pb-title {
+            color: var(--accent-color);
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .pb-item {
+            margin-bottom: 25px;
+        }
+
+        .pb-item h3 {
+            margin: 0 0 8px 0;
+            font-size: 1.1rem;
+            color: #fff;
+        }
+
+        .pb-item p {
+            margin: 0;
+            font-size: 0.95rem;
+            color: #aaa;
+            line-height: 1.4;
+        }
+
+        .restart-btn {
+            margin-top: 30px;
+            background: transparent;
+            border: 1px solid #555;
+            color: #888;
+            padding: 12px 30px;
+            cursor: pointer;
+            font-family: inherit;
+            text-transform: uppercase;
+            transition: 0.2s;
+        }
+        
+        .restart-btn:hover {
+            color: #fff;
+            border-color: #fff;
+        }
+
+        .save-btn {
+            background: #333;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 10px 20px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            font-family: inherit;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+
+        .save-btn:hover {
+            background: var(--accent-color);
+            color: #000;
+        }
+
+        .legend-container {
+            margin-top: 40px;
+            text-align: left;
+            border-top: 1px solid #333;
+            padding-top: 20px;
+        }
+
+        .legend-section {
+            margin-bottom: 30px;
+        }
+
+        .legend-title {
+            color: #fff;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            text-decoration: underline;
+            text-decoration-color: var(--accent-color);
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .legend-item {
+            background: #111;
+            padding: 15px;
+            border: 1px solid #222;
+        }
+
+        .l-name { color: var(--accent-color); font-weight: bold; font-size: 1rem; margin-bottom: 5px; }
+        .l-desc { color: #ccc; font-size: 0.85rem; line-height: 1.4; margin-bottom: 10px; }
+        .l-examples { color: #888; font-size: 0.75rem; line-height: 1.3; font-style: italic; }
+
+        .density-list p {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin: 5px 0;
+        }
+        .density-list span { color: #fff; font-weight: bold; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Landing Page -->
+    <div id="landing-page">
+        <button class="init-btn" onclick="startApp()">Find Ego</button>
+    </div>
+
+    <div class="container">
+        <!-- Quiz Section -->
+        <div id="quiz-section">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            
+            <div class="question-text" id="question-text">
+                Loading...
+            </div>
+
+            <!-- Slider -->
+            <div class="slider-wrapper">
+                <div class="slider-label left">Does not<br>describe me</div>
+                
+                <div class="range-container">
+                    <div class="ticks-overlay">
+                        <div class="tick"></div>
+                        <div class="tick"></div>
+                        <div class="tick"></div>
+                        <div class="tick"></div>
+                        <div class="tick"></div>
+                    </div>
+                    <input type="range" min="0" max="100" value="50" step="1" id="response-slider">
+                </div>
+
+                <div class="slider-label right">Describes<br>me</div>
+            </div>
+
+            <button class="next-btn" onclick="nextQuestion()">Next</button>
+        </div>
+
+       <!-- Results Section -->
+        <div id="results-section">
+            
+            <!-- CAPTURE AREA FOR SCREENSHOT -->
+            <div id="capture-area" style="background-color: var(--panel-bg); padding: 20px; border-radius: 8px; border: 1px solid #333;">
+                <div class="result-header">SCAN COMPLETE</div>
+                <div class="ego-zone" id="ego-zone-display">Calculating Density...</div>
+
+                <div class="chart-wrapper">
+                    <canvas id="radarChart"></canvas>
+                </div>
+
+                <div class="pattern-break-container" id="pattern-breaks">
+                    <div class="pb-title">Recommended Pattern Breaks</div>
+                    <!-- Content injected via JS -->
+                </div>
+            </div>
+            <!-- END CAPTURE AREA -->
+
+            <button class="save-btn" onclick="saveResults()" style="margin-top: 30px;">Save Results</button>
+
+            <!-- LEGEND SECTION -->
+            <div class="legend-container">
+                <div class="legend-section">
+                    <div class="legend-title">Density Levels Guide</div>
+                    <div class="density-list">
+                        <p><span>Subtle Ego:</span> High presence. You observe thoughts rather than becoming them.</p>
+                        <p><span>Typical Ego:</span> Standard structure. You have healthy boundaries but react defensively.</p>
+                        <p><span>Strong Ego:</span> High reactivity. Your identity is heavily tied to external outcomes.</p>
+                        <p><span>Very Strong Ego:</span> Calcified identity. Almost total identification with the mind/self.</p>
+                    </div>
+                </div>
+
+                <div class="legend-section">
+                    <div class="legend-title">Archetype Legend</div>
+                    <div class="legend-grid">
+                        <div class="legend-item">
+                            <div class="l-name">Emperor</div>
+                            <div class="l-desc">Dominance and control-seeking. Needs to be right and enforce will.</div>
+                            <div class="l-examples"><strong>Examples:</strong> Steve Jobs, Queen Elizabeth I, Vladimir Putin, Alexander the Great, Margaret Thatcher</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="l-name">Martyr</div>
+                            <div class="l-desc">Victimhood. Uses personal suffering and sacrifice for significance.</div>
+                            <div class="l-examples"><strong>Examples:</strong> Frida Kahlo, Mahatma Gandhi, Joan of Arc, Kurt Cobain, Vincent van Gogh</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="l-name">Guru</div>
+                            <div class="l-desc">Spiritual superiority. Uses "insight" to elevate above the ordinary.</div>
+                            <div class="l-examples"><strong>Examples:</strong> Osho (Rajneesh), Deepak Chopra, Jordan Peterson, Aleister Crowley, Jiddu Krishnamurti</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="l-name">Avoider</div>
+                            <div class="l-desc">Hiding and peace-keeping to shield vulnerability and avoid judgment.</div>
+                            <div class="l-examples"><strong>Examples:</strong> Howard Hughes, Emily Dickinson, Keanu Reeves, Greta Garbo, Syd Barrett</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="l-name">Pleaser-Savior</div>
+                            <div class="l-desc">Approval-seeking. Needs to help and be indispensable to feel worthy.</div>
+                            <div class="l-examples"><strong>Examples:</strong> Mother Teresa, Oprah Winfrey, Jimmy Carter, Ellen DeGeneres, Princess Diana</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="l-name">Hustler</div>
+                            <div class="l-desc">Performance-driven. Equates human worth strictly with achievement.</div>
+                            <div class="l-examples"><strong>Examples:</strong> Elon Musk, Serena Williams, Jeff Bezos, Arnold Schwarzenegger, Jay-Z</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="l-name">Defier</div>
+                            <div class="l-desc">Opposition and rebellion. Defines self strictly by opposing the norm.</div>
+                            <div class="l-examples"><strong>Examples:</strong> Kanye West (Ye), Christopher Hitchens, Ayn Rand, Malcolm X, Madonna</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="l-name">Skeptical Judge</div>
+                            <div class="l-desc">Uses doubt and criticism as an intellectual shield for superiority.</div>
+                            <div class="l-examples"><strong>Examples:</strong> Friedrich Nietzsche, George Carlin, Christopher Nolan, Simon Cowell, H.L. Mencken</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="l-name">Perfectionist</div>
+                            <div class="l-desc">Pursues flawlessness to completely avoid shame or failure.</div>
+                            <div class="l-examples"><strong>Examples:</strong> Martha Stewart, Steve Wozniak, Beyoncé, Leonardo da Vinci, Marie Kondo</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="restart-btn" onclick="location.reload()">Reset System</button>
+        </div>
+    </div> <!-- Closes .container -->
+
+    <script>
+        // --- DATASET ---
+        const questions = [
+            // EMPEROR
+            { type: 'Emperor', text: "When I am contradicted, I feel a sudden rush of heat in my face or chest." },
+            { type: 'Emperor', text: "I secretly believe that most people are incompetent compared to me." },
+            { type: 'Emperor', text: "I have a very hard time letting an argument go until I have proven my point." },
+            { type: 'Emperor', text: "It bothers me deeply when someone else takes charge of a situation I could handle better." },
+            { type: 'Emperor', text: "I feel a loss of respect for people who display weakness or indecision." },
+            
+            // MARTYR
+            { type: 'Martyr', text: "I frequently feel that I give more to others than I ever receive in return." },
+            { type: 'Martyr', text: "When I am upset, I feel a heavy, sinking sensation in my chest or stomach." },
+            { type: 'Martyr', text: "Bad luck seems to find me more often than it finds other people." },
+            { type: 'Martyr', text: "I replay past hurts in my mind, wondering why people treated me that way." },
+            { type: 'Martyr', text: "It annoys me when people don't acknowledge how difficult my situation is." },
+            
+            // GURU
+            { type: 'Guru', text: "I often feel a sense of pity for people who are 'unconscious' or asleep to the truth." },
+            { type: 'Guru', text: "I feel a detached, floaty sensation when others are engaging in gossip or drama." },
+            { type: 'Guru', text: "I believe my spiritual or intellectual insights make me different from the average person." },
+            { type: 'Guru', text: "I get frustrated when I see people obsessing over shallow, material things." },
+            { type: 'Guru', text: "I sometimes use spiritual concepts to avoid dealing with messy human emotions." },
+            
+            // AVOIDER
+            { type: 'Avoider', text: "In group settings, I physically shrink or hunch to take up less space." },
+            { type: 'Avoider', text: "I will agree with things I don't truly believe just to keep the peace." },
+            { type: 'Avoider', text: "I feel my throat tighten or my voice disappear when I need to say 'no'." },
+            { type: 'Avoider', text: "I am terrified of being exposed as a fraud or being judged, so I hide my true self." },
+            { type: 'Avoider', text: "I often 'check out' or mentally dissociate during conflict." },
+            
+            // PLEASER-SAVIOR
+            { type: 'Pleaser-Savior', text: "I feel a magnetic physical pull to step in and fix things when someone is struggling." },
+            { type: 'Pleaser-Savior', text: "I derive most of my self-worth from being the person others rely on." },
+            { type: 'Pleaser-Savior', text: "I feel slightly resentful when people I have helped don't appreciate it or follow my advice." },
+            { type: 'Pleaser-Savior', text: "I subconsciously change my personality to ensure the people around me like me." },
+            { type: 'Pleaser-Savior', text: "It is very hard for me to watch someone fail; I feel I must intervene to save them." },
+            
+            // HUSTLER
+            { type: 'Hustler', text: "I feel a restless vibration in my legs or hands when I am not being productive." },
+            { type: 'Hustler', text: "I feel guilty when I take time off to just do nothing." },
+            { type: 'Hustler', text: "I constantly compare my achievements to those of my peers." },
+            { type: 'Hustler', text: "I believe my value as a human is tied to what I produce or earn." },
+            { type: 'Hustler', text: "I lose respect for people who seem lazy or lack ambition." },
+            
+            // DEFIER
+            { type: 'Defier', text: "I feel a prickle of irritation when I realize I am liking something that is popular." },
+            { type: 'Defier', text: "I often play 'devil's advocate' just to challenge the group consensus." },
+            { type: 'Defier', text: "I have a deep fear of being seen as 'basic', conforming, or ordinary." },
+            { type: 'Defier', text: "If everyone agrees on something, I automatically assume it must be flawed." },
+            { type: 'Defier', text: "I pride myself on rebelling against the norm, even if it causes friction." },
+            
+            // SKEPTICAL JUDGE
+            { type: 'Skeptical Judge', text: "I instinctively roll my eyes or feel tension in my brow when hearing hopeful or naive ideas." },
+            { type: 'Skeptical Judge', text: "I prepare for the worst outcome so I can never be disappointed or fooled." },
+            { type: 'Skeptical Judge', text: "I secretly judge people's intellect or life choices to feel more secure about my own." },
+            { type: 'Skeptical Judge', text: "I use my intellect, doubt, and criticism as a shield to keep people from getting too close." },
+            { type: 'Skeptical Judge', text: "I trust my doubts and critiques much more than I trust people's promises." },
+
+            // PERFECTIONIST
+            { type: 'Perfectionist', text: "I am often paralyzed by the fear of making a mistake or looking foolish." },
+            { type: 'Perfectionist', text: "I obsessively tweak and fix my work long after others would say it is 'done'." },
+            { type: 'Perfectionist', text: "I feel intense shame or anxiety if someone points out a minor flaw in something I did." },
+            { type: 'Perfectionist', text: "I cannot relax if my environment or schedule feels chaotic or out of perfect order." },
+            { type: 'Perfectionist', text: "I hold myself—and the people around me—to impossibly high, flawless standards." }
+        ];
+
+        // --- ANTIDOTES ---
+        const antidotes = {
+            'Emperor': { title: "Surrender Control", desc: "For the next 24 hours, when someone makes a minor mistake, say nothing. Observe the fire in your chest, but do not act on it." },
+            'Martyr': { title: "Rewrite the Script", desc: "Write down your biggest complaint. Now rewrite it removing the words 'me', 'I', 'always', and 'never'." },
+            'Guru': { title: "The Ordinary Challenge", desc: "Do something incredibly 'basic' (watch reality TV, eat junk food) and find the joy in it without judging yourself or others." },
+            'Avoider': { title: "Take Up Space & Voice Conflict", desc: "Express a preference today that conflicts with someone else. Maintain eye contact, do not apologize, and don't shrink." },
+            'Pleaser-Savior': { title: "Let Them Fail", desc: "Identify a problem you are trying to solve for someone else to gain their approval. Stop. Let them handle the consequences." },
+            'Hustler': { title: "Radical Stillness", desc: "Sit for 15 minutes doing absolutely nothing. No phone, no meditation technique. Just sit. Watch the itch to 'do'." },
+            'Defier': { title: "Join the Crowd", desc: "Find something popular that you usually mock. Try to genuinely understand why people enjoy it. Join them." },
+            'Skeptical Judge': { title: "Suspend Judgment & Risk Hope", desc: "Catch yourself judging someone today and immediately find one thing to praise about them. Verbalize a sincere hope." },
+            'Perfectionist': { title: "Make a Mess", desc: "Intentionally leave a minor typo in an email, or leave a room slightly messy. Sit with the uncomfortable feeling that the world didn't end." }
+        };
+
+        let currentQuestion = 0;
+        let scores = {
+            'Emperor': 0, 'Martyr': 0, 'Guru': 0, 'Avoider': 0, 
+            'Pleaser-Savior': 0, 'Hustler': 0, 'Defier': 0, 'Skeptical Judge': 0, 'Perfectionist': 0
+        };
+        let totalScore = 0; 
+
+        function startApp() {
+            questions.sort(() => Math.random() - 0.5);
+            document.getElementById('landing-page').style.display = 'none';
+            document.getElementById('quiz-section').style.display = 'block';
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const q = questions[currentQuestion];
+            document.getElementById('question-text').innerText = q.text;
+            document.getElementById('response-slider').value = 50;
+            
+            const pct = (currentQuestion / questions.length) * 100;
+            document.getElementById('progress-fill').style.width = pct + "%";
+        }
+
+        function nextQuestion() {
+            const sliderVal = parseInt(document.getElementById('response-slider').value);
+            const type = questions[currentQuestion].type;
+            
+            scores[type] += sliderVal;
+            totalScore += sliderVal;
+
+            currentQuestion++;
+
+            if (currentQuestion < questions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('quiz-section').style.display = 'none';
+            document.getElementById('results-section').style.display = 'block';
+
+            const zoneDisplay = document.getElementById('ego-zone-display');
+            let densityText = "";
+            if (totalScore < 1500) densityText = "Subtle Ego (High Presence)";
+            else if (totalScore < 2500) densityText = "Typical Ego (Standard Structure)";
+            else if (totalScore < 3500) densityText = "Strong Ego (High Reactivity)";
+            else densityText = "Very Strong Ego (Calcified Identity)";
+            
+            zoneDisplay.innerHTML = `Ego Density Level: <span style="color:var(--accent-color)">${densityText}</span>`;
+
+            renderChart();
+            generatePatternBreaks();
+        }
+
+        function saveResults() {
+            const btn = document.querySelector('.save-btn');
+            const originalText = btn.innerText;
+            btn.innerText = "Saving Image...";
+
+            const element = document.getElementById("capture-area");
+            
+            html2canvas(element, {
+                backgroundColor: "#0a0a0a",
+                scale: 3, 
+                useCORS: true,
+                logging: false
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'ego-scan-results.png';
+                link.href = canvas.toDataURL("image/png", 1.0);
+                link.click();
+                
+                btn.innerText = originalText;
+            }).catch(err => {
+                console.error("Image save failed: ", err);
+                btn.innerText = "Error - Try Again";
+            });
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            const labels = Object.keys(scores);
+            const dataPoints = labels.map(label => Math.round((scores[label] / 500) * 100));
+            
+            // SPLIT LONG LABELS FOR MOBILE
+            const chartLabels = labels.map((label, index) => {
+                const val = `${dataPoints[index]}%`;
+                if (label === 'Skeptical Judge') return ['Skeptical', 'Judge', val];
+                if (label === 'Pleaser-Savior') return ['Pleaser-', 'Savior', val];
+                return [label, val];
+            });
+
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: 'Ego Footprint',
+                        data: dataPoints,
+                        backgroundColor: function(context) {
+                            const chart = context.chart;
+                            const {ctx, chartArea, scales} = chart;
+
+                            if (!chartArea || !scales.r) {
+                                return null;
+                            }
+
+                            // FIX: Get the exact center and radius of the Radar web itself
+                            const rScale = scales.r;
+                            const centerX = rScale.xCenter;
+                            const centerY = rScale.yCenter;
+                            
+                            // drawingArea gives the exact radius from the center to the outer polygon
+                            const r = rScale.drawingArea; 
+
+                            const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, r);
+
+                            gradient.addColorStop(0, 'rgba(102, 51, 153, 0.7)');   // 0% - Purple
+                            gradient.addColorStop(0.2, 'rgba(0, 0, 255, 0.6)');    // 20% - Blue
+                            gradient.addColorStop(0.4, 'rgba(0, 255, 0, 0.6)');    // 40% - Green
+                            gradient.addColorStop(0.6, 'rgba(255, 255, 0, 0.7)');  // 60% - Yellow
+                            gradient.addColorStop(0.7, 'rgba(255, 140, 0, 0.8)');  // 70% - Orange
+                            gradient.addColorStop(0.8, 'rgba(255, 0, 0, 0.85)');   // 80% - RED STARTS HERE
+                            gradient.addColorStop(1, 'rgba(180, 0, 0, 0.95)');     // 100% - Dark Red
+
+                            return gradient;
+                        },
+                        borderColor: '#fff',
+                        borderWidth: 1,
+                        pointBackgroundColor: '#fff',
+                        pointRadius: 2
+                    }]
+                },
+                options: {
+                    resizeDelay: 200, // Debounce resize to fix orientation bug
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: 10 // Add padding to prevent label cutoff
+                    },
+                    scales: {
+                        r: {
+                            angleLines: { color: '#333' },
+                            grid: { color: '#333' },
+                            pointLabels: {
+                                color: '#e0e0e0',
+                                font: { 
+                                    family: 'Courier New',
+                                    // Responsive font size
+                                    size: (window.innerWidth < 500 ? 9 : 11) 
+                                }
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 100,
+                            ticks: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function generatePatternBreaks() {
+            const sortedTypes = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+            const top3 = sortedTypes.slice(0, 3);
+            const container = document.getElementById('pattern-breaks');
+            
+            top3.forEach(item => {
+                const type = item[0];
+                const intensity = Math.round((item[1] / 500) * 100);
+                const antidote = antidotes[type];
+                
+                const div = document.createElement('div');
+                div.className = 'pb-item';
+                div.innerHTML = `
+                    <h3>${type} (${intensity}%)</h3>
+                    <p><strong>Exercise: ${antidote.title}</strong><br>${antidote.desc}</p>
+                `;
+                container.appendChild(div);
+            });
+        }
+    </script>
+</body>
+</html>
