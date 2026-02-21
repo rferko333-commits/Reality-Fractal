@@ -225,11 +225,12 @@
             overflow-y: auto;
             padding: 20px;
         }
-        
-        /* Mobile Specific: Streamline settings to single column */
-        #settings-menu .ctrl-grid {
-            display: flex;
-            flex-direction: column;
+
+        /* Streamlined Mobile Menu (Forces Single Column) */
+        #mobile-controls-target .ctrl-grid {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 15px;
         }
 
         h3.settings-title { margin: 0 0 20px 0; color: white; }
@@ -353,9 +354,11 @@
 
     <!-- Mobile Slide-Out Menu -->
     <div id="settings-menu">
-        <div class="settings-content" id="mobile-controls-target">
-            <h3 class="settings-title">Settings</h3>
-            <!-- Injected by UI Module -->
+        <div class="settings-content">
+            <h3 style="margin-top:0; color:white; margin-bottom: 20px;">Settings</h3>
+            <div id="mobile-controls-target">
+                <!-- Injected by UI Module -->
+            </div>
         </div>
     </div>
 
@@ -366,9 +369,9 @@
             
             <div class="control-group">
                 <label>File Name</label>
-                <input type="text" id="save-name" value="Fractal_Render" style="width:100%; box-sizing:border-box;">
+                <input type="text" id="save-name" value="Fractal_Render" style="width:100%;">
             </div>
-            
+
             <div class="control-group">
                 <label>Target Window</label>
                 <select id="save-view">
@@ -384,14 +387,17 @@
                     <option value="2">HD (1920 x 1080)</option>
                     <option value="4">4K (3840 x 2160)</option>
                     <option value="8">8K (7680 x 4320)</option>
-                    <option value="custom">Custom Keyboard Input...</option>
+                    <option value="custom">Custom Input...</option>
                 </select>
                 
                 <div id="custom-res-div" style="display:none; gap:10px; margin-top:10px; align-items:center;">
-                    <input type="number" id="save-w" value="4000" placeholder="Width">
+                    <input type="number" id="save-w" value="4000" placeholder="W">
                     <span style="color:#888">x</span>
-                    <input type="number" id="save-h" value="4000" placeholder="Height">
+                    <input type="number" id="save-h" value="4000" placeholder="H">
                 </div>
+                <p style="font-size:10px; color:#888; margin-top:10px; line-height:1.4;">
+                    Note: Nebulae/Buddhabrots save exactly what is visible on screen to preserve the progressive trajectory accumulation.
+                </p>
             </div>
 
             <div style="display:flex; gap:10px; margin-top:20px;">
@@ -404,16 +410,22 @@
 <script>
 /**
  * FRACTAL ATLAS - MASTER EDITION
- * Fully expanded logic to ensure absolute stability.
+ * 
+ * Architecture:
+ * 1. Math Parser (String -> GLSL)
+ * 2. WebGL GPU Renderer (Standard Fractals)
+ * 3. CPU Progressive Renderer (Nebulae / Buddhabrot)
+ * 4. App State Controller
+ * 5. UI & Input Controller
  */
 
 // =======================================================
 // 1. EQUATION PARSER
 // =======================================================
 function parseEquation(eq) {
-    let s = eq.toLowerCase().replace(/\s+/g, ''); 
+    let s = eq.toLowerCase().replace(/\s+/g, '');
     
-    // CPU Mode Routing
+    // Set CPU Mode flag for the Nebula Renderer
     app.state.p.eqMode = 0; // Default
     if (s === 'z^3+c') app.state.p.eqMode = 1;
     else if (s === 'z^4+c') app.state.p.eqMode = 2;
@@ -430,11 +442,11 @@ function parseEquation(eq) {
         }
     }
 
-    // GLSL Translation
+    // Build the GLSL String for the GPU
     if(s === 'burningship') return 'vec2(abs(z.x)*abs(z.x)-abs(z.y)*abs(z.y), 2.0*abs(z.x*z.y))+c';
     if(s === 'tricorn') return 'vec2(z.x*z.x-z.y*z.y, -2.0*z.x*z.y)+c';
     
-    s = s.replace(/z\^2(?!\.)/g, 'csqr(z)'); 
+    s = s.replace(/z\^2(?!\.)/g, 'csqr(z)');
     s = s.replace(/z\^([0-9.]+)/g, (match, p1) => {
         return p1.includes('.') ? `cpow(z,${p1})` : `cpow(z,${p1}.0)`;
     });
@@ -464,12 +476,14 @@ const GL_CORE = {
             
             // Math Library
             vec2 csqr(vec2 z) { return vec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y); }
+            
             vec2 cpow(vec2 z, float n) {
                 float r = length(z);
                 if(r < 0.00001) return vec2(0.0);
                 float a = atan(z.y, z.x);
                 return pow(r, n) * vec2(cos(a*n), sin(a*n));
             }
+            
             vec2 csin(vec2 z) {
                 float ey = exp(z.y); float e_y = exp(-z.y);
                 return vec2(sin(z.x)*(ey+e_y)/2.0, cos(z.x)*(ey-e_y)/2.0);
@@ -479,7 +493,7 @@ const GL_CORE = {
                 return vec2(cos(z.x)*(ey+e_y)/2.0, -sin(z.x)*(ey-e_y)/2.0);
             }
             
-            // Palettes
+            // True Palettes
             vec3 palette(float t, int id) {
                 t = clamp(t, 0.0, 1.0);
                 
@@ -520,32 +534,37 @@ const GL_CORE = {
                 
                 bool isAtlas = (u_mode == 2);
                 
+                // --- MAP PROJECTION ---
                 if (isAtlas) {
+                    // WORLD SPACE GRID LOGIC
                     vec2 worldPos = uv / u_zoom + u_offset;
                     float tileSize = 4.0 / u_grid; 
                     vec2 cell = floor(worldPos / tileSize);
                     c = (cell + 0.5) * tileSize;
                     vec2 local = (worldPos - c) / tileSize;
-                    z = local * 3.0; 
+                    z = local * 3.0; // Fit inside the tile
                 } else {
+                    // Standard View
                     vec2 p = uv / u_zoom + u_offset;
                     if (u_view == 1) { z = p; c = u_c; } 
                     else { z = vec2(0.0); c = p; }
                 }
 
+                // --- ITERATION LOOP ---
                 float iter = 0.0;
                 float m = 0.0;
                 
                 for (int i = 0; i < 10000; i++) {
                     if (float(i) > u_iter) break;
                     
-                    z = {{EQ}}; 
+                    z = {{EQ}}; // Equation injected here
                     
                     m = dot(z,z);
                     if (m > 100.0) break;
                     iter += 1.0;
                 }
 
+                // --- COLORING ---
                 vec3 col = vec3(0.0);
                 if (m >= 100.0) {
                     float sn = iter - log2(log2(m)) + 4.0;
@@ -553,9 +572,9 @@ const GL_CORE = {
                     col = palette(norm_iter * 2.0, u_pal); 
                 }
 
-                // OVERLAYS
+                // --- OVERLAYS ---
                 if (isAtlas) {
-                    // Anti-Screendoor Check
+                    // Perfect Grid Alignment (Anti-Screendoor applied)
                     float tileSize = 4.0 / u_grid;
                     float pxPerTile = tileSize * u_zoom * u_res.y;
                     
@@ -571,6 +590,7 @@ const GL_CORE = {
                         }
                     }
                 } else if (u_view == 0) {
+                     // Seed Dot (Screen Space calculation for perfect circle)
                      vec2 screen_c = (u_c - u_offset) * u_zoom;
                      float dist = distance(uv, screen_c);
                      
@@ -702,6 +722,7 @@ class NebulaRenderer {
             let cr, ci, zx, zy, cellX, cellY;
             
             if (isNebulaAtlas) {
+                // Nebula Atlas Logic
                 let asp = w/h;
                 let uvX = (Math.random() - 0.5) * asp;
                 let uvY = (Math.random() - 0.5); 
@@ -715,13 +736,11 @@ class NebulaRenderer {
                 cr = (cellX + 0.5) * tileSize;
                 ci = (cellY + 0.5) * tileSize;
                 
-                // Toggled Origin-Biased Math
+                // Toggle between Cloud (Uniform) and Emergence (Origin-Biased)
                 if (p.atlasMode === 1) {
-                    // Buddhabrot Emergence: Only trace points extremely close to Z=0
                     zx = (Math.random() - 0.5) * 0.01;
                     zy = (Math.random() - 0.5) * 0.01;
                 } else {
-                    // Uniform Cloud: Trace all points in the tile
                     zx = (Math.random() - 0.5) * 3.0;
                     zy = (Math.random() - 0.5) * 3.0;
                 }
@@ -768,7 +787,8 @@ class NebulaRenderer {
                 for(let s=0; s<step; s++) {
                     let px, py;
                     
-                    if (isNebulaAtlas) {
+                    if (isNebulaAtlas && p.atlasMode === 0) {
+                        // In Uniform Cloud Mode, trap the trajectory inside the tile visually
                         let tileSize = 4.0 / grid;
                         let wx = (cellX + 0.5) * tileSize + (trX[s] / 3.0) * tileSize;
                         let wy = (cellY + 0.5) * tileSize + (trY[s] / 3.0) * tileSize;
@@ -777,6 +797,7 @@ class NebulaRenderer {
                         py = Math.floor((wy - minY) / vh * h);
                         
                     } else {
+                        // In Standard Mode AND Buddhabrot Emergence, plot globally!
                         px = Math.floor((trX[s] - minX) / vw * w);
                         py = Math.floor((trY[s] - minY) / vh * h);
                     }
@@ -797,9 +818,7 @@ class NebulaRenderer {
         const baseGain = isRight ? 20.0 : 800.0; 
         const safeFrames = Math.max(1, this.frames);
         const scale = (p.den * baseGain) / safeFrames;
-        
-        // Prevent Division by Zero Error on Initial Frame
-        const norm = 1.0 / (Math.log1p(baseGain) || 1.0); 
+        const norm = 1.0 / (Math.log1p(baseGain) || 1.0); // Safety check
 
         let j = 0;
         for(let i=0; i<len; i+=3) {
@@ -812,6 +831,7 @@ class NebulaRenderer {
                 let tileSize = 4.0 / grid;
                 let pxPerTile = tileSize * cam.z * h;
                 
+                // Fade out grid if too small
                 if(pxPerTile > 15.0) {
                     let py = Math.floor((i/3)/w);
                     let px = (i/3) % w;
@@ -865,7 +885,7 @@ const app = {
         c: {x: -0.76, y: 0.12},
         left: {x: -0.5, y: 0.0, z: 1.0},
         right: {x: 0.0, y: 0.0, z: 1.0},
-        p: { eqMode: 0, customPow: 2, iter: 300, grid: 10, pal: 0, den: 1.5, r: 200, g: 100, b: 50 },
+        p: { eqMode: 0, customPow: 2, iter: 300, grid: 10, atlasMode: 0, pal: 0, den: 1.5, r: 200, g: 100, b: 50 },
         drag: false, dragPoint: false, active: null, last: {x:0, y:0}
     },
     glCtx: [], nebCtx: [],
@@ -899,6 +919,7 @@ const app = {
         if(errStr) {
             log.style.display = 'block';
             log.innerText = `GLSL SYNTAX ERROR:\nCould not compile equation: "${rawEq}"\n\nDETAILS:\n${errStr}`;
+            // Use safe fallback so screen doesn't stay black
             GL_CORE.compile(this.glCtx[0], 'csqr(z)+c');
             GL_CORE.compile(this.glCtx[1], 'csqr(z)+c');
         } else {
@@ -919,9 +940,8 @@ const app = {
         p.den = v('nb-den');
         p.pal = parseInt(document.getElementById('sel-pal').value);
         
-        // Add this line:
-        let atlasSelect = document.getElementById('sel-atlas-mode');
-        p.atlasMode = atlasSelect ? parseInt(atlasSelect.value) : 0;
+        const amObj = document.getElementById('sel-atlas-mode');
+        p.atlasMode = amObj ? parseInt(amObj.value) : 0;
     },
 
     triggerReset: function() {
@@ -969,13 +989,11 @@ const app = {
     updateTitles: function() {
         const m = this.state.mode;
         
-        // Grab the actual text from the dropdown (e.g. "Burning Ship")
         const sel = document.getElementById('sel-preset');
         let eqName = sel.options[sel.selectedIndex].text.split(' (')[0];
         
-        // If the user typed a completely custom equation not matching the dropdown
         if (sel.value !== document.getElementById('inp-eq').value) {
-            eqName = "Custom Equation";
+            eqName = "Custom Fractal";
         }
 
         let lName = eqName;
@@ -1003,9 +1021,13 @@ const app = {
         const useCpuEngine = (this.state.mode === 1) || (this.state.mode === 2 && isRight);
         let targetCvs;
         
+        // Grab Custom Filename
+        let fName = document.getElementById('save-name').value.trim();
+        if (!fName) fName = "Fractal_Render";
+        
         if(useCpuEngine) {
-            // High Res CPU Burst rendering
             if (resChoice !== '1') {
+                // High Res CPU Save Burst
                 this.state.saving = true;
                 const ctx = isRight ? this.nebCtx[1] : this.nebCtx[0];
                 const oldW = ctx.cvs.width, oldH = ctx.cvs.height;
@@ -1022,15 +1044,13 @@ const app = {
                 ctx.cvs.width = w; ctx.cvs.height = h;
                 ctx.reset();
                 
-                // Burst 50 batches synchronously for the high res image
+                // Run 50 batches instantly
                 for(let i=0; i<50; i++) ctx.renderBatch(this.state, isRight);
                 
                 targetCvs = ctx.cvs;
                 
                 const a = document.createElement('a');
-                let fName = document.getElementById('save-name').value.trim();
-        if (!fName) fName = "Fractal_Render";
-        a.download = `${fName}.png`;
+                a.download = `${fName}.png`;
                 a.href = targetCvs.toDataURL('image/png');
                 a.click();
                 
@@ -1040,13 +1060,12 @@ const app = {
             } else {
                 targetCvs = isRight ? this.nebCtx[1].cvs : this.nebCtx[0].cvs;
                 const a = document.createElement('a');
-                let fName = document.getElementById('save-name').value.trim();
-        if (!fName) fName = "Fractal_Render";
-        a.download = `${fName}.png`;
+                a.download = `${fName}.png`;
                 a.href = targetCvs.toDataURL('image/png');
                 a.click();
             }
         } else {
+            // High Res GPU Save
             this.state.saving = true;
             const ctx = isRight ? this.glCtx[1] : this.glCtx[0];
             const ow = ctx.cvs.width, oh = ctx.cvs.height;
@@ -1065,9 +1084,7 @@ const app = {
             targetCvs = ctx.cvs;
             
             const a = document.createElement('a');
-            let fName = document.getElementById('save-name').value.trim();
-        if (!fName) fName = "Fractal_Render";
-        a.download = `${fName}.png`;
+            a.download = `${fName}.png`;
             a.href = targetCvs.toDataURL('image/png');
             a.click();
             
@@ -1083,6 +1100,7 @@ const app = {
 // 5. UI CONTROLLER
 // =======================================================
 const ui = {
+    // Generates HTML for both Desktop Panel and Mobile Menu
     buildControls: (prefix = '') => `
         <div class="ctrl-grid">
             <div class="control-group" style="grid-column: span 2; max-width: 400px;">
@@ -1150,7 +1168,7 @@ const ui = {
                     <input type="number" id="${prefix}nb-grid" value="10">
                 </div>
             </div>
-
+            
             <div class="control-group hidden" id="${prefix}grp-atlas-mode">
                 <label>Nebula Atlas Mode</label>
                 <select id="${prefix}sel-atlas-mode">
@@ -1158,7 +1176,7 @@ const ui = {
                     <option value="1">Origin-Biased (Buddhabrot Emergence)</option>
                 </select>
             </div>
-            
+
             <div class="control-group">
                 <label>Zoom Speed</label>
                 <div class="hybrid-input">
@@ -1178,6 +1196,7 @@ const ui = {
         document.getElementById('bottom-controls').innerHTML = this.buildControls();
         document.getElementById('mobile-controls-target').innerHTML = this.buildControls('menu-');
         
+        // Sync Logic for Hybrid Inputs
         const coreIds = ['iter','red','grn','blu','den','grid','zoom'];
         
         const syncHybrid = (idBase) => {
@@ -1197,6 +1216,7 @@ const ui = {
         };
         coreIds.forEach(syncHybrid);
 
+        // Sync Dropdowns & Text
         const listIds = ['sel-preset','inp-eq','sel-pal','sel-atlas-mode'];
         listIds.forEach(id => {
             const dEl = document.getElementById(id);
@@ -1219,6 +1239,7 @@ const ui = {
             }
         });
 
+        // Bind Buttons
         const bindBtn = (id, func) => {
             let b1 = document.getElementById(id); if(b1) b1.onclick = func;
             let b2 = document.getElementById('menu-'+id); if(b2) b2.onclick = func;
@@ -1226,6 +1247,7 @@ const ui = {
         bindBtn('btn-compile', () => app.compile());
         bindBtn('btn-reset', () => app.resetPos());
         
+        // --- INPUT HANDLERS (Desktop & Mobile) ---
         document.querySelectorAll('.canvas-container').forEach((cont, idx) => {
             const isR = idx === 1;
             
@@ -1234,6 +1256,7 @@ const ui = {
                 app.state.drag = true; 
                 app.state.last = {x: clientX, y: clientY};
                 
+                // Dot Drag Logic
                 if (!isR && !app.state.locked && app.state.mode !== 2) {
                     const r = cont.getBoundingClientRect();
                     const asp = r.width / r.height;
@@ -1284,6 +1307,7 @@ const ui = {
                 app.state.last = {x: clientX, y: clientY};
             };
 
+            // Mouse
             cont.addEventListener('dblclick', () => {
                 app.state.locked = !app.state.locked; 
                 document.getElementById('lock-indicator').style.display = app.state.locked ? 'block' : 'none';
@@ -1293,11 +1317,14 @@ const ui = {
             cont.addEventListener('wheel', e => {
                 e.preventDefault(); 
                 const cam = isR ? app.state.right : app.state.left;
+                
+                // Zoom
                 const spd = parseFloat(document.getElementById('nb-zoom').value) * 0.1; 
                 if (e.deltaY < 0) cam.z *= (1+spd); else cam.z /= (1+spd); 
                 if(app.state.mode !== 0) app.triggerReset();
             });
 
+            // Touch
             let initDist = 0; let initZoom = 1;
             cont.addEventListener('touchstart', e => {
                 if(e.touches.length === 1) { 
@@ -1329,13 +1356,18 @@ const ui = {
     
     updateCoords: () => document.getElementById('c-coords').innerText = `C: ${app.state.c.x.toFixed(4)}, ${app.state.c.y.toFixed(4)}`,
     toggleSettings: () => document.getElementById('settings-menu').classList.toggle('open'),
+    
     toggleModal: (show) => { 
         document.getElementById('save-modal').style.display = show ? 'flex' : 'none'; 
+        const isNeb = (app.state.mode === 1) || (app.state.mode === 2 && document.getElementById('save-view').value === 'right');
+        document.getElementById('row-res').style.display = isNeb ? 'none' : 'block';
     },
+    
     checkCustomRes: () => {
         document.getElementById('custom-res-div').style.display = (document.getElementById('save-res').value === 'custom') ? 'flex' : 'none';
     },
-   updateControlsVisibility: () => {
+    
+    updateControlsVisibility: () => {
         const m = app.state.mode;
         const s = (id, isVisible) => { 
             let e1 = document.getElementById(id), e2 = document.getElementById('menu-'+id);
@@ -1346,7 +1378,7 @@ const ui = {
         s('grp-nebula-den', m !== 0);
         s('grp-pal', m === 0); 
         s('grp-grid', m === 2);
-        s('grp-atlas-mode', m === 2); // Added this line
+        s('grp-atlas-mode', m === 2);
     }
 };
 
