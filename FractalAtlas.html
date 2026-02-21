@@ -54,6 +54,16 @@
             gap: 15px;
         }
 
+        .app-title {
+            font-weight: 800;
+            letter-spacing: 1px;
+            font-size: 18px;
+            color: white;
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+
         .mode-tabs {
             display: flex;
             gap: 8px;
@@ -86,8 +96,10 @@
             color: #ccc;
             font-size: 24px;
             cursor: pointer;
-            padding: 0 10px;
+            padding: 0 5px;
             transition: color 0.2s;
+            display: flex;
+            align-items: center;
         }
         .icon-btn:hover { color: white; }
 
@@ -113,7 +125,6 @@
             overflow: hidden;
         }
 
-        /* Dual Canvas Architecture */
         canvas {
             display: block;
             position: absolute;
@@ -220,86 +231,62 @@
         
         #settings-menu.open { transform: translateX(0); }
 
-        .settings-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-        }
-
-        /* Streamlined Mobile Menu (Forces Single Column) */
-        #mobile-controls-target .ctrl-grid {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 15px;
-        }
-
+        .settings-content { flex: 1; overflow-y: auto; padding: 20px; }
+        #mobile-controls-target .ctrl-grid { display: flex !important; flex-direction: column !important; gap: 15px; }
         h3.settings-title { margin: 0 0 20px 0; color: white; }
 
         /* --- WIDGETS --- */
-        .ctrl-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px; width: 100%;
-        }
+        .ctrl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; width: 100%; }
         .control-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 5px; }
-        
-        label {
-            font-size: 10px; color: var(--text-dim);
-            text-transform: uppercase; font-weight: 700;
-        }
-
+        label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: 700; }
         .hybrid-input { display: flex; align-items: center; gap: 10px; }
 
-        input[type="range"] {
-            flex: 1; height: 6px; background: #333; border-radius: 3px; appearance: none; cursor: pointer;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            appearance: none; width: 16px; height: 16px;
-            background: var(--accent-color); border-radius: 50%; border: 2px solid #fff;
-        }
-
-        input[type="number"], input[type="text"], select {
-            background: #222; border: 1px solid #444; color: white; padding: 8px;
-            border-radius: 4px; font-size: 12px; font-family: monospace; box-sizing: border-box;
-        }
+        input[type="range"] { flex: 1; height: 6px; background: #333; border-radius: 3px; appearance: none; cursor: pointer; }
+        input[type="range"]::-webkit-slider-thumb { appearance: none; width: 18px; height: 18px; background: var(--accent-color); border-radius: 50%; border: 2px solid #fff;}
+        input[type="number"], input[type="text"], select { background: #222; border: 1px solid #444; color: white; padding: 8px; border-radius: 4px; font-size: 12px; font-family: monospace; box-sizing: border-box; }
         input[type="number"] { width: 75px; }
         select { width: 100%; cursor: pointer; }
 
-        .action-btn {
-            background: #333; color: white; border: 1px solid #555;
-            padding: 10px 15px; border-radius: 4px; font-weight: bold; font-size: 12px;
-            cursor: pointer; text-align: center; transition: background 0.2s;
-        }
+        .action-btn { background: #333; color: white; border: 1px solid #555; padding: 10px 15px; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; text-align: center; transition: background 0.2s; }
         .action-btn:hover { background: #444; }
         .btn-primary { background: var(--accent-color); color: black; border: none; }
         .btn-primary:hover { background: #33eebb; }
 
         .hidden { display: none !important; }
-
-        /* Specific Threshold Colors */
-        .lbl-red { color: #ff6b6b; }
-        .lbl-green { color: #51cf66; }
-        .lbl-blue { color: #339af0; }
+        .lbl-red { color: #ff6b6b; } .lbl-green { color: #51cf66; } .lbl-blue { color: #339af0; }
 
         /* --- SAVE MODAL --- */
-        #save-modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.9); z-index: 500;
-            align-items: center; justify-content: center;
-        }
-        .modal-box {
-            background: #181818; border: 1px solid #444; padding: 25px;
-            width: 90%; max-width: 350px; border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-        }
+        #save-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 500; align-items: center; justify-content: center; }
+        .modal-box { background: #181818; border: 1px solid #444; padding: 25px; width: 90%; max-width: 350px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+
+        /* --- MANUAL MODAL --- */
+        #manual-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 1000; align-items: center; justify-content: center; user-select: text; -webkit-user-select: text;}
+        .manual-box { background: #151515; border: 1px solid #444; padding: 0; width: 95%; max-width: 800px; height: 90%; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; position: relative; }
+        .manual-header { padding: 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; border-radius: 8px 8px 0 0; }
+        .manual-header h2 { margin: 0; color: white; font-size: 20px; }
+        .close-manual-btn { background: none; border: none; color: #aaa; font-size: 28px; cursor: pointer; transition: color 0.2s; }
+        .close-manual-btn:hover { color: white; }
+        .manual-content { flex: 1; overflow-y: auto; padding: 30px; color: #ccc; font-size: 15px; line-height: 1.7; font-family: -apple-system, sans-serif; }
+        .manual-content p { margin-bottom: 20px; }
+        .manual-content h3 { color: var(--accent-color); margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .manual-content ol { margin-bottom: 20px; padding-left: 20px; }
+        .manual-content li { margin-bottom: 15px; }
+        .img-placeholder { background: #222; border: 1px dashed #555; padding: 30px; text-align: center; margin: 15px 0; border-radius: 4px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .img-placeholder span { font-family: monospace; color: #888; font-size: 12px; }
+        .caption { font-size: 13px; color: #999; font-style: italic; text-align: center; margin-top: -5px; margin-bottom: 25px; }
 
         /* --- MOBILE RESPONSIVENESS --- */
         @media (max-width: 768px) {
+            header { padding: 0 10px; }
+            .app-title { font-size: 15px; }
+            .header-right { gap: 5px; }
+            .tab-btn { padding: 6px 10px; }
             #viewport { flex-direction: column; }
             .canvas-container { border-right: none; border-bottom: 1px solid #333; }
-            #bottom-controls { display: none; } 
+            #bottom-controls { display: none; }
             #info-overlay { bottom: 10px; }
             #settings-menu { width: 85%; }
+            .manual-content { padding: 15px; font-size: 14px; }
         }
     </style>
 </head>
@@ -307,7 +294,11 @@
 
     <!-- HEADER -->
     <header>
-        <div class="header-left"></div> 
+        <div class="header-left">
+            <div class="app-title">Fractal Atlas</div>
+            <!-- MANUAL BUTTON -->
+            <button class="icon-btn" onclick="ui.toggleManual()" title="Theory Manual" style="margin-left: 10px; font-size: 18px;">📖</button>
+        </div> 
         <div class="mode-tabs">
             <button class="tab-btn active" onclick="app.setMode(0)">FRACTALS</button>
             <button class="tab-btn" onclick="app.setMode(1)">NEBULAE</button>
@@ -322,7 +313,6 @@
     <!-- MAIN INTERFACE -->
     <div id="main-wrapper">
         <div id="viewport">
-            
             <!-- Left Window -->
             <div class="canvas-container" id="cont-left">
                 <div class="view-label" id="lbl-left">Mandelbrot</div>
@@ -347,18 +337,14 @@
         </div>
 
         <!-- Desktop Bottom Controls -->
-        <div id="bottom-controls">
-            <!-- Injected by UI Module -->
-        </div>
+        <div id="bottom-controls"></div>
     </div>
 
     <!-- Mobile Slide-Out Menu -->
     <div id="settings-menu">
         <div class="settings-content">
-            <h3 style="margin-top:0; color:white; margin-bottom: 20px;">Settings</h3>
-            <div id="mobile-controls-target">
-                <!-- Injected by UI Module -->
-            </div>
+            <h3 class="settings-title">Settings</h3>
+            <div id="mobile-controls-target"></div>
         </div>
     </div>
 
@@ -369,7 +355,7 @@
             
             <div class="control-group">
                 <label>File Name</label>
-                <input type="text" id="save-name" value="Fractal_Render" style="width:100%;">
+                <input type="text" id="save-name" value="Fractal_Render" style="width:100%; box-sizing:border-box;">
             </div>
 
             <div class="control-group">
@@ -391,12 +377,12 @@
                 </select>
                 
                 <div id="custom-res-div" style="display:none; gap:10px; margin-top:10px; align-items:center;">
-                    <input type="number" id="save-w" value="4000" placeholder="W">
+                    <input type="number" id="save-w" value="4000" placeholder="Width">
                     <span style="color:#888">x</span>
-                    <input type="number" id="save-h" value="4000" placeholder="H">
+                    <input type="number" id="save-h" value="4000" placeholder="Height">
                 </div>
                 <p style="font-size:10px; color:#888; margin-top:10px; line-height:1.4;">
-                    Note: Nebulae/Buddhabrots save exactly what is visible on screen to preserve the progressive trajectory accumulation.
+                    Note: Nebulae/Buddhabrots are saved exactly as seen on screen. Let it fully resolve before saving.
                 </p>
             </div>
 
@@ -407,10 +393,181 @@
         </div>
     </div>
 
+    <!-- Theory Manual Modal -->
+    <div id="manual-modal">
+        <div class="manual-box">
+            <div class="manual-header">
+                <h2>Reality Fractal: Theory of Everything</h2>
+                <button class="close-manual-btn" onclick="ui.toggleManual()">&times;</button>
+            </div>
+            <div class="manual-content">
+                <p>Reality is a fractal (RF), more specifically, a multifractal. A fractal is a pattern that is self-similar with an infinite perimeter and a finite area. One can zoom into the perimeter forever and still find more self-similar structures at ever finer scales.</p>
+                
+                <div class="img-placeholder">
+                    <span>[Image: Mandelbrot Zoom]</span>
+                </div>
+                <p class="caption">An example zoom into a point on the Mandelbrot set. You can find many examples on YouTube of other zooms that go on for many hours that zoom into different points.</p>
+                
+                <p>Fractals are found abundantly at all scales of the universe, even at the cosmic microwave background (CMB) scale. The CMB only appears to be classified as homogeneous and isotropic due to the low resolution of the application of those terms. The terms are applied at a level that smooths out the dataset which has the effect of smoothing out the inherent fractal pattern. This is why ΛCDM (the cosmological model astrophysics currently works within) is an imprecise approximation, and the assumption of homogeneity and isotropy is a lossy one that is not supported by observational evidence. Since the universe contains many different types of fractal patterns, it must be a multifractal, a fractal that contains other sub-fractals with fractally varying self-similar properties.</p>
+                
+                <div class="img-placeholder">
+                    <span>[Image: Cosmic microwave background seen by Planck]</span>
+                </div>
+                <p class="caption">Planck Satellite image of the CMB showing inhomogeneity and anisotropy.</p>
+                
+                <p>Sabine Hossenfelder: Backreaction: Anomalous Alignments in the Cosmic Microwave Background</p>
+                
+                <div class="img-placeholder">
+                    <span>[Image: Homogeneous CMB Model]</span>
+                </div>
+                <p class="caption">What the CMB would look like if it were truly homogeneous and isotropic. Notice that the lack of clumping would make gravitational collapse for forming stars, planets, and galaxies impossible.</p>
+                
+                <p>We know that all the information in a black hole can be contained on the surface area of its event horizon. Similarly, the particle horizon’s surface area contains all the information within the observable universe. Quantum entanglement provides a direct and instantaneous correspondence between these domains. We know that changing the state of one quantumly entangled particle instantaneously changes the state of its entangled partner, which proves nonlocality (John Clauser and Anton Zeilinger won the Nobel Prize in physics in 2022 for this very discovery). When conscious beings die, their consciousness is instantaneously transported to the particle horizon due to the state change within the universe.</p>
+                
+                <div class="img-placeholder">
+                    <span>[Image: Anamorphic frog sculpture by Jonty Hurwitz]</span>
+                </div>
+                <p class="caption">Anamorphic Frog by Jonty Hurwitz. Anamorphosis is a distorted projection that requires the viewer to occupy a specific vantage point, use special devices, or both to view a recognizable image. This is analogous to how information gets stored on the event horizon of black holes and the particle horizon. We are the normal-looking frog, and the event/particle horizon is the warped representation.</p>
+                
+                <p>Now for the analogy. It must be an analogy because in order to determine the precise equation of RF, one would need to determine the physical theory of everything (TOE). The physical TOE would be an equation that if run in a simulation, would produce the universe exactly as we see it. RF predicts that since we exist on an effectively infinite boundary of a multifractal, we will never be able to achieve a high enough resolution to determine the precise equation of its generation. Therefore, the exact equation can never be ascertained and an analogy is the best that can be done in principle as the metaphysical TOE.</p>
+                
+                <div class="img-placeholder">
+                    <span>[Image: Standard Model Equation]</span>
+                </div>
+                <p class="caption">This is the equation that describes the standard model of particle physics, which accounts for the strong nuclear force, weak nuclear force, electromagnetic force, and their interactions. It does not include gravity, otherwise it would be a physical theory of everything.</p>
+                
+                <p>The argument goes even deeper for why it must be an analogy. Mathematics is a rigorous form of language, but it is still language. Language is the mechanism of bifurcation and is responsible for the presence of the RF in the first place. Interacting particles are also a form of language that only gets interpreted by conscious beings. Anytime language is invoked, it is necessarily generating the embedded multifractal structure, and we know that examining the perimeter of a multifractal at higher zooms gets us no closer to understanding the equation of its generation. Examining at higher zooms only generates more fractal patterns to be examined. So the best that can be done is to use language to produce an overarching zoomed-out fully encapsulating structure, which is an analogy capable of tying all loose ends that also applies at zoomed-in scales (without defining a precise equation, which again, would be impossible).</p>
+                
+                <div class="img-placeholder">
+                    <span>[Image: Verhulst-Mandelbrot-Bifurcation]</span>
+                </div>
+                <p class="caption">The direct correspondence between a bifurcation diagram and structures in the Mandelbrot set. This shows how language constructs and processes reality.</p>
+                
+                <div class="img-placeholder">
+                    <span>[Image: Bifurcation diagram and Mandelbrot set in 3D]</span>
+                </div>
+                <p class="caption">The direct correspondence between a bifurcation diagram and the Mandelbrot set visualized in 3D. Credit: Jonny Hyman</p>
+                
+                <p>We are currently in a multifractal version of a type of Julia set. Importantly, the Mandelbrot set is the collection of all possible Julia sets. The universe is a dissociated point on the multifractal version of the Mandelbrot set. The point moves along the RF Mandelbrot set which causes the evolution of the universe; every time step is a new RF Julia set with a seed corresponding to the position on the RF Mandelbrot set. Conscious beings are points inhabiting the boundary of the RF Julia set. One universe is made by a single point on the RF Mandelbrot set (the particle horizon is this point), while there are countless points in the RF Julia set that both watch and participate in its evolution via embedded conscious beings (Multiplex Unity). The conscious beings are capable of observing the changes in the RF Julia set, which we call time, and they are also capable of updating their position within the RF Julia set by directing the attention of their awareness. The RF Mandelbrot point started at the origin (the corresponding RF Julia set is a singularity) and updated its position continuously until we reached our current position.</p>
+                
+                <div class="img-placeholder">
+                    <span>[Image: Low-resolution Mandelbrot with Julia Sets]</span>
+                </div>
+                <p class="caption">This is a low-resolution version of the Mandelbrot set. Look closely and you will see each position has its own Julia set. If we were to include more points, this would yield a high-resolution Mandelbrot set, although the Julia sets would be impossible to see. Image credit: Gijs Bellaard</p>
+                
+                <p>The RF Julia set we are in is a disconnected one and the properties observable within the universe match this. There are discrete entities, including galaxies, stars, planets, people, particles, and subatomic particles (to make a passing overview), each of which is a discrete entity made of smaller discrete entities. The RF Mandelbrot set will continue to evolve to the most disconnected RF Julia set possible (heat death of the universe) and become maximally disconnected. At this point, the particle horizon only contains a singular thing, with nothing to draw a distinction with another. This is the entire universe evolving to the maximally enlightened state. A state where no distinctions can be made.</p>
+                
+                <div class="img-placeholder">
+                    <span>[Image: Disconnected and Connected Julia sets]</span>
+                </div>
+                <p class="caption">A disconnected Julia set is seen on the left with 2 connected Julia sets on the right. Our universe is analogous to a disconnected Julia set and used to be a connected one in the distant past. The future of the universe corresponds to moving the disconnected Julia set point further away from the Mandelbrot set. Image credit: Tariq Rashid</p>
+                
+                <p>To apply the analogy at another level, the colored part of the Julia set is our thoughts, and the black part of the Julia set is the physical world. The interplay between thoughts and physical sensations keeps beings bound to the perimeter of the fractal. Keep in mind that the fractal analogy is being applied in both states; i.e., the universe is an evolving point on the RF Mandelbrot set (discarnate phase), and our experience of the universe is a localized window into the RF Julia set (incarnate phase). Our localized windows are self-similar, yet globally disjoint (within the RF Julia set). This means that when you and I look at the same apple, we experience slightly different physical sensations (we occupy different parts of space while viewing it), and we also experience different thoughts.</p>
+                
+                <p>When one dies, the RF Julia set point one occupies gets retracted (the dissociation ends), and a figure-ground reversal of experience occurs. One becomes the entire universe, evolving one’s position in the RF Mandelbrot set and recognizes that you were a projected dissociated fragment of the universal point (which can simply be thought of as a sphere that contains our universe). From this perspective, one does not have the ability to change what has happened, only to relive it, and relive it from every possible perspective that intersected with one’s window while incarnate. This experience is heaven/hell/purgatory. This happens atemporally, and then one gets reintegrated as another dissociated point in the RF Julia set if enlightenment is not yet achieved.</p>
+                
+                <p>The path to enlightenment is the path one can take to escape the fractal toward infinity (boundlessness). This is analogous to the Buddhabrot, which maps the parts of the fractal that escape to infinity. Escaping RF is equivalent to escaping Samsara. Without thoughts and physical sensations, suffering is impossible. Escaping the RF Julia set leads one to the simplest possible thought, “I”. Once the attention is directed away from the “I” and towards itself, this is when the RF Julia set is transcended, and the observer no longer participates in the generation of the localized RF Julia set window. The transcendence is unbound telesis (UBT). Points within the RF Julia set may reach transcendence prior to the entire RF Mandelbrot point (universe). At the end of the evolution of the RF Mandelbrot point, a new point can be made at the origin and a different trajectory can be selected for the corresponding RF Julia set points (windows/beings) that still choose to participate in Samsara (the cycle of birth and death and the cause of all suffering). A new universe with a different, yet self-similar evolution takes place, and over the course of the universe, more and more RF Julia set points escape while more are born.</p>
+                
+                <div class="img-placeholder">
+                    <span>[Image: Buddhabrot rotated 90 degrees]</span>
+                </div>
+                <p class="caption">A Buddhabrot (sometimes also called a Nebulabrot) that is rotated 90 degrees clockwise to show the striking similarity between its structure and the Buddha. Image credit: Ryan Ferko</p>
+                
+                <p>This continues for as long as the universe has willing participants for Samsara (dissociated fragments not wanting to reassociate yet). The universe remains fragmented, with the reassociated points occupying UBT while the dissociated points play in Samsara. The universe only becomes fully enlightened once no more thoughts and physical sensations are present anywhere in existence. This is the generalized utility that the universe is maximizing: to become content with the state of just being. To prove to itself via experimentation that this is the ultimate state and all other states are inferior. Once achieved, the boundary of a boundary is recognized as 0. The universe/God remains as an undisturbed, boundless potential atemporally. Eventually, the one may dissociate from itself and that will be the impetus for another RF filled with conscious beings to escape Samsara once again.</p>
+                
+                <p>There is more to RF, but at least for now, you have the skeletal framework. I highly encourage you to let these ideas sink in. The theory goes as deep as you care to go and can meet you at the level of explanation you are interested in.</p>
+                
+                <h3>Reality Fractal (RF) Dynamics</h3>
+                <p>As discussed in RF simplified, we exist in a multifractal version of a type of Julia set. Every moment in time is a new RF Julia set. The sets are chosen by the Global Operator Descriptor (G.O.D.) via its traversal of the RF Mandelbrot set. It is crucial to understand that when I speak of the Mandelbrot and Julia sets, I am NOT claiming these are the literal structures of RF, but rather they are the simplest analogs that map to RF dynamics.</p>
+                
+                <ol>
+                    <li>The dark part of a Julia set, or any fractal, is the physical realm (information).</li>
+                    <li>The mapped colors of the fractal correspond to the thought realm (cognition).</li>
+                    <li>The boundary of the fractal, where all of the interesting things happen, is where thoughts and physical reality intermingle. This boundary is where we can find awareness inhabiting consensus reality. Science centers on the boundary of the fractal and zooms in or out to try to understand its shape.</li>
+                </ol>
+                
+                <div class="img-placeholder">
+                    <span>[Image: Thought vs Physical Realm Boundary]</span>
+                </div>
+                <p class="caption">Thoughts are the colored part, and physical sensations are the black part. The colored parts of the map are points that escape the Julia set, and the black parts are points contained within the set. The boundary where the rainbow of colors emerges is the interface where thoughts and physical sensations intermingle.</p>
+                
+                <p>4. Awareness makes choices about where to explore the fractal by directing its attention to various thoughts and sensations. Awareness can get caught up in thoughts, the physical realm, and their interplay.</p>
+                
+                <div class="img-placeholder">
+                    <span>[Image: Physical sensation dominant window]</span>
+                </div>
+                <p class="caption">Awareness, when mostly caught up in physical sensations, has a window that looks like this. There are still thoughts present, which are represented by the colored parts, but physical sensations are dominant in this localized window.</p>
+                
+                <div class="img-placeholder">
+                    <span>[Image: Thought dominant window]</span>
+                </div>
+                <p class="caption">Awareness, when mostly caught up with thoughts, has a window that looks like this. There are still physical sensations present, but they are no longer dominating the localized window.</p>
+                
+                <p>5. Continued focus on the same part of the fractal is equivalent to increasing the number of iterations. This is only useful to the extent of your window’s resolution (the intelligence of the dissociated fragment). Any iterations beyond this are redundant computation.</p>
+                
+                <div class="img-placeholder">
+                    <span>[Image: Mandelbrot increasing iterations GIF]</span>
+                </div>
+                <p class="caption">A gif of the Mandelbrot set showing increasing iterations. The higher the number of iterations, the more details can be seen. One can continue to increase the iterations forever, but the resolution of the window is the limiting factor.</p>
+                
+                <p>6. Drilling down on a niche-specific thing or thought is zooming in (eg, making a mathematical proof or studying a particular physical thing). Relating various topics to one another and big-picture thinking is zooming out (like pinch to zoom). How big or small is your world?</p>
+                
+                <p>7. The resolution of your window is how many or few organisms you take to be yourself. Eg, a human is a bunch of smaller cells. A cell has a tiny resolution compared to a human. One could imagine other, more intelligent beings inhabiting higher resolution windows with more precise thoughts (more nuanced color mapping).</p>
+                
+                <div class="img-placeholder"><span>[Image: 32x32 window]</span></div>
+                <p class="caption">An example of a 32x32 window into the Mandelbrot set. This would be analogous to simple creatures that do not have many thoughts and physical sensations.</p>
+                
+                <div class="img-placeholder"><span>[Image: 144p window]</span></div>
+                <p class="caption">A low resolution (144p) window into the Mandelbrot set. This would be roughly analogous to something like a dog.</p>
+                
+                <div class="img-placeholder"><span>[Image: 720p window]</span></div>
+                <p class="caption">A higher resolution image (720p) window into the Mandelbrot set. This would be roughly analogous to a human.</p>
+                
+                <div class="img-placeholder"><span>[Image: 1080p window]</span></div>
+                <p class="caption">A 1080p version of the Mandelbrot set with a more nuanced color mapping. This would be analogous to the window of a being more intelligent than humans that has richer qualia.</p>
+                
+                <p>8. We are born to parents inhabiting a certain point in the fractal, and the way we direct our attention dictates how we move the center of the window and how zoomed in or out our windows are. Each dissociated point of awareness has its own window into the fractal from different vantage points. The dissociated point always inhabits the center of the display output. The attention of awareness is always central, with peripherals present but not focused on. When the attention focuses on something in the periphery, it moves the center of the window to it. When two beings share a reality, it means that their windows overlap. There is no possibility of communication if there is no overlap.</p>
+                
+                <div class="img-placeholder"><span>[Image: Overlapping windows]</span></div>
+                <p class="caption">These two windows share an overlapping region. This is what happens when two people interact. They share a consensus, yet they also have their own central point, allowing for different thoughts and physical sensations relative to their interlocutor.</p>
+                
+                <p>It becomes more computationally intensive to zoom in farther into the fractal, prohibitively so with significant iterations. This is why it takes so much energy for us to probe at the smallest scales. Eg, the Large Hadron Collider requires enormous energy concentrated into protons, which is why we get such low resolution per unit of computation at those scales.</p>
+                
+                <p>9. Zoom out enough, and you’ll see the whole picture, or at least see a repeating self-similar pattern.</p>
+                <p>10. Zoom out sufficiently far, and reality (the fractal) disappears below the window’s resolution to display it, leaving only the simplest thought (a single color).</p>
+                <p>11. The Buddhabrot shows the trajectories that escape the fractal (the thought and physical realms). This leads to awareness placing its attention on itself rather than the fractal.</p>
+                
+                <div class="img-placeholder"><span>[Image: Colored Buddhabrot]</span></div>
+                <p class="caption">The colors of the Buddhabrot correspond to the amount of time it takes to escape the fractal. With this particular color mapping, the blue locations escape in fewer iterations, green in intermediate iterations, and red in many iterations.</p>
+                
+                <p>12. Ultimately, there is only one thought before reaching the boundless potential. It is “I”. This is the simplest computed thought. In the above images, the uniform red field would correspond to “I”.</p>
+                <p>13. To find the awareness, one has to direct the awareness’s attention towards itself. To do so requires pulling attention away from the interplay of both the thought and physical realms.</p>
+                <p>14. Awareness will eventually abide in itself. This is the fundamental state. It is the boundless potential that generates RF. This is awareness no longer spending its energy on computing and displaying the fractal.</p>
+                <p>15. Iterating the computation of the fractal (zoom in or out, or do nothing) is equivalent to a moment of time. The awareness abiding in itself experiences no time. Escaping the wheel of samsara is escaping the fractal.</p>
+                <p>16. The Mandelbrot set is a map of all Julia sets. Every point within the Mandelbrot set contains the seed for a distinct and self-similar, yet globally disjoint, Julia set. When one traverses the RF in life, their path leads them to a specific point, which will be their death state.</p>
+                
+                <div class="img-placeholder"><span>[Image: Mandelbrot map of Julia sets]</span></div>
+                <p class="caption">This is a low-resolution version of the Mandelbrot set. Look closely, and you will see each position has its own Julia set. The G.O.D. is a point traversing the Mandelbrot, and its traversal causes the evolution of the Julia sets. The G.O.D.’s attention of awareness is the cause of time itself.</p>
+                
+                <p>17. The dissociated fragment will continue iterating within the Julia set until death, where they will have a window of the Mandelbrot set corresponding to its life’s trajectory, explore that set for an apparent eternity, and return to the Julia set with the lessons learned from the afterlife and inhabit a new body.</p>
+                <p>18. Once one has sufficiently explored the RF, one will find one's way out of it. This state is equivalent to nirvana. In the RF model, heaven and nirvana are distinct states.</p>
+                <p>19. Resting in the void, the boundless potential which generates the RF, is equivalent to unifying with the source (God, not the G.O.D., which is a subset of God), becoming the unbound will of the Universe. Zero compute is the boundless and unmanifested potential.</p>
+                <p>20. The time steps are spatially relativistic (dependent on the vantage point of the dissociated awareness exploring the fractal). Higher compute time objects yield greater relativistic effects.</p>
+                <p>21. The physics theory of everything would be an equation that most closely models the generation of the RF. Since the generation of RF occurs in language, neither self-configuring self-processing language nor any subset derivative (like mathematics) can encapsulate its generator God, who is everything and every non-thing, and is the only being that exists.</p>
+                <p>22. The logistic map exhibits bifurcation. It is also directly analogous to the self-referential nature of language and ties in with the Metaphysical Autology Principle (MAP), Multiplex Unity (MU), and the Mind equals Reality (M=R) principle.</p>
+                
+                <div class="img-placeholder"><span>[Image: Verhulst-Mandelbrot-Bifurcation]</span></div>
+                <p class="caption">The direct correspondence between a bifurcation diagram and structures in the Mandelbrot set. This shows how language constructs and processes reality.</p>
+                
+                <h3>This is Reality Fractal, the Theory of Everything.</h3>
+                <div style="height: 40px;"></div>
+            </div>
+        </div>
+    </div>
+
 <script>
 /**
  * FRACTAL ATLAS - MASTER EDITION
- * 
  * Architecture:
  * 1. Math Parser (String -> GLSL)
  * 2. WebGL GPU Renderer (Standard Fractals)
@@ -423,7 +580,7 @@
 // 1. EQUATION PARSER
 // =======================================================
 function parseEquation(eq) {
-    let s = eq.toLowerCase().replace(/\s+/g, '');
+    let s = eq.toLowerCase().replace(/\s+/g, ''); // Remove spaces
     
     // Set CPU Mode flag for the Nebula Renderer
     app.state.p.eqMode = 0; // Default
@@ -435,6 +592,7 @@ function parseEquation(eq) {
     else if (s === 'sin(z)+c') app.state.p.eqMode = 6;
     else if (s === 'cos(z)+c') app.state.p.eqMode = 7;
     else {
+        // Arbitrary power detection for CPU (e.g. z^7.5)
         let m = s.match(/z\^([0-9.]+)\+c/);
         if(m) {
             app.state.p.eqMode = 8;
@@ -446,11 +604,14 @@ function parseEquation(eq) {
     if(s === 'burningship') return 'vec2(abs(z.x)*abs(z.x)-abs(z.y)*abs(z.y), 2.0*abs(z.x*z.y))+c';
     if(s === 'tricorn') return 'vec2(z.x*z.x-z.y*z.y, -2.0*z.x*z.y)+c';
     
-    s = s.replace(/z\^2(?!\.)/g, 'csqr(z)');
+    // Replace powers
+    s = s.replace(/z\^2(?!\.)/g, 'csqr(z)'); // Optimize z^2
     s = s.replace(/z\^([0-9.]+)/g, (match, p1) => {
+        // GLSL requires explicit decimals for floats
         return p1.includes('.') ? `cpow(z,${p1})` : `cpow(z,${p1}.0)`;
     });
     
+    // Replace trig
     s = s.replace(/sin\(z\)/g, 'csin(z)');
     s = s.replace(/cos\(z\)/g, 'ccos(z)');
     
@@ -465,8 +626,10 @@ const GL_CORE = {
         const cvs = document.getElementById(canvasId);
         const gl = cvs.getContext('webgl', {preserveDrawingBuffer: true});
         
+        // Full screen triangle vertex shader
         const vs = `attribute vec2 p; void main() { gl_Position = vec4(p, 0.0, 1.0); }`;
         
+        // Fragment Shader Header (Math + Palettes)
         const fsHead = `
             #ifdef GL_FRAGMENT_PRECISION_HIGH
             precision highp float;
@@ -476,14 +639,12 @@ const GL_CORE = {
             
             // Math Library
             vec2 csqr(vec2 z) { return vec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y); }
-            
             vec2 cpow(vec2 z, float n) {
                 float r = length(z);
                 if(r < 0.00001) return vec2(0.0);
                 float a = atan(z.y, z.x);
                 return pow(r, n) * vec2(cos(a*n), sin(a*n));
             }
-            
             vec2 csin(vec2 z) {
                 float ey = exp(z.y); float e_y = exp(-z.y);
                 return vec2(sin(z.x)*(ey+e_y)/2.0, cos(z.x)*(ey-e_y)/2.0);
@@ -818,7 +979,7 @@ class NebulaRenderer {
         const baseGain = isRight ? 20.0 : 800.0; 
         const safeFrames = Math.max(1, this.frames);
         const scale = (p.den * baseGain) / safeFrames;
-        const norm = 1.0 / (Math.log1p(baseGain) || 1.0); // Safety check
+        const norm = 1.0 / (Math.log1p(baseGain) || 1.0); 
 
         let j = 0;
         for(let i=0; i<len; i+=3) {
@@ -1021,13 +1182,11 @@ const app = {
         const useCpuEngine = (this.state.mode === 1) || (this.state.mode === 2 && isRight);
         let targetCvs;
         
-        // Grab Custom Filename
         let fName = document.getElementById('save-name').value.trim();
         if (!fName) fName = "Fractal_Render";
         
         if(useCpuEngine) {
             if (resChoice !== '1') {
-                // High Res CPU Save Burst
                 this.state.saving = true;
                 const ctx = isRight ? this.nebCtx[1] : this.nebCtx[0];
                 const oldW = ctx.cvs.width, oldH = ctx.cvs.height;
@@ -1044,7 +1203,7 @@ const app = {
                 ctx.cvs.width = w; ctx.cvs.height = h;
                 ctx.reset();
                 
-                // Run 50 batches instantly
+                // Burst batches for high-res save
                 for(let i=0; i<50; i++) ctx.renderBatch(this.state, isRight);
                 
                 targetCvs = ctx.cvs;
@@ -1065,7 +1224,6 @@ const app = {
                 a.click();
             }
         } else {
-            // High Res GPU Save
             this.state.saving = true;
             const ctx = isRight ? this.glCtx[1] : this.glCtx[0];
             const ow = ctx.cvs.width, oh = ctx.cvs.height;
@@ -1100,7 +1258,6 @@ const app = {
 // 5. UI CONTROLLER
 // =======================================================
 const ui = {
-    // Generates HTML for both Desktop Panel and Mobile Menu
     buildControls: (prefix = '') => `
         <div class="ctrl-grid">
             <div class="control-group" style="grid-column: span 2; max-width: 400px;">
@@ -1196,7 +1353,6 @@ const ui = {
         document.getElementById('bottom-controls').innerHTML = this.buildControls();
         document.getElementById('mobile-controls-target').innerHTML = this.buildControls('menu-');
         
-        // Sync Logic for Hybrid Inputs
         const coreIds = ['iter','red','grn','blu','den','grid','zoom'];
         
         const syncHybrid = (idBase) => {
@@ -1216,7 +1372,6 @@ const ui = {
         };
         coreIds.forEach(syncHybrid);
 
-        // Sync Dropdowns & Text
         const listIds = ['sel-preset','inp-eq','sel-pal','sel-atlas-mode'];
         listIds.forEach(id => {
             const dEl = document.getElementById(id);
@@ -1239,7 +1394,6 @@ const ui = {
             }
         });
 
-        // Bind Buttons
         const bindBtn = (id, func) => {
             let b1 = document.getElementById(id); if(b1) b1.onclick = func;
             let b2 = document.getElementById('menu-'+id); if(b2) b2.onclick = func;
@@ -1247,7 +1401,6 @@ const ui = {
         bindBtn('btn-compile', () => app.compile());
         bindBtn('btn-reset', () => app.resetPos());
         
-        // --- INPUT HANDLERS (Desktop & Mobile) ---
         document.querySelectorAll('.canvas-container').forEach((cont, idx) => {
             const isR = idx === 1;
             
@@ -1256,7 +1409,6 @@ const ui = {
                 app.state.drag = true; 
                 app.state.last = {x: clientX, y: clientY};
                 
-                // Dot Drag Logic
                 if (!isR && !app.state.locked && app.state.mode !== 2) {
                     const r = cont.getBoundingClientRect();
                     const asp = r.width / r.height;
@@ -1307,7 +1459,6 @@ const ui = {
                 app.state.last = {x: clientX, y: clientY};
             };
 
-            // Mouse
             cont.addEventListener('dblclick', () => {
                 app.state.locked = !app.state.locked; 
                 document.getElementById('lock-indicator').style.display = app.state.locked ? 'block' : 'none';
@@ -1317,14 +1468,11 @@ const ui = {
             cont.addEventListener('wheel', e => {
                 e.preventDefault(); 
                 const cam = isR ? app.state.right : app.state.left;
-                
-                // Zoom
                 const spd = parseFloat(document.getElementById('nb-zoom').value) * 0.1; 
                 if (e.deltaY < 0) cam.z *= (1+spd); else cam.z /= (1+spd); 
                 if(app.state.mode !== 0) app.triggerReset();
             });
 
-            // Touch
             let initDist = 0; let initZoom = 1;
             cont.addEventListener('touchstart', e => {
                 if(e.touches.length === 1) { 
@@ -1355,12 +1503,16 @@ const ui = {
     },
     
     updateCoords: () => document.getElementById('c-coords').innerText = `C: ${app.state.c.x.toFixed(4)}, ${app.state.c.y.toFixed(4)}`,
+    
     toggleSettings: () => document.getElementById('settings-menu').classList.toggle('open'),
     
+    toggleManual: () => {
+        const modal = document.getElementById('manual-modal');
+        modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+    },
+
     toggleModal: (show) => { 
         document.getElementById('save-modal').style.display = show ? 'flex' : 'none'; 
-        const isNeb = (app.state.mode === 1) || (app.state.mode === 2 && document.getElementById('save-view').value === 'right');
-        document.getElementById('row-res').style.display = isNeb ? 'none' : 'block';
     },
     
     checkCustomRes: () => {
