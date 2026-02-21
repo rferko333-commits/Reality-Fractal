@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reality Fractal Hub</title>
+    <style>
+        /* DARK MODE & THEME VARIABLES */
+        :root {
+            --bg-color: #0a0a0a;
+            --card-bg: #161616;
+            --text-color: #efefef;
+            --accent-color: #00d2ff;
+            --donate-color: #10b981;
+            --substack-color: #f97316;
+            --discord-color: #5865F2;
+            --atlas-gradient: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        }
+
+        body, html {
+            margin: 0; padding: 0; height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+        }
+
+        /* HEADER NAVIGATION */
+        header {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            background-color: #111;
+            border-bottom: 1px solid #333;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            position: relative;
+            z-index: 100;
+        }
+
+        #back-btn {
+            background: none; border: none; color: var(--text-color);
+            font-size: 28px; cursor: pointer; margin-right: 20px;
+            display: none; /* Only shows when an app is open */
+            transition: transform 0.2s;
+        }
+        #back-btn:hover { transform: scale(1.2); color: var(--accent-color); }
+
+        h1 { font-size: 22px; margin: 0; font-weight: 800; letter-spacing: 1px; }
+
+        /* MAIN MENU LAYOUT */
+        #menu-container {
+            padding: 20px;
+            height: calc(100% - 60px);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            width: 100%;
+            max-width: 700px;
+            margin-bottom: 40px;
+        }
+
+        /* APP CARDS */
+        .app-card {
+            background-color: var(--card-bg);
+            border: 1px solid #222;
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .app-card:hover {
+            transform: translateY(-8px);
+            background-color: #1c1c1c;
+            border-color: var(--accent-color);
+            box-shadow: 0 15px 30px rgba(0,210,255,0.2);
+        }
+
+        /* FEATURED ATLAS BUTTON (2x size) */
+        .featured-card {
+            grid-column: span 2;
+            background: var(--atlas-gradient);
+            padding: 45px 25px;
+            border: none;
+        }
+        .featured-card:hover {
+            box-shadow: 0 15px 40px rgba(59, 130, 246, 0.4);
+        }
+
+        .app-icon { font-size: 40px; margin-bottom: 12px; display: block; }
+        .featured-card .app-icon { font-size: 60px; }
+        
+        .app-title { font-weight: bold; font-size: 1.1rem; letter-spacing: 0.5px; }
+        .featured-card .app-title { font-size: 1.8rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+
+        /* EXTERNAL LINKS SECTION */
+        .external-links {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 400px;
+            padding-bottom: 40px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            transition: opacity 0.2s, transform 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .btn:hover { opacity: 0.9; transform: scale(1.02); }
+        .btn-discord { background-color: var(--discord-color); }
+        .btn-substack { background-color: var(--substack-color); }
+        .btn-donate { background-color: var(--donate-color); }
+
+        /* IFRAME APP VIEWER */
+        #app-viewer {
+            display: none;
+            width: 100%;
+            height: calc(100% - 60px);
+            border: none;
+            background: #000;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <button id="back-btn" onclick="goBack()" title="Return to Menu">&#8592;</button>
+        <h1 id="page-title">Reality Fractal</h1>
+    </header>
+
+    <div id="menu-container">
+        <div class="grid">
+            
+            <!-- FEATURED: FRACTAL ATLAS (2X SIZE) -->
+            <div class="app-card featured-card" onclick="launchApp('fractalatlas.html', 'Fractal Atlas')">
+                <span class="app-icon">🗺️</span>
+                <span class="app-title">Fractal Atlas</span>
+            </div>
+
+            <!-- THE REST OF THE SUITE -->
+            <div class="app-card" onclick="launchApp('integrallocator.html', 'Integral Locator')">
+                <span class="app-icon">🌀</span>
+                <span class="app-title">Integral Locator</span>
+            </div>
+            
+            <div class="app-card" onclick="launchApp('egofinder.html', 'Ego Finder')">
+                <span class="app-icon">🎭</span>
+                <span class="app-title">Ego Finder</span>
+            </div>
+
+            <div class="app-card" onclick="launchApp('languageundoer.html', 'Language Undoer')">
+                <span class="app-icon">🤐</span>
+                <span class="app-title">Language Undoer</span>
+            </div>
+
+            <div class="app-card" onclick="launchApp('manifestationmixer.html', 'Manifestation Mixer')">
+                <span class="app-icon">✨</span>
+                <span class="app-title">Manifestation Mixer</span>
+            </div>
+
+        </div>
+
+        <div class="external-links">
+            <a href="https://discord.gg/q9mckcur" target="_blank" class="btn btn-discord">
+                Join Community Chat (Discord)
+            </a>
+            <a href="https://ryanferko.substack.com" target="_blank" class="btn btn-substack">
+                Reality Fractal on Substack
+            </a>
+            <a href="https://www.paypal.com/donate/?hosted_button_id=DKZJ2TYCZ8HBW" target="_blank" class="btn btn-donate">
+                ❤️ Donate to Project
+            </a>
+        </div>
+    </div>
+
+    <!-- The Window where apps load -->
+    <iframe id="app-viewer" src=""></iframe>
+
+    <script>
+        const menuContainer = document.getElementById('menu-container');
+        const appViewer = document.getElementById('app-viewer');
+        const backBtn = document.getElementById('back-btn');
+        const pageTitle = document.getElementById('page-title');
+
+        function launchApp(url, title) {
+            menuContainer.style.display = 'none';
+            appViewer.style.display = 'block';
+            appViewer.src = url;
+            backBtn.style.display = 'block';
+            pageTitle.innerText = title;
+        }
+
+        function goBack() {
+            menuContainer.style.display = 'flex';
+            appViewer.style.display = 'none';
+            appViewer.src = ''; 
+            backBtn.style.display = 'none';
+            pageTitle.innerText = 'Reality Fractal';
+        }
+    </script>
+</body>
+</html>
