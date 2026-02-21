@@ -1300,12 +1300,12 @@ const ui = {
     checkCustomRes: () => {
         document.getElementById('custom-res-div').style.display = (document.getElementById('save-res').value === 'custom') ? 'flex' : 'none';
     },
-    updateControlsVisibility: () => {
+   updateControlsVisibility: () => {
         const m = app.state.mode;
         const s = (id, isVisible) => { 
             let e1 = document.getElementById(id), e2 = document.getElementById('menu-'+id);
-            if(e1) e1.style.display = isVisible ? 'flex' : 'none';
-            if(e2) e2.style.display = isVisible ? 'flex' : 'none';
+            if(e1) e1.classList.toggle('hidden', !isVisible);
+            if(e2) e2.classList.toggle('hidden', !isVisible);
         };
         s('grp-nebula', m !== 0); 
         s('grp-nebula-den', m !== 0);
