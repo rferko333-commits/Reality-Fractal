@@ -275,12 +275,23 @@
         .img-placeholder span { font-family: monospace; color: #888; font-size: 12px; }
         .caption { font-size: 13px; color: #999; font-style: italic; text-align: center; margin-top: -5px; margin-bottom: 25px; }
 
-        /* --- MOBILE RESPONSIVENESS --- */
+       /* --- MOBILE RESPONSIVENESS --- */
         @media (max-width: 768px) {
-            header { padding: 0 10px; }
-            .app-title { font-size: 15px; }
-            .header-right { gap: 5px; }
-            .tab-btn { padding: 6px 10px; }
+            header { padding: 0 4px; }
+            
+            /* Stop flexbox from pushing the gear icon off screen */
+            .header-left, .header-right { gap: 4px; flex: unset; }
+            
+            /* Prevent the Manual text from stacking and shrink it */
+            .icon-btn { font-size: 14px !important; white-space: nowrap; padding: 0 2px; }
+            
+            /* Shrink the Tabs to fit */
+            .mode-tabs { gap: 2px; }
+            .tab-btn { padding: 6px 4px; font-size: 9px; letter-spacing: 0; }
+            
+            /* Shrink the Save View Button */
+            header .action-btn { padding: 6px 6px; font-size: 9px; margin: 0; }
+
             #viewport { flex-direction: column; }
             .canvas-container { border-right: none; border-bottom: 1px solid #333; }
             #bottom-controls { display: none; }
