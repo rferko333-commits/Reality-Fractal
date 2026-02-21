@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fractal Atlas - Architect</title>
+    <title>Fractal Atlas</title>
     <style>
+        /* --- CSS VARIABLES & THEMING --- */
         :root {
             --bg-color: #050505;
             --panel-bg: #121212;
@@ -14,6 +15,7 @@
             --text-dim: #888;
             --danger-color: #ff4444;
             --success-color: #00ff88;
+            --glass-bg: rgba(18, 18, 18, 0.95);
         }
 
         body, html {
@@ -21,11 +23,11 @@
             height: 100%; width: 100%;
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
-            touch-action: none;
+            touch-action: none; /* Prevents mobile browser from interfering with canvas dragging */
         }
 
         /* --- HEADER --- */
@@ -34,25 +36,31 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 10px;
+            padding: 0 15px;
             background-color: #080808;
             border-bottom: 1px solid var(--border-color);
             position: relative;
             z-index: 100;
         }
 
-        #back-btn {
-            background: none; border: none; color: white;
-            font-size: 24px; cursor: pointer; padding: 0 15px;
+        .app-title {
+            font-weight: 800;
+            letter-spacing: 1px;
+            font-size: 18px;
+            color: white;
+            margin: 0;
         }
 
-        .mode-tabs { display: flex; gap: 8px; }
+        .mode-tabs {
+            display: flex;
+            gap: 8px;
+        }
         
         .tab-btn {
             background: #222;
             border: 1px solid #444;
             color: #888;
-            padding: 6px 14px;
+            padding: 8px 16px;
             cursor: pointer;
             border-radius: 4px;
             font-weight: bold;
@@ -69,9 +77,15 @@
         }
 
         .icon-btn {
-            background: none; border: none; color: #ccc;
-            font-size: 24px; cursor: pointer; padding: 0 10px;
+            background: none;
+            border: none;
+            color: #ccc;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px 10px;
+            transition: color 0.2s;
         }
+        .icon-btn:hover { color: white; }
 
         /* --- MAIN LAYOUT --- */
         #main-wrapper {
@@ -95,7 +109,11 @@
             overflow: hidden;
         }
 
-        /* Stack Canvases: WebGL (Base) + 2D (Overlay/Nebula) */
+        /* 
+           Dual Canvas Architecture:
+           WebGL runs standard fractals. 
+           HTML5 2D Canvas overlays it to render Progressive Nebulae.
+        */
         canvas {
             display: block;
             position: absolute;
@@ -105,13 +123,12 @@
         }
 
         .cvs-cpu {
-            pointer-events: none; /* Default: Let GL handle mouse */
+            pointer-events: none;
             opacity: 0;
             transition: opacity 0.2s;
             z-index: 10;
         }
 
-        /* Show CPU canvas when needed */
         body.mode-nebula #cpu-left, 
         body.mode-nebula #cpu-right, 
         body.mode-atlas #cpu-right {
@@ -119,89 +136,166 @@
             pointer-events: auto;
         }
 
-        /* Overlays */
+        /* Overlays & Labels */
         .view-label {
-            position: absolute; top: 10px; left: 10px;
+            position: absolute;
+            top: 10px; left: 10px;
             background: rgba(0, 0, 0, 0.7);
-            padding: 4px 8px; border-radius: 4px;
-            font-size: 12px; pointer-events: none; z-index: 20;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 20;
             border: 1px solid #333;
+            color: white;
         }
 
         #bottom-bar-info {
-            position: absolute; bottom: 15px; left: 15px;
-            display: flex; gap: 10px; pointer-events: none; z-index: 30;
+            position: absolute;
+            bottom: 15px; left: 15px;
+            display: flex;
+            gap: 10px;
+            pointer-events: none;
+            z-index: 30;
         }
 
         .info-tag {
             background: rgba(0, 0, 0, 0.85);
-            padding: 6px 10px; font-size: 11px; font-family: monospace;
-            border: 1px solid #444; border-radius: 4px; pointer-events: auto;
+            padding: 6px 10px;
+            font-size: 11px;
+            font-family: monospace;
+            border: 1px solid #444;
+            border-radius: 4px;
+            pointer-events: auto;
+            color: #aaa;
         }
 
         .tag-lock { color: var(--success-color); border-color: var(--success-color); display: none; }
         .tag-warn { color: var(--danger-color); border-color: var(--danger-color); display: none; }
 
-        /* --- CONTROLS AREA --- */
+        #error-log {
+            display: none;
+            position: absolute;
+            top: 60px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(50, 0, 0, 0.95);
+            border: 1px solid red;
+            color: #ffaaaa;
+            padding: 15px;
+            border-radius: 6px;
+            z-index: 300;
+            font-family: monospace;
+            font-size: 11px;
+            white-space: pre-wrap;
+            max-width: 80%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* --- DESKTOP BOTTOM CONTROLS --- */
         #bottom-controls {
             height: 180px;
             background: var(--panel-bg);
             border-top: 1px solid var(--border-color);
-            padding: 15px;
+            padding: 15px 20px;
             overflow-y: auto;
-            display: flex;
-            flex-direction: column;
         }
 
-        /* Slide-Out Menu (Mobile) */
+        /* --- MOBILE SLIDE-OUT MENU --- */
         #settings-menu {
-            position: fixed; top: 50px; right: 0; bottom: 0; width: 320px;
-            background: rgba(18, 18, 18, 0.98);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            position: fixed;
+            top: 50px; right: 0; bottom: 0;
+            width: 320px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border-left: 1px solid var(--border-color);
             transform: translateX(100%);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 200; display: flex; flex-direction: column;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
             box-shadow: -5px 0 20px rgba(0,0,0,0.5);
         }
+        
         #settings-menu.open { transform: translateX(0); }
-        .settings-content { flex: 1; overflow-y: auto; padding: 20px; }
-        h3.settings-title { margin: 0 0 20px 0; color: white; }
 
-        /* --- WIDGETS --- */
+        .settings-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* --- CONTROL WIDGETS --- */
         .ctrl-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px; width: 100%;
-        }
-        .control-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 5px; }
-        
-        label {
-            font-size: 10px; color: var(--text-dim);
-            text-transform: uppercase; font-weight: 700;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+            width: 100%;
         }
 
-        .hybrid-input { display: flex; align-items: center; gap: 10px; }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 5px;
+        }
+
+        label {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .hybrid-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
         input[type="range"] {
-            flex: 1; height: 6px; background: #333; border-radius: 3px; appearance: none; cursor: pointer;
+            flex: 1;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            appearance: none;
+            cursor: pointer;
         }
+        
         input[type="range"]::-webkit-slider-thumb {
-            appearance: none; width: 16px; height: 16px;
-            background: var(--accent-color); border-radius: 50%; border: 2px solid #fff;
+            appearance: none;
+            width: 16px; height: 16px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            border: 2px solid #fff;
         }
 
         input[type="number"], input[type="text"], select {
-            background: #222; border: 1px solid #444; color: white; padding: 6px;
-            border-radius: 4px; font-size: 12px; font-family: monospace;
+            background: #222;
+            border: 1px solid #444;
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: monospace;
+            box-sizing: border-box;
         }
-        input[type="number"] { width: 60px; }
+
+        input[type="number"] { width: 75px; }
         select { width: 100%; cursor: pointer; }
 
         .action-btn {
-            background: #333; color: white; border: 1px solid #555;
-            padding: 10px; border-radius: 4px; font-weight: bold; font-size: 12px;
-            cursor: pointer; text-align: center; transition: background 0.2s;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.2s;
         }
         .action-btn:hover { background: #444; }
         .btn-primary { background: var(--accent-color); color: black; border: none; }
@@ -209,38 +303,48 @@
 
         .hidden { display: none !important; }
 
+        /* Specific Threshold Colors */
+        .lbl-red { color: #ff6b6b; }
+        .lbl-green { color: #51cf66; }
+        .lbl-blue { color: #339af0; }
+
         /* --- SAVE MODAL --- */
         #save-modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.9); z-index: 500;
-            align-items: center; justify-content: center;
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
         }
+
         .modal-box {
-            background: #181818; border: 1px solid #444; padding: 25px;
-            width: 90%; max-width: 350px; border-radius: 8px;
+            background: #181818;
+            border: 1px solid #444;
+            padding: 25px;
+            width: 90%;
+            max-width: 350px;
+            border-radius: 8px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
 
-        #error-log {
-            display: none; position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
-            background: rgba(50, 0, 0, 0.95); border: 1px solid red; color: #ffaaaa;
-            padding: 15px; border-radius: 6px; z-index: 300; font-family: monospace;
-            font-size: 11px; white-space: pre-wrap; max-width: 80%;
-        }
-
+        /* --- MOBILE RESPONSIVENESS --- */
         @media (max-width: 768px) {
             #viewport { flex-direction: column; }
             .canvas-container { border-right: none; border-bottom: 1px solid #333; }
-            #bottom-controls { display: none; } /* Hide bottom on phone */
+            #bottom-controls { display: none; } /* Hide bottom panel on phone */
             #info-overlay { bottom: 10px; }
             #settings-menu { width: 85%; }
+            .app-title { display: none; } /* Hide title on small screens to fit tabs */
         }
     </style>
 </head>
 <body id="app-body">
 
+    <!-- HEADER -->
     <header>
-        <button id="back-btn" onclick="window.parent.goBack()">&#8592;</button>
+        <div class="app-title">Fractal Atlas</div>
         <div class="mode-tabs">
             <button class="tab-btn active" onclick="app.setMode(0)">FRACTALS</button>
             <button class="tab-btn" onclick="app.setMode(1)">NEBULAE</button>
@@ -249,37 +353,43 @@
         <button class="icon-btn" onclick="ui.toggleSettings()">⚙️</button>
     </header>
 
+    <!-- MAIN INTERFACE -->
     <div id="main-wrapper">
         <div id="viewport">
+            
+            <!-- Left Window -->
             <div class="canvas-container" id="cont-left">
                 <div class="view-label" id="lbl-left">Mandelbrot</div>
                 <canvas id="gl-left"></canvas>
                 <canvas id="cpu-left" class="cvs-cpu"></canvas>
             </div>
 
+            <!-- Right Window -->
             <div class="canvas-container" id="cont-right">
                 <div class="view-label" id="lbl-right">Julia Set</div>
                 <canvas id="gl-right"></canvas>
                 <canvas id="cpu-right" class="cvs-cpu"></canvas>
             </div>
-
+            
+            <!-- Information Overlays -->
             <div id="bottom-bar-info">
-                <div class="info-tag" id="c-coords">C: -0.7600, 0.1200</div>
-                <div class="info-tag tag-lock" id="lock-indicator">🔒 LOCKED</div>
-                <div class="info-tag tag-warn" id="zoom-warning">⚠️ GPU PRECISION LIMIT</div>
+                <div class="info-tag" id="c-coords" title="Current Julia Seed">C: -0.7600, 0.1200</div>
+                <div class="info-tag tag-lock" id="lock-indicator" title="Double click canvas to unlock">🔒 LOCKED</div>
+                <div class="info-tag tag-warn" id="zoom-warning" title="Hardware 32-bit Float Limit Reached">⚠️ GPU PRECISION LIMIT</div>
             </div>
             <div id="error-log"></div>
         </div>
 
         <!-- Desktop Bottom Controls -->
-        <div id="bottom-controls"></div>
+        <div id="bottom-controls">
+            <!-- Injected by UI Module -->
+        </div>
     </div>
 
     <!-- Mobile Slide-Out Menu -->
     <div id="settings-menu">
-        <div class="settings-content">
-            <h3 style="margin-top:0; color:white;">Settings</h3>
-            <div id="mobile-controls-target"></div>
+        <div class="settings-content" id="mobile-controls">
+            <!-- Injected by UI Module -->
         </div>
     </div>
 
@@ -287,6 +397,7 @@
     <div id="save-modal">
         <div class="modal-box">
             <h3 style="margin-top:0; color:white; margin-bottom:15px;">Save Image</h3>
+            
             <div class="control-group">
                 <label>Target Window</label>
                 <select id="save-view">
@@ -294,24 +405,27 @@
                     <option value="right" selected>Right Window</option>
                 </select>
             </div>
+
             <div class="control-group" id="row-res">
                 <label>Resolution</label>
                 <select id="save-res" onchange="ui.checkCustomRes()">
-                    <option value="1">Screen Size (Fast)</option>
+                    <option value="1">Screen Size (Instant)</option>
                     <option value="2">HD (1920 x 1080)</option>
                     <option value="4">4K (3840 x 2160)</option>
                     <option value="8">8K (7680 x 4320)</option>
                     <option value="custom">Custom Keyboard Input...</option>
                 </select>
+                
                 <div id="custom-res-div" style="display:none; gap:10px; margin-top:10px; align-items:center;">
-                    <input type="number" id="save-w" value="3000" placeholder="W">
+                    <input type="number" id="save-w" value="3000" placeholder="Width">
                     <span style="color:#888">x</span>
-                    <input type="number" id="save-h" value="3000" placeholder="H">
+                    <input type="number" id="save-h" value="3000" placeholder="Height">
                 </div>
-                <p style="font-size:10px; color:#888; margin-top:5px; line-height:1.4;">
-                    Note: Nebulae/Buddhabrots are saved exactly as seen on screen. Standard fractals are re-rendered at high res.
+                <p style="font-size:10px; color:#888; margin-top:10px; line-height:1.4;">
+                    Note: Nebulae/Buddhabrots save exactly what is visible on screen to preserve the progressive particle data. Let the image fully resolve before saving.
                 </p>
             </div>
+
             <div style="display:flex; gap:10px; margin-top:20px;">
                 <button class="action-btn" onclick="ui.toggleModal(false)" style="flex:1">Cancel</button>
                 <button class="action-btn btn-primary" onclick="app.save()" style="flex:1">Download</button>
@@ -321,19 +435,23 @@
 
 <script>
 /**
- * FRACTAL ATLAS - ARCHITECT EDITION (FIXED)
- * 1. WebGL Renderer (GL_CORE)
- * 2. Nebula Renderer (NebulaRenderer)
- * 3. App Controller (app)
- * 4. UI Controller (ui)
+ * FRACTAL ATLAS - MASTER EDITION
+ * Architecture:
+ * 1. Math Parser (String -> GLSL)
+ * 2. WebGL GPU Renderer (Standard Fractals)
+ * 3. CPU Progressive Renderer (Nebulae / Buddhabrot)
+ * 4. App State Controller
+ * 5. UI & Input Controller
  */
 
-// --- EQUATION PARSER ---
+// =======================================================
+// 1. EQUATION PARSER
+// =======================================================
 function parseEquation(eq) {
     let s = eq.toLowerCase().replace(/\s+/g, '');
     
-    // CPU Mode Routing
-    app.state.p.eqMode = 0; 
+    // Determine the math mode for the CPU renderer
+    app.state.p.eqMode = 0; // Default
     if (s === 'z^3+c') app.state.p.eqMode = 1;
     else if (s === 'z^4+c') app.state.p.eqMode = 2;
     else if (s === 'z^5+c') app.state.p.eqMode = 3;
@@ -342,31 +460,41 @@ function parseEquation(eq) {
     else if (s === 'sin(z)+c') app.state.p.eqMode = 6;
     else if (s === 'cos(z)+c') app.state.p.eqMode = 7;
     else {
+        // Detect arbitrary floating point powers for CPU
         let m = s.match(/z\^([0-9.]+)\+c/);
-        if(m) { app.state.p.eqMode = 8; app.state.p.customPow = parseFloat(m[1]); }
+        if(m) {
+            app.state.p.eqMode = 8;
+            app.state.p.customPow = parseFloat(m[1]);
+        }
     }
 
-    // GLSL Translation
+    // Build the GLSL String for the GPU
     if(s === 'burningship') return 'vec2(abs(z.x)*abs(z.x)-abs(z.y)*abs(z.y), 2.0*abs(z.x*z.y))+c';
     if(s === 'tricorn') return 'vec2(z.x*z.x-z.y*z.y, -2.0*z.x*z.y)+c';
     
-    s = s.replace(/z\^2(?!\.)/g, 'csqr(z)');
+    s = s.replace(/z\^2(?!\.)/g, 'csqr(z)'); // Optimization for standard Mandelbrot
     s = s.replace(/z\^([0-9.]+)/g, (match, p1) => {
+        // GLSL requires explicit decimals for floats
         return p1.includes('.') ? `cpow(z,${p1})` : `cpow(z,${p1}.0)`;
     });
+    
     s = s.replace(/sin\(z\)/g, 'csin(z)');
     s = s.replace(/cos\(z\)/g, 'ccos(z)');
     
     return s;
 }
 
-// --- WEBGL RENDERER ---
+// =======================================================
+// 2. WEBGL RENDERER (GPU)
+// =======================================================
 const GL_CORE = {
     setup: function(canvasId) {
         const cvs = document.getElementById(canvasId);
         const gl = cvs.getContext('webgl', {preserveDrawingBuffer: true});
         
         const vs = `attribute vec2 p; void main() { gl_Position = vec4(p, 0.0, 1.0); }`;
+        
+        // Shader Header containing Math & Custom Palettes
         const fsHead = `
             #ifdef GL_FRAGMENT_PRECISION_HIGH
             precision highp float;
@@ -374,75 +502,128 @@ const GL_CORE = {
             precision mediump float;
             #endif
             
+            // Math Library
             vec2 csqr(vec2 z) { return vec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y); }
             vec2 cpow(vec2 z, float n) {
-                float r = length(z); if(r < 0.00001) return vec2(0.0);
-                float a = atan(z.y, z.x); return pow(r, n) * vec2(cos(a*n), sin(a*n));
+                float r = length(z);
+                if(r < 0.00001) return vec2(0.0);
+                float a = atan(z.y, z.x);
+                return pow(r, n) * vec2(cos(a*n), sin(a*n));
             }
-            vec2 csin(vec2 z) { float ey = exp(z.y); float e_y = exp(-z.y); return vec2(sin(z.x)*(ey+e_y)/2.0, cos(z.x)*(ey-e_y)/2.0); }
-            vec2 ccos(vec2 z) { float ey = exp(z.y); float e_y = exp(-z.y); return vec2(cos(z.x)*(ey+e_y)/2.0, -sin(z.x)*(ey-e_y)/2.0); }
+            vec2 csin(vec2 z) {
+                float ey = exp(z.y); float e_y = exp(-z.y);
+                return vec2(sin(z.x)*(ey+e_y)/2.0, cos(z.x)*(ey-e_y)/2.0);
+            }
+            vec2 ccos(vec2 z) {
+                float ey = exp(z.y); float e_y = exp(-z.y);
+                return vec2(cos(z.x)*(ey+e_y)/2.0, -sin(z.x)*(ey-e_y)/2.0);
+            }
             
+            // True Palettes
             vec3 palette(float t, int id) {
-                vec3 a=vec3(0.5), b=vec3(0.5), c=vec3(1.0), d;
-                if(id==0) { c=vec3(1.0); d=vec3(0.0, 0.33, 0.67); } // Magma
-                else if(id==1) { c=vec3(1.0); d=vec3(0.3, 0.2, 0.2); } // Viridis
-                else if(id==2) { c=vec3(0.8); d=vec3(0.15,0.2,0.3); } // Ice
-                else { c=vec3(2.0); d=vec3(0.5,0.2,0.25); } // Electric
-                return a + b * cos(6.28318 * (c * t + d));
+                t = clamp(t, 0.0, 1.0);
+                
+                if (id == 0) {
+                    // Magma (Black -> Red -> Orange -> White)
+                    if(t < 0.33) return mix(vec3(0.0), vec3(0.8, 0.1, 0.1), t/0.33);
+                    else if(t < 0.66) return mix(vec3(0.8, 0.1, 0.1), vec3(0.9, 0.6, 0.1), (t-0.33)/0.33);
+                    else return mix(vec3(0.9, 0.6, 0.1), vec3(1.0, 1.0, 1.0), (t-0.66)/0.34);
+                } 
+                else if (id == 1) {
+                    // Viridis (Dark Purple -> Blue -> Green -> Yellow)
+                    if(t < 0.33) return mix(vec3(0.26, 0.0, 0.33), vec3(0.18, 0.34, 0.56), t/0.33);
+                    else if(t < 0.66) return mix(vec3(0.18, 0.34, 0.56), vec3(0.15, 0.68, 0.38), (t-0.33)/0.33);
+                    else return mix(vec3(0.15, 0.68, 0.38), vec3(0.99, 0.9, 0.14), (t-0.66)/0.34);
+                } 
+                else if (id == 2) {
+                    // Ice (Dark Blue -> Cyan -> White)
+                    return mix(mix(vec3(0.0, 0.1, 0.3), vec3(0.0, 0.8, 1.0), t*2.0), vec3(1.0), max(0.0, t*2.0 - 1.0));
+                } 
+                else {
+                    // Electric (Cosine phase shift)
+                    return vec3(0.5) + vec3(0.5) * cos(6.28318 * (vec3(2.0)*t + vec3(0.5, 0.2, 0.25)));
+                }
             }
         `;
 
         const fsBody = `
-            uniform vec2 u_res; uniform vec2 u_offset; uniform float u_zoom; uniform vec2 u_c;
-            uniform int u_mode; uniform int u_view; uniform float u_iter; uniform float u_grid;
+            uniform vec2 u_res;
+            uniform vec2 u_offset;
+            uniform float u_zoom;
+            uniform vec2 u_c;
+            
+            uniform int u_mode;
+            uniform int u_view;
+            uniform float u_iter;
+            uniform float u_grid;
             uniform int u_pal;
 
             void main() {
                 vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / u_res.y;
                 vec2 z, c;
+                
                 bool isAtlas = (u_mode == 2);
                 
+                // --- MAP PROJECTION ---
                 if (isAtlas) {
-                    // World Space Grid Logic
                     vec2 worldPos = uv / u_zoom + u_offset;
                     float tileSize = 4.0 / u_grid; 
                     vec2 cell = floor(worldPos / tileSize);
                     c = (cell + 0.5) * tileSize;
                     vec2 local = (worldPos - c) / tileSize;
-                    z = local * 3.0; 
+                    z = local * 3.0; // Fit inside the tile
                 } else {
                     vec2 p = uv / u_zoom + u_offset;
-                    if (u_view == 1) { z = p; c = u_c; } else { z = vec2(0.0); c = p; }
+                    if (u_view == 1) { z = p; c = u_c; } 
+                    else { z = vec2(0.0); c = p; }
                 }
 
-                float iter = 0.0; float m = 0.0;
+                // --- ITERATION LOOP ---
+                float iter = 0.0;
+                float m = 0.0;
+                
                 for (int i = 0; i < 10000; i++) {
                     if (float(i) > u_iter) break;
-                    z = {{EQ}}; // Injection Point
+                    
+                    z = {{EQ}}; // Equation injected dynamically
+                    
                     m = dot(z,z);
                     if (m > 100.0) break;
                     iter += 1.0;
                 }
 
+                // --- COLORING ---
                 vec3 col = vec3(0.0);
                 if (m >= 100.0) {
                     float sn = iter - log2(log2(m)) + 4.0;
-                    col = palette(sn * 0.03, u_pal);
+                    float norm_iter = sn / u_iter; // Normalize 0 to 1
+                    col = palette(norm_iter * 2.0, u_pal); // Scale for aesthetic
                 }
 
+                // --- OVERLAYS ---
                 if (isAtlas) {
-                    // Grid Overlay (World Space Math)
+                    // PERFECT GRID ALIGNMENT: 
+                    // Draw lines precisely where fractional part of tile coordinate approaches 0 or 1
                     float tileSize = 4.0 / u_grid;
                     vec2 worldPos = uv / u_zoom + u_offset;
-                    vec2 distToEdge = abs(fract(worldPos / tileSize + 0.5) - 0.5) * tileSize;
-                    vec2 pixelDist = distToEdge * u_zoom * u_res.y;
-                    if (min(pixelDist.x, pixelDist.y) < 1.0) col = vec3(0.1);
+                    vec2 gridPos = worldPos / tileSize;
+                    vec2 gridFract = fract(gridPos);
+                    
+                    // Convert screen pixel size to grid unit size
+                    vec2 pixelSize = vec2(1.0 / (u_zoom * u_res.y * tileSize));
+                    
+                    if (gridFract.x < pixelSize.x || gridFract.x > 1.0 - pixelSize.x || 
+                        gridFract.y < pixelSize.y || gridFract.y > 1.0 - pixelSize.y) {
+                        col = vec3(0.2); // Draw thin dark grid line
+                    }
                 } else if (u_view == 0) {
+                     // Draw circular dot representing C coordinate
                      vec2 screen_c = (u_c - u_offset) * u_zoom;
                      float dist = distance(uv, screen_c);
                      if (dist < 0.012) col = vec3(1.0);
                      else if (dist < 0.016) col = vec3(0.0);
                 }
+
                 gl_FragColor = vec4(col, 1.0);
             }
         `;
@@ -476,7 +657,7 @@ const GL_CORE = {
         gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 
         ctx.prog = p;
-        return null;
+        return null; // Return null if success
     },
 
     render: function(ctx, state, isRight) {
@@ -484,6 +665,7 @@ const GL_CORE = {
         const {gl, cvs, prog} = ctx;
         const dpr = window.devicePixelRatio || 1;
         
+        // Auto-resize canvas buffer
         if (!state.saving) {
             const w = Math.floor(cvs.clientWidth * dpr);
             const h = Math.floor(cvs.clientHeight * dpr);
@@ -493,6 +675,8 @@ const GL_CORE = {
         }
 
         gl.useProgram(prog);
+        
+        // Uniform binding helpers
         const u = (n,v) => { const l=gl.getUniformLocation(prog,n); if(typeof v==='number')gl.uniform1f(l,v); else gl.uniform2f(l,v[0],v[1]); };
         const ui = (n,v) => gl.uniform1i(gl.getUniformLocation(prog,n),v);
 
@@ -512,18 +696,23 @@ const GL_CORE = {
     }
 };
 
-// --- CPU NEBULA RENDERER ---
+// =======================================================
+// 3. CPU RENDERER (True Nebula Physics)
+// =======================================================
 class NebulaRenderer {
     constructor(canvasId) {
         this.cvs = document.getElementById(canvasId);
         this.ctx = this.cvs.getContext('2d', {willReadFrequently: true});
-        this.hist = null; this.imgData = null; this.frames = 0;
+        this.hist = null; 
+        this.imgData = null;
+        this.frames = 0;
     }
 
     reset() {
         const dpr = window.devicePixelRatio || 1;
         const w = Math.floor(this.cvs.clientWidth * dpr);
         const h = Math.floor(this.cvs.clientHeight * dpr);
+        
         if (this.cvs.width !== w || this.cvs.height !== h) {
             this.cvs.width = w; this.cvs.height = h;
             this.hist = new Float32Array(w * h * 3);
@@ -535,36 +724,50 @@ class NebulaRenderer {
 
     renderBatch(state, isRight) {
         if (!this.hist) return;
-        const w = this.cvs.width; const h = this.cvs.height;
+        const w = this.cvs.width;
+        const h = this.cvs.height;
         const cam = isRight ? state.right : state.left;
         
-        const vh = 1.0 / cam.z; const vw = (w/h) * vh;
-        const minX = cam.x - vw/2; const minY = cam.y - vh/2;
+        const vh = 1.0 / cam.z;
+        const vw = (w/h) * vh;
+        const minX = cam.x - vw/2;
+        const minY = cam.y - vh/2;
         
-        const batch = 30000; const p = state.p; const max_i = p.iter;
-        const trX = new Float32Array(max_i); const trY = new Float32Array(max_i);
+        const batch = 25000; 
+        const p = state.p;
+        const max_i = p.iter;
+        const trX = new Float32Array(max_i);
+        const trY = new Float32Array(max_i);
 
         const isNebulaAtlas = (state.mode === 2 && isRight);
-        const grid = p.grid; const eqm = p.eqMode; const cp = p.customPow;
+        const grid = p.grid;
+        const eqm = p.eqMode;
+        const cp = p.customPow;
 
         this.frames++;
 
+        // Generate Monte Carlo Trajectories
         for(let i=0; i<batch; i++) {
             let cr, ci, zx, zy, cellX, cellY;
+            
             if (isNebulaAtlas) {
-                let asp = w/h;
-                let uvX = (Math.random() - 0.5) * asp;
+                // Determine tile based on screen UV projection
+                let uvX = (Math.random() - 0.5) * (w/h);
                 let uvY = (Math.random() - 0.5); 
-                let worldX = cam.x + uvX * (1.0/cam.z);
-                let worldY = cam.y + uvY * (1.0/cam.z);
+                let worldX = cam.x + uvX * vh;
+                let worldY = cam.y + uvY * vh;
                 let tileSize = 4.0 / grid;
                 
                 cellX = Math.floor(worldX / tileSize);
                 cellY = Math.floor(worldY / tileSize);
+                
                 cr = (cellX + 0.5) * tileSize;
                 ci = (cellY + 0.5) * tileSize;
+                
+                // Random start inside tile
                 zx = (Math.random() - 0.5) * 3.0;
                 zy = (Math.random() - 0.5) * 3.0;
+                
             } else {
                 let sr = cam.x + (Math.random()-0.5) * vw * 1.5;
                 let si = cam.y + (Math.random()-0.5) * vh * 1.5;
@@ -574,11 +777,15 @@ class NebulaRenderer {
                 zy = isRight ? si : 0.0;
             }
             
-            let step = 0; let esc = false; let d_min = 1000.0;
+            let step = 0;
+            let esc = false;
+            let d_min = 1000.0;
             
+            // Equation Loop (CPU Equivalent)
             while(step < max_i) {
                 trX[step] = zx; trY[step] = zy;
                 let nx, ny;
+                
                 if(eqm === 0) { nx = zx*zx-zy*zy+cr; ny = 2.0*zx*zy+ci; } 
                 else if(eqm === 1) { nx = zx*zx*zx - 3.0*zx*zy*zy + cr; ny = 3.0*zx*zx*zy - zy*zy*zy + ci; } 
                 else if(eqm === 2) { nx = zx*zx*zx*zx - 6.0*zx*zx*zy*zy + zy*zy*zy*zy + cr; ny = 4.0*zx*zx*zx*zy - 4.0*zx*zy*zy*zy + ci; } 
@@ -589,6 +796,7 @@ class NebulaRenderer {
                 else if(eqm === 7) { let ey=Math.exp(zy), e_y=Math.exp(-zy); nx=Math.cos(zx)*(ey+e_y)/2+cr; ny=-Math.sin(zx)*(ey-e_y)/2+ci; } 
                 else if(eqm === 8) { let r=Math.sqrt(zx*zx+zy*zy); let a=Math.atan2(zy,zx); let rn=Math.pow(r,cp); nx=rn*Math.cos(a*cp)+cr; ny=rn*Math.sin(a*cp)+ci; } 
                 else { nx = zx*zx-zy*zy+cr; ny = 2.0*zx*zy+ci; } 
+                
                 zx = nx; zy = ny;
                 let m = zx*zx + zy*zy;
                 if(m < d_min) d_min = m;
@@ -596,10 +804,14 @@ class NebulaRenderer {
                 step++;
             }
             
+            // Trace Accumulation (Only if escaped!)
             if(esc && step > 0) {
+                // Intensity is inversely proportional to closest approach to origin
                 let glow = Math.exp(-d_min * 10.0); 
+                
                 for(let s=0; s<step; s++) {
                     let px, py;
+                    
                     if (isNebulaAtlas) {
                         let tileSize = 4.0 / grid;
                         let wx = (cellX + 0.5) * tileSize + (trX[s] / 3.0) * tileSize;
@@ -610,8 +822,9 @@ class NebulaRenderer {
                         px = Math.floor((trX[s] - minX) / vw * w);
                         py = Math.floor((trY[s] - minY) / vh * h);
                     }
+                    
                     if(px>=0 && px<w && py>=0 && py<h) {
-                        let idx = ((h - 1 - py) * w + px) * 3;
+                        let idx = ((h - 1 - py) * w + px) * 3; // Y-invert
                         if(step > p.r) this.hist[idx] += glow; 
                         if(step > p.g) this.hist[idx+1] += glow; 
                         if(step > p.b) this.hist[idx+2] += glow; 
@@ -620,9 +833,11 @@ class NebulaRenderer {
             }
         }
         
-        // Tone Mapping
+        // Draw to Image Data
         const data = this.imgData.data;
         const len = w * h * 3;
+        
+        // Base gain calculation to prevent blowing out early frames
         const baseGain = isRight ? 20.0 : 800.0; 
         const safeFrames = Math.max(1, this.frames);
         const scale = (p.den * baseGain) / safeFrames;
@@ -634,16 +849,26 @@ class NebulaRenderer {
             let g = Math.log1p(this.hist[i+1] * scale) * norm;
             let b = Math.log1p(this.hist[i+2] * scale) * norm;
             
+            // Grid Overlay math for Nebula Atlas
             let isGrid = false;
             if (isNebulaAtlas) {
                 let py = Math.floor((i/3)/w);
                 let px = (i/3) % w;
                 let wx = minX + (px/w) * vw;
                 let wy = minY + ((h-1-py)/h) * vh;
+                
                 let tileSize = 4.0 / grid;
-                let distToEdgeX = Math.abs(wx - Math.round(wx/tileSize)*tileSize);
-                let distToEdgeY = Math.abs(wy - Math.round(wy/tileSize)*tileSize);
-                if (distToEdgeX < vw*1.5 || distToEdgeY < vh*1.5) isGrid = true;
+                let gx = wx / tileSize;
+                let gy = wy / tileSize;
+                let fx = gx - Math.floor(gx);
+                let fy = gy - Math.floor(gy);
+                
+                let pxSizeX = vw / w / tileSize;
+                let pxSizeY = vh / h / tileSize;
+                
+                if (fx < pxSizeX || fx > 1.0 - pxSizeX || fy < pxSizeY || fy > 1.0 - pxSizeY) {
+                    isGrid = true;
+                }
             }
 
             if (isGrid) {
@@ -657,19 +882,26 @@ class NebulaRenderer {
         }
         this.ctx.putImageData(this.imgData, 0, 0);
         
+        // Draw White Dot
         if(!isRight && state.mode !== 2) {
             const sx = (state.c.x - cam.x) / vw * w + (w/2);
             const sy = -(state.c.y - cam.y) / vh * h + (h/2); 
-            this.ctx.beginPath(); this.ctx.arc(sx, sy, 5, 0, Math.PI*2);
-            this.ctx.fillStyle = 'white'; this.ctx.fill(); this.ctx.lineWidth = 2; this.ctx.strokeStyle = 'black'; this.ctx.stroke();
+            this.ctx.beginPath();
+            this.ctx.arc(sx, sy, 5, 0, Math.PI*2);
+            this.ctx.fillStyle = 'white'; this.ctx.fill();
+            this.ctx.lineWidth = 2; this.ctx.strokeStyle = 'black'; this.ctx.stroke();
         }
     }
 }
 
-// --- APP CONTROLLER ---
+// =======================================================
+// 4. APP CONTROLLER
+// =======================================================
 const app = {
     state: {
-        mode: 0, locked: false, saving: false,
+        mode: 0, 
+        locked: false, 
+        saving: false,
         c: {x: -0.76, y: 0.12},
         left: {x: -0.5, y: 0.0, z: 1.0},
         right: {x: 0.0, y: 0.0, z: 1.0},
@@ -694,15 +926,18 @@ const app = {
     compile: function() {
         const rawEq = document.getElementById('inp-eq').value;
         const glslEq = parseEquation(rawEq);
+        
         let errStr = null;
         this.glCtx.forEach(c => {
             let res = GL_CORE.compile(c, glslEq);
             if(res) errStr = res;
         });
+
         const log = document.getElementById('error-log');
         if(errStr) {
-            log.style.display = 'block'; log.innerText = `GLSL SYNTAX ERROR:\nCould not compile equation: "${rawEq}"\n\nDETAILS:\n${errStr}`;
-            // Use Fallback
+            log.style.display = 'block';
+            log.innerText = `GLSL SYNTAX ERROR:\nCould not compile equation: "${rawEq}"\n\nDETAILS:\n${errStr}`;
+            // Use safe fallback so screen doesn't stay black
             GL_CORE.compile(this.glCtx[0], 'csqr(z)+c');
             GL_CORE.compile(this.glCtx[1], 'csqr(z)+c');
         } else {
@@ -711,8 +946,20 @@ const app = {
         }
     },
 
+    updateParams: function() {
+        const v = id => parseFloat(document.getElementById(id).value);
+        const p = this.state.p;
+        p.iter = v('sl-iter');
+        p.grid = v('sl-grid');
+        p.r = v('sl-red');
+        p.g = v('sl-grn');
+        p.b = v('sl-blu');
+        p.den = v('sl-den');
+        p.pal = parseInt(document.getElementById('sel-pal').value);
+    },
+
     triggerReset: function() {
-        ui.updParams();
+        this.updateParams();
         this.nebCtx[0].reset();
         this.nebCtx[1].reset();
     },
@@ -730,8 +977,10 @@ const app = {
                 this.nebCtx[1].renderBatch(this.state, true);
             }
         }
+        
         const maxZ = Math.max(this.state.left.z, this.state.right.z);
         document.getElementById('zoom-warning').style.display = (maxZ > 100000 && this.state.mode !== 1) ? 'block' : 'none';
+        
         requestAnimationFrame(()=>this.loop());
     },
     
@@ -746,12 +995,13 @@ const app = {
         document.getElementById('lbl-left').innerText=l;
         document.getElementById('lbl-right').innerText=r;
         
+        // Visibility Flags
         document.getElementById('cpu-left').style.opacity = (m === 1) ? '1' : '0';
         document.getElementById('cpu-left').style.pointerEvents = (m === 1) ? 'auto' : 'none';
         document.getElementById('cpu-right').style.opacity = (m === 1 || m === 2) ? '1' : '0';
         document.getElementById('cpu-right').style.pointerEvents = (m === 1 || m === 2) ? 'auto' : 'none';
 
-        ui.updControls();
+        ui.updateControlsVisibility();
         this.triggerReset();
     },
 
@@ -765,15 +1015,17 @@ const app = {
         const view = document.getElementById('save-view').value;
         const resChoice = document.getElementById('save-res').value;
         const isRight = (view === 'right');
-        const useCpuEngine = (this.state.mode === 1) || (this.state.mode === 2 && isRight);
         
+        const useCpuEngine = (this.state.mode === 1) || (this.state.mode === 2 && isRight);
         let targetCvs;
+        
         if(useCpuEngine) {
             targetCvs = isRight ? this.nebCtx[1].cvs : this.nebCtx[0].cvs;
         } else {
             this.state.saving = true;
             const ctx = isRight ? this.glCtx[1] : this.glCtx[0];
             const ow = ctx.cvs.width, oh = ctx.cvs.height;
+            
             let w = ow, h = oh;
             if(resChoice === '2') { w=1920; h=1080; }
             else if(resChoice === '4') { w=3840; h=2160; }
@@ -782,6 +1034,7 @@ const app = {
                 w = parseInt(document.getElementById('save-w').value) || 1920;
                 h = parseInt(document.getElementById('save-h').value) || 1080;
             }
+            
             ctx.cvs.width = w; ctx.cvs.height = h; ctx.gl.viewport(0,0,w,h);
             GL_CORE.render(ctx, this.state, isRight);
             targetCvs = ctx.cvs;
@@ -802,8 +1055,11 @@ const app = {
     }
 };
 
-// --- UI GENERATOR ---
+// =======================================================
+// 5. UI CONTROLLER
+// =======================================================
 const ui = {
+    // Shared HTML for Desktop & Mobile layout
     buildControls: (prefix = '') => `
         <div class="ctrl-grid">
             <div class="control-group" style="grid-column: span 2; max-width: 400px;">
@@ -819,6 +1075,7 @@ const ui = {
                     <button class="action-btn btn-primary" id="${prefix}btn-compile" style="width:auto; padding:8px 15px;">APPLY</button>
                 </div>
             </div>
+            
             <div class="control-group">
                 <label>Max Iterations</label>
                 <div class="hybrid-input">
@@ -826,23 +1083,27 @@ const ui = {
                     <input type="number" id="${prefix}nb-iter" value="300">
                 </div>
             </div>
+            
             <div class="control-group hidden" id="${prefix}grp-nebula">
-                <label style="color:#ff6b6b">Red Threshold</label>
-                <div class="hybrid-input">
+                <label class="lbl-red">Red Threshold</label>
+                <div class="hybrid-input" style="margin-bottom:8px">
                     <input type="range" id="${prefix}sl-red" min="0" max="2000" value="200">
                     <input type="number" id="${prefix}nb-red" value="200">
                 </div>
-                <label style="color:#51cf66; margin-top:5px;">Green Threshold</label>
-                <div class="hybrid-input">
+                
+                <label class="lbl-green">Green Threshold</label>
+                <div class="hybrid-input" style="margin-bottom:8px">
                     <input type="range" id="${prefix}sl-grn" min="0" max="2000" value="100">
                     <input type="number" id="${prefix}nb-grn" value="100">
                 </div>
-                <label style="color:#339af0; margin-top:5px;">Blue Threshold</label>
+                
+                <label class="lbl-blue">Blue Threshold</label>
                 <div class="hybrid-input">
                     <input type="range" id="${prefix}sl-blu" min="0" max="2000" value="50">
                     <input type="number" id="${prefix}nb-blu" value="50">
                 </div>
             </div>
+            
             <div class="control-group hidden" id="${prefix}grp-nebula-den">
                 <label>Nebula Brightness</label>
                 <div class="hybrid-input">
@@ -850,6 +1111,7 @@ const ui = {
                     <input type="number" id="${prefix}nb-den" value="1.5" step="0.1">
                 </div>
             </div>
+            
             <div class="control-group" id="${prefix}grp-pal">
                 <label>Palette</label>
                 <select id="${prefix}sel-pal">
@@ -857,6 +1119,7 @@ const ui = {
                     <option value="2">Ice</option> <option value="3">Electric</option>
                 </select>
             </div>
+            
             <div class="control-group hidden" id="${prefix}grp-grid">
                 <label>Atlas Grid</label>
                 <div class="hybrid-input">
@@ -864,6 +1127,7 @@ const ui = {
                     <input type="number" id="${prefix}nb-grid" value="10">
                 </div>
             </div>
+            
             <div class="control-group">
                 <label>Zoom Speed</label>
                 <div class="hybrid-input">
@@ -871,133 +1135,196 @@ const ui = {
                     <input type="number" id="${prefix}nb-zoom" value="1.0" step="0.1">
                 </div>
             </div>
+            
             <div class="control-group">
                 <label>&nbsp;</label>
                 <button class="action-btn" id="${prefix}btn-reset">RESET CAMERA</button>
             </div>
         </div>
     `,
+
     init: function() {
         document.getElementById('bottom-controls').innerHTML = this.buildControls();
-        document.querySelector('#settings-menu .settings-content').insertAdjacentHTML('beforeend', this.buildControls('menu-'));
-        const ids = ['sel-preset','inp-eq','sl-iter','sl-red','sl-grn','sl-blu','sl-den','sel-pal','sl-grid','sl-zoom'];
-        const numIds = ['nb-iter','nb-red','nb-grn','nb-blu','nb-den','nb-grid','nb-zoom'];
+        document.getElementById('mobile-controls-target').innerHTML = this.buildControls('menu-');
         
-        const sync = (src, val) => {
-            const base = src.id.replace(/(menu-|sl-|nb-)/g, '');
-            // Update all matching elements
-            [`sl-${base}`, `nb-${base}`, `menu-sl-${base}`, `menu-nb-${base}`].forEach(id => {
-                const el = document.getElementById(id);
-                if(el && el !== src) el.value = val;
+        // Sync Logic for Hybrid Inputs
+        const coreIds = ['iter','red','grn','blu','den','grid','zoom'];
+        
+        const syncHybrid = (idBase) => {
+            const els = [
+                document.getElementById(`sl-${idBase}`), document.getElementById(`nb-${idBase}`),
+                document.getElementById(`menu-sl-${idBase}`), document.getElementById(`menu-nb-${idBase}`)
+            ].filter(e => e); // remove nulls
+            
+            els.forEach(el => {
+                el.addEventListener('input', () => {
+                    let val = el.value;
+                    els.forEach(e => { if(e !== el) e.value = val; });
+                    app.updateParams();
+                    app.triggerReset();
+                });
             });
-            app.updParams(); app.triggerReset();
         };
+        coreIds.forEach(syncHybrid);
 
-        ids.concat(numIds).forEach(id => {
-            const el = document.getElementById(id); const mel = document.getElementById('menu-'+id);
-            if(el) {
-                if(el.type === 'text' || el.tagName === 'SELECT') {
-                    el.addEventListener(el.tagName==='SELECT'?'change':'input', () => { 
-                        if(mel) mel.value = el.value; 
-                        if(el.id.includes('sel-preset')) { document.getElementById('inp-eq').value = el.value; document.getElementById('menu-inp-eq').value = el.value; }
-                        app.updParams(); app.compile(); 
-                    });
-                } else {
-                    el.addEventListener('input', () => sync(el, el.value));
-                }
-            }
-            if(mel) {
-                if(mel.type === 'text' || mel.tagName === 'SELECT') {
-                    mel.addEventListener(mel.tagName==='SELECT'?'change':'input', () => { 
-                        if(el) el.value = mel.value; 
-                        if(mel.id.includes('sel-preset')) { document.getElementById('inp-eq').value = mel.value; document.getElementById('menu-inp-eq').value = mel.value; }
-                        app.updParams(); app.compile(); 
-                    });
-                } else {
-                    mel.addEventListener('input', () => sync(mel, mel.value));
+        // Sync Dropdowns & Text
+        const listIds = ['sel-preset','inp-eq','sel-pal'];
+        listIds.forEach(id => {
+            const dEl = document.getElementById(id);
+            const mEl = document.getElementById('menu-'+id);
+            const sync = (src, dest) => { dest.value = src.value; app.updateParams(); app.triggerReset(); };
+            
+            if(dEl && mEl) {
+                dEl.addEventListener('input', () => sync(dEl, mEl));
+                mEl.addEventListener('input', () => sync(mEl, dEl));
+                
+                if(id === 'sel-preset') {
+                    const updText = (src) => {
+                        document.getElementById('inp-eq').value = src.value;
+                        document.getElementById('menu-inp-eq').value = src.value;
+                    };
+                    dEl.addEventListener('change', () => updText(dEl));
+                    mEl.addEventListener('change', () => updText(mEl));
                 }
             }
         });
 
-        // Button Binds
+        // Bind Buttons
         const bindBtn = (id, func) => {
-            const b1 = document.getElementById(id), b2 = document.getElementById('menu-'+id);
-            if(b1) b1.onclick = func; if(b2) b2.onclick = func;
+            let b1 = document.getElementById(id); if(b1) b1.onclick = func;
+            let b2 = document.getElementById('menu-'+id); if(b2) b2.onclick = func;
         };
-        bindBtn('btn-compile', app.compile); bindBtn('btn-reset', app.resetPos);
+        bindBtn('btn-compile', () => app.compile());
+        bindBtn('btn-reset', () => app.resetPos());
         
-        // Canvas Interactions
+        // --- INPUT HANDLERS (Desktop & Mobile) ---
         document.querySelectorAll('.canvas-container').forEach((cont, idx) => {
-            const isR = idx===1;
-            const handleStart = (cx, cy) => {
-                app.state.active = isR ? 'r' : 'l'; app.state.drag = true; app.state.last = {x:cx, y:cy};
+            const isR = idx === 1;
+            
+            const handleStart = (clientX, clientY) => {
+                app.state.active = isR ? 'r' : 'l'; 
+                app.state.drag = true; 
+                app.state.last = {x: clientX, y: clientY};
+                
+                // Dot Drag Logic
                 if (!isR && !app.state.locked && app.state.mode !== 2) {
-                    const r=cont.getBoundingClientRect(), cam=app.state.left, asp=r.width/r.height;
-                    const wx = ((cx-r.left)/r.width-0.5)*asp/cam.z + cam.x;
-                    const wy = -((cy-r.top)/r.height-0.5)/cam.z + cam.y;
+                    const r = cont.getBoundingClientRect();
+                    const asp = r.width / r.height;
+                    const nx = ((clientX - r.left) / r.width - 0.5) * asp;
+                    const ny = -((clientY - r.top) / r.height - 0.5); 
+                    const cam = app.state.left;
+                    
+                    const wx = nx / cam.z + cam.x;
+                    const wy = ny / cam.z + cam.y;
+                    
+                    // Hit box size
                     const dist = Math.hypot(wx - app.state.c.x, wy - app.state.c.y) * cam.z * r.height;
-                    if(dist < 40) { app.state.dragPoint=true; app.state.drag=false; return; }
-                    app.state.c.x=wx; app.state.c.y=wy; ui.updateCoords(); app.triggerReset();
+                    if (dist < 40) { // Large hit area for touch
+                        app.state.dragPoint = true; 
+                        app.state.drag = false; 
+                        return; 
+                    }
+                    
+                    // Click to teleport dot
+                    app.state.c.x = wx; app.state.c.y = wy; 
+                    ui.updateCoords(); 
+                    app.triggerReset();
                 }
-            };
-            const handleMove = (cx, cy) => {
-                if(app.state.active !== (isR?'r':'l')) return;
-                const r = cont.getBoundingClientRect(), cam = isR ? app.state.right : app.state.left;
-                if(app.state.dragPoint && !isR) {
-                    const asp=r.width/r.height;
-                    const nx=((cx-r.left)/r.width-0.5)*asp, ny=-((cy-r.top)/r.height-0.5);
-                    app.state.c.x = nx/cam.z+cam.x; app.state.c.y = ny/cam.z+cam.y;
-                    ui.updateCoords(); app.triggerReset();
-                } else if (app.state.drag) {
-                    const dx=cx-app.state.last.x, dy=cy-app.state.last.y, asp=r.width/r.height;
-                    cam.x -= (dx/r.height)/cam.z; cam.y += (dy/r.height)/cam.z; // Correct 1:1 panning
-                    if(app.state.mode!==0) app.triggerReset();
-                }
-                app.state.last = {x:cx, y:cy};
             };
 
-            cont.addEventListener('dblclick',()=>{app.state.locked=!app.state.locked; document.getElementById('lock-indicator').style.display=app.state.locked?'block':'none';});
-            cont.addEventListener('mousedown',e=>handleStart(e.clientX, e.clientY));
-            cont.addEventListener('mousemove',e=>{if(app.state.drag||app.state.dragPoint) handleMove(e.clientX, e.clientY);});
-            cont.addEventListener('wheel',e=>{
-                e.preventDefault(); 
-                const c=isR?app.state.right:app.state.left, s=parseFloat(document.getElementById('sl-zoom').value)*0.1; 
-                if(e.deltaY<0)c.z*=(1+s); else c.z/=(1+s); 
-                if(app.state.mode!==0)app.triggerReset();
+            const handleMove = (clientX, clientY) => {
+                if(app.state.active !== (isR ? 'r' : 'l')) return;
+                const r = cont.getBoundingClientRect();
+                const cam = isR ? app.state.right : app.state.left;
+                
+                if (app.state.dragPoint && !isR) {
+                    const asp = r.width / r.height;
+                    const nx = ((clientX - r.left) / r.width - 0.5) * asp;
+                    const ny = -((clientY - r.top) / r.height - 0.5);
+                    app.state.c.x = nx / cam.z + cam.x; 
+                    app.state.c.y = ny / cam.z + cam.y;
+                    ui.updateCoords(); 
+                    app.triggerReset();
+                } else if (app.state.drag) {
+                    const dx = clientX - app.state.last.x;
+                    const dy = clientY - app.state.last.y;
+                    const asp = r.width / r.height;
+                    const factor = 1.0 / (r.height * cam.z);
+                    
+                    cam.x -= dx * factor * asp; 
+                    cam.y += dy * factor;
+                    
+                    if(app.state.mode !== 0) app.triggerReset(); // Only reset progressive renderers
+                }
+                app.state.last = {x: clientX, y: clientY};
+            };
+
+            // Mouse
+            cont.addEventListener('dblclick', () => {
+                app.state.locked = !app.state.locked; 
+                document.getElementById('lock-indicator').style.display = app.state.locked ? 'block' : 'none';
             });
-            
+            cont.addEventListener('mousedown', e => handleStart(e.clientX, e.clientY));
+            cont.addEventListener('mousemove', e => { if(app.state.drag || app.state.dragPoint) handleMove(e.clientX, e.clientY); });
+            cont.addEventListener('wheel', e => {
+                e.preventDefault(); 
+                const cam = isR ? app.state.right : app.state.left;
+                const spd = parseFloat(document.getElementById('sl-zoom').value) * 0.1; 
+                if (e.deltaY < 0) cam.z *= (1+spd); else cam.z /= (1+spd); 
+                if(app.state.mode !== 0) app.triggerReset();
+            });
+
             // Touch
-            let initDist=0, initZoom=1;
-            cont.addEventListener('touchstart', e=>{
-                if(e.touches.length===1) handleStart(e.touches[0].clientX, e.touches[0].clientY);
-                else if(e.touches.length===2) {
-                    app.state.drag=false; app.state.dragPoint=false;
+            let initDist = 0; let initZoom = 1;
+            cont.addEventListener('touchstart', e => {
+                if(e.touches.length === 1) { 
+                    handleStart(e.touches[0].clientX, e.touches[0].clientY); 
+                } else if(e.touches.length === 2) {
+                    app.state.drag = false; app.state.dragPoint = false;
                     initDist = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
                     initZoom = isR ? app.state.right.z : app.state.left.z;
                 }
-            }, {passive:false});
-            cont.addEventListener('touchmove', e=>{
+            }, {passive: false});
+
+            cont.addEventListener('touchmove', e => {
                 e.preventDefault();
-                if(e.touches.length===1 && (app.state.drag||app.state.dragPoint)) handleMove(e.touches[0].clientX, e.touches[0].clientY);
-                else if(e.touches.length===2) {
+                if(e.touches.length === 1 && (app.state.drag || app.state.dragPoint)) {
+                    handleMove(e.touches[0].clientX, e.touches[0].clientY);
+                } else if (e.touches.length === 2) {
                     const dist = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
                     const cam = isR ? app.state.right : app.state.left;
-                    cam.z = initZoom * (dist/initDist);
-                    if(app.state.mode!==0) app.triggerReset();
+                    cam.z = initZoom * (dist / initDist);
+                    if(app.state.mode !== 0) app.triggerReset();
                 }
-            }, {passive:false});
+            }, {passive: false});
         });
-        window.addEventListener('mouseup', ()=>{app.state.drag=false; app.state.dragPoint=false;});
-        window.addEventListener('touchend', ()=>{app.state.drag=false; app.state.dragPoint=false;});
+        
+        const stopDrag = () => { app.state.drag = false; app.state.dragPoint = false; };
+        window.addEventListener('mouseup', stopDrag);
+        window.addEventListener('touchend', stopDrag);
     },
-    updateCoords: () => document.getElementById('c-coords').innerText=`C: ${app.state.c.x.toFixed(4)}, ${app.state.c.y.toFixed(4)}`,
+    
+    updateCoords: () => document.getElementById('c-coords').innerText = `C: ${app.state.c.x.toFixed(4)}, ${app.state.c.y.toFixed(4)}`,
     toggleSettings: () => document.getElementById('settings-menu').classList.toggle('open'),
-    toggleModal: (s) => { document.getElementById('save-modal').style.display=s?'flex':'none'; document.getElementById('row-res').style.display=((app.state.mode===1)||(app.state.mode===2&&document.getElementById('save-view').value==='right'))?'none':'block';},
-    checkCustomRes: () => document.getElementById('custom-res-div').style.display=(document.getElementById('save-res').value==='custom')?'flex':'none',
-    updControls: () => {
-        const m = app.state.mode, s = (id,v) => { document.getElementById(id).classList.toggle('hidden',!v); document.getElementById('menu-'+id).classList.toggle('hidden',!v); };
-        s('grp-nebula',m!==0); s('grp-nebula-den', m!==0);
-        s('grp-pal', m===0); s('grp-grid', m===2);
+    toggleModal: (show) => { 
+        document.getElementById('save-modal').style.display = show ? 'flex' : 'none'; 
+        const isNeb = (app.state.mode === 1) || (app.state.mode === 2 && document.getElementById('save-view').value === 'right');
+        document.getElementById('row-res').style.display = isNeb ? 'none' : 'block';
+    },
+    checkCustomRes: () => {
+        document.getElementById('custom-res-div').style.display = (document.getElementById('save-res').value === 'custom') ? 'flex' : 'none';
+    },
+    updateControlsVisibility: () => {
+        const m = app.state.mode;
+        const s = (id, show) => { 
+            let e1 = document.getElementById(id), e2 = document.getElementById('menu-'+id);
+            if(e1) e1.classList.toggle('hidden', !show);
+            if(e2) e2.classList.toggle('hidden', !show);
+        };
+        s('grp-nebula', m !== 0); 
+        s('grp-nebula-den', m !== 0);
+        s('grp-pal', m === 0); 
+        s('grp-grid', m === 2);
     }
 };
 
