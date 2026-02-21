@@ -365,6 +365,11 @@
             <h3 style="margin-top:0; color:white; margin-bottom:15px;">Save Image</h3>
             
             <div class="control-group">
+                <label>File Name</label>
+                <input type="text" id="save-name" value="Fractal_Render" style="width:100%; box-sizing:border-box;">
+            </div>
+            
+            <div class="control-group">
                 <label>Target Window</label>
                 <select id="save-view">
                     <option value="left">Left Window</option>
@@ -710,8 +715,16 @@ class NebulaRenderer {
                 cr = (cellX + 0.5) * tileSize;
                 ci = (cellY + 0.5) * tileSize;
                 
-                zx = (Math.random() - 0.5) * 3.0;
-                zy = (Math.random() - 0.5) * 3.0;
+                // Toggled Origin-Biased Math
+                if (p.atlasMode === 1) {
+                    // Buddhabrot Emergence: Only trace points extremely close to Z=0
+                    zx = (Math.random() - 0.5) * 0.01;
+                    zy = (Math.random() - 0.5) * 0.01;
+                } else {
+                    // Uniform Cloud: Trace all points in the tile
+                    zx = (Math.random() - 0.5) * 3.0;
+                    zy = (Math.random() - 0.5) * 3.0;
+                }
                 
             } else {
                 let sr = cam.x + (Math.random()-0.5) * vw * 1.5;
@@ -905,6 +918,10 @@ const app = {
         p.b = v('nb-blu');
         p.den = v('nb-den');
         p.pal = parseInt(document.getElementById('sel-pal').value);
+        
+        // Add this line:
+        let atlasSelect = document.getElementById('sel-atlas-mode');
+        p.atlasMode = atlasSelect ? parseInt(atlasSelect.value) : 0;
     },
 
     triggerReset: function() {
@@ -951,17 +968,21 @@ const app = {
     
     updateTitles: function() {
         const m = this.state.mode;
-        let lName = "Mandelbrot";
-        let rName = "Julia Set";
         
+        // Grab the actual text from the dropdown (e.g. "Burning Ship")
         const sel = document.getElementById('sel-preset');
-        let eqName = "Custom Fractal";
-        if(sel.value === document.getElementById('inp-eq').value) {
-            eqName = sel.options[sel.selectedIndex].text.split(' (')[0];
+        let eqName = sel.options[sel.selectedIndex].text.split(' (')[0];
+        
+        // If the user typed a completely custom equation not matching the dropdown
+        if (sel.value !== document.getElementById('inp-eq').value) {
+            eqName = "Custom Equation";
         }
 
+        let lName = eqName;
+        let rName = eqName + " Julia";
+
         if(m === 0) { lName = eqName; rName = eqName + " Julia"; }
-        if(m === 1) { lName = eqName + " Nebula"; rName = eqName + " Nebula Julia"; }
+        if(m === 1) { lName = eqName + " Buddhabrot"; rName = eqName + " Nebula Julia"; }
         if(m === 2) { lName = eqName + " Atlas"; rName = "Nebula Atlas"; }
 
         document.getElementById('lbl-left').innerText = lName;
@@ -1007,7 +1028,9 @@ const app = {
                 targetCvs = ctx.cvs;
                 
                 const a = document.createElement('a');
-                a.download = `fractal_nebula_${w}x${h}.png`;
+                let fName = document.getElementById('save-name').value.trim();
+        if (!fName) fName = "Fractal_Render";
+        a.download = `${fName}.png`;
                 a.href = targetCvs.toDataURL('image/png');
                 a.click();
                 
@@ -1017,7 +1040,9 @@ const app = {
             } else {
                 targetCvs = isRight ? this.nebCtx[1].cvs : this.nebCtx[0].cvs;
                 const a = document.createElement('a');
-                a.download = `fractal_nebula_screen.png`;
+                let fName = document.getElementById('save-name').value.trim();
+        if (!fName) fName = "Fractal_Render";
+        a.download = `${fName}.png`;
                 a.href = targetCvs.toDataURL('image/png');
                 a.click();
             }
@@ -1040,7 +1065,9 @@ const app = {
             targetCvs = ctx.cvs;
             
             const a = document.createElement('a');
-            a.download = `fractal_render_${w}x${h}.png`;
+            let fName = document.getElementById('save-name').value.trim();
+        if (!fName) fName = "Fractal_Render";
+        a.download = `${fName}.png`;
             a.href = targetCvs.toDataURL('image/png');
             a.click();
             
@@ -1123,6 +1150,14 @@ const ui = {
                     <input type="number" id="${prefix}nb-grid" value="10">
                 </div>
             </div>
+
+            <div class="control-group hidden" id="${prefix}grp-atlas-mode">
+                <label>Nebula Atlas Mode</label>
+                <select id="${prefix}sel-atlas-mode">
+                    <option value="0">Uniform (Mandelbrot Cloud)</option>
+                    <option value="1">Origin-Biased (Buddhabrot Emergence)</option>
+                </select>
+            </div>
             
             <div class="control-group">
                 <label>Zoom Speed</label>
@@ -1162,7 +1197,7 @@ const ui = {
         };
         coreIds.forEach(syncHybrid);
 
-        const listIds = ['sel-preset','inp-eq','sel-pal'];
+        const listIds = ['sel-preset','inp-eq','sel-pal','sel-atlas-mode'];
         listIds.forEach(id => {
             const dEl = document.getElementById(id);
             const mEl = document.getElementById('menu-'+id);
@@ -1311,6 +1346,7 @@ const ui = {
         s('grp-nebula-den', m !== 0);
         s('grp-pal', m === 0); 
         s('grp-grid', m === 2);
+        s('grp-atlas-mode', m === 2); // Added this line
     }
 };
 
