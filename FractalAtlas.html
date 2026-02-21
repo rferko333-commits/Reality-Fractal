@@ -43,17 +43,21 @@
             z-index: 100;
         }
 
-        .app-title {
-            font-weight: 800;
-            letter-spacing: 1px;
-            font-size: 18px;
-            color: white;
-            margin: 0;
+        .header-left, .header-right {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+
+        .header-right {
+            justify-content: flex-end;
+            gap: 15px;
         }
 
         .mode-tabs {
             display: flex;
             gap: 8px;
+            justify-content: center;
         }
         
         .tab-btn {
@@ -82,7 +86,7 @@
             color: #ccc;
             font-size: 24px;
             cursor: pointer;
-            padding: 5px 10px;
+            padding: 0;
             transition: color 0.2s;
         }
         .icon-btn:hover { color: white; }
@@ -123,12 +127,13 @@
         }
 
         .cvs-cpu {
-            pointer-events: none;
+            pointer-events: none; /* Let clicks pass through to WebGL by default */
             opacity: 0;
             transition: opacity 0.2s;
             z-index: 10;
         }
 
+        /* When in Nebula mode, CPU canvas takes input and becomes visible */
         body.mode-nebula #cpu-left, 
         body.mode-nebula #cpu-right, 
         body.mode-atlas #cpu-right {
@@ -191,7 +196,9 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        /* --- DESKTOP BOTTOM CONTROLS --- */
+        /* --- CONTROLS AREA --- */
+        
+        /* Bottom Panel (Desktop) */
         #bottom-controls {
             height: 180px;
             background: var(--panel-bg);
@@ -200,7 +207,7 @@
             overflow-y: auto;
         }
 
-        /* --- MOBILE SLIDE-OUT MENU --- */
+        /* Slide-Out Menu (Mobile) */
         #settings-menu {
             position: fixed;
             top: 50px; right: 0; bottom: 0;
@@ -228,7 +235,7 @@
         /* --- CONTROL WIDGETS --- */
         .ctrl-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 15px;
             width: 100%;
         }
@@ -248,6 +255,7 @@
             letter-spacing: 0.5px;
         }
 
+        /* Hybrid Slider + Input */
         .hybrid-input {
             display: flex;
             align-items: center;
@@ -289,7 +297,7 @@
             background: #333;
             color: white;
             border: 1px solid #555;
-            padding: 10px;
+            padding: 10px 15px;
             border-radius: 4px;
             font-weight: bold;
             font-size: 12px;
@@ -301,9 +309,7 @@
         .btn-primary { background: var(--accent-color); color: black; border: none; }
         .btn-primary:hover { background: #33eebb; }
 
-        .hidden { display: none !important; }
-
-        /* Specific Threshold Colors */
+        /* Specific Colors for Thresholds */
         .lbl-red { color: #ff6b6b; }
         .lbl-green { color: #51cf66; }
         .lbl-blue { color: #339af0; }
@@ -336,7 +342,6 @@
             #bottom-controls { display: none; } /* Hide bottom panel on phone */
             #info-overlay { bottom: 10px; }
             #settings-menu { width: 85%; }
-            .app-title { display: none; } /* Hide title on small screens to fit tabs */
         }
     </style>
 </head>
@@ -344,13 +349,16 @@
 
     <!-- HEADER -->
     <header>
-        <div class="app-title">Fractal Atlas</div>
+        <div class="header-left"></div> <!-- Spacer for layout balance -->
         <div class="mode-tabs">
             <button class="tab-btn active" onclick="app.setMode(0)">FRACTALS</button>
             <button class="tab-btn" onclick="app.setMode(1)">NEBULAE</button>
             <button class="tab-btn" onclick="app.setMode(2)">ATLAS</button>
         </div>
-        <button class="icon-btn" onclick="ui.toggleSettings()">⚙️</button>
+        <div class="header-right">
+            <button class="action-btn" onclick="ui.toggleModal(true)">SAVE VIEW</button>
+            <button class="icon-btn" onclick="ui.toggleSettings()">⚙️</button>
+        </div>
     </header>
 
     <!-- MAIN INTERFACE -->
@@ -388,8 +396,11 @@
 
     <!-- Mobile Slide-Out Menu -->
     <div id="settings-menu">
-        <div class="settings-content" id="mobile-controls">
-            <!-- Injected by UI Module -->
+        <div class="settings-content">
+            <h3 style="margin-top:0; color:white; margin-bottom: 20px;">Settings</h3>
+            <div id="mobile-controls-target">
+                <!-- Injected by UI Module -->
+            </div>
         </div>
     </div>
 
@@ -409,7 +420,7 @@
             <div class="control-group" id="row-res">
                 <label>Resolution</label>
                 <select id="save-res" onchange="ui.checkCustomRes()">
-                    <option value="1">Screen Size (Instant)</option>
+                    <option value="1">Screen Size (Fast)</option>
                     <option value="2">HD (1920 x 1080)</option>
                     <option value="4">4K (3840 x 2160)</option>
                     <option value="8">8K (7680 x 4320)</option>
@@ -422,7 +433,7 @@
                     <input type="number" id="save-h" value="3000" placeholder="Height">
                 </div>
                 <p style="font-size:10px; color:#888; margin-top:10px; line-height:1.4;">
-                    Note: Nebulae/Buddhabrots save exactly what is visible on screen to preserve the progressive particle data. Let the image fully resolve before saving.
+                    Note: Nebulae/Buddhabrots save exactly what is visible on screen to preserve the progressive trajectory accumulation.
                 </p>
             </div>
 
@@ -436,6 +447,7 @@
 <script>
 /**
  * FRACTAL ATLAS - MASTER EDITION
+ * 
  * Architecture:
  * 1. Math Parser (String -> GLSL)
  * 2. WebGL GPU Renderer (Standard Fractals)
@@ -448,9 +460,9 @@
 // 1. EQUATION PARSER
 // =======================================================
 function parseEquation(eq) {
-    let s = eq.toLowerCase().replace(/\s+/g, '');
+    let s = eq.toLowerCase().replace(/\s+/g, ''); // Remove spaces
     
-    // Determine the math mode for the CPU renderer
+    // Set CPU Mode flag for the Nebula Renderer
     app.state.p.eqMode = 0; // Default
     if (s === 'z^3+c') app.state.p.eqMode = 1;
     else if (s === 'z^4+c') app.state.p.eqMode = 2;
@@ -460,7 +472,7 @@ function parseEquation(eq) {
     else if (s === 'sin(z)+c') app.state.p.eqMode = 6;
     else if (s === 'cos(z)+c') app.state.p.eqMode = 7;
     else {
-        // Detect arbitrary floating point powers for CPU
+        // Arbitrary power detection for CPU (e.g. z^7.5)
         let m = s.match(/z\^([0-9.]+)\+c/);
         if(m) {
             app.state.p.eqMode = 8;
@@ -472,12 +484,14 @@ function parseEquation(eq) {
     if(s === 'burningship') return 'vec2(abs(z.x)*abs(z.x)-abs(z.y)*abs(z.y), 2.0*abs(z.x*z.y))+c';
     if(s === 'tricorn') return 'vec2(z.x*z.x-z.y*z.y, -2.0*z.x*z.y)+c';
     
-    s = s.replace(/z\^2(?!\.)/g, 'csqr(z)'); // Optimization for standard Mandelbrot
+    // Replace powers
+    s = s.replace(/z\^2(?!\.)/g, 'csqr(z)'); // Optimize z^2
     s = s.replace(/z\^([0-9.]+)/g, (match, p1) => {
         // GLSL requires explicit decimals for floats
         return p1.includes('.') ? `cpow(z,${p1})` : `cpow(z,${p1}.0)`;
     });
     
+    // Replace trig
     s = s.replace(/sin\(z\)/g, 'csin(z)');
     s = s.replace(/cos\(z\)/g, 'ccos(z)');
     
@@ -492,9 +506,10 @@ const GL_CORE = {
         const cvs = document.getElementById(canvasId);
         const gl = cvs.getContext('webgl', {preserveDrawingBuffer: true});
         
+        // Full screen triangle vertex shader
         const vs = `attribute vec2 p; void main() { gl_Position = vec4(p, 0.0, 1.0); }`;
         
-        // Shader Header containing Math & Custom Palettes
+        // Fragment Shader Header (Math + Palettes)
         const fsHead = `
             #ifdef GL_FRAGMENT_PRECISION_HIGH
             precision highp float;
@@ -504,12 +519,14 @@ const GL_CORE = {
             
             // Math Library
             vec2 csqr(vec2 z) { return vec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y); }
+            
             vec2 cpow(vec2 z, float n) {
                 float r = length(z);
                 if(r < 0.00001) return vec2(0.0);
                 float a = atan(z.y, z.x);
                 return pow(r, n) * vec2(cos(a*n), sin(a*n));
             }
+            
             vec2 csin(vec2 z) {
                 float ey = exp(z.y); float e_y = exp(-z.y);
                 return vec2(sin(z.x)*(ey+e_y)/2.0, cos(z.x)*(ey-e_y)/2.0);
@@ -546,6 +563,7 @@ const GL_CORE = {
             }
         `;
 
+        // Fragment Shader Body (Logic)
         const fsBody = `
             uniform vec2 u_res;
             uniform vec2 u_offset;
@@ -559,6 +577,7 @@ const GL_CORE = {
             uniform int u_pal;
 
             void main() {
+                // Normalize Coordinates
                 vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / u_res.y;
                 vec2 z, c;
                 
@@ -566,6 +585,7 @@ const GL_CORE = {
                 
                 // --- MAP PROJECTION ---
                 if (isAtlas) {
+                    // WORLD SPACE GRID LOGIC
                     vec2 worldPos = uv / u_zoom + u_offset;
                     float tileSize = 4.0 / u_grid; 
                     vec2 cell = floor(worldPos / tileSize);
@@ -573,6 +593,7 @@ const GL_CORE = {
                     vec2 local = (worldPos - c) / tileSize;
                     z = local * 3.0; // Fit inside the tile
                 } else {
+                    // Standard View
                     vec2 p = uv / u_zoom + u_offset;
                     if (u_view == 1) { z = p; c = u_c; } 
                     else { z = vec2(0.0); c = p; }
@@ -585,7 +606,7 @@ const GL_CORE = {
                 for (int i = 0; i < 10000; i++) {
                     if (float(i) > u_iter) break;
                     
-                    z = {{EQ}}; // Equation injected dynamically
+                    z = {{EQ}}; // Equation injected here
                     
                     m = dot(z,z);
                     if (m > 100.0) break;
@@ -595,9 +616,10 @@ const GL_CORE = {
                 // --- COLORING ---
                 vec3 col = vec3(0.0);
                 if (m >= 100.0) {
+                    // Smooth coloring normalized
                     float sn = iter - log2(log2(m)) + 4.0;
-                    float norm_iter = sn / u_iter; // Normalize 0 to 1
-                    col = palette(norm_iter * 2.0, u_pal); // Scale for aesthetic
+                    float norm_iter = sn / u_iter; 
+                    col = palette(norm_iter * 2.0, u_pal); 
                 }
 
                 // --- OVERLAYS ---
@@ -617,9 +639,10 @@ const GL_CORE = {
                         col = vec3(0.2); // Draw thin dark grid line
                     }
                 } else if (u_view == 0) {
-                     // Draw circular dot representing C coordinate
+                     // Seed Dot (Screen Space calculation for perfect circle)
                      vec2 screen_c = (u_c - u_offset) * u_zoom;
                      float dist = distance(uv, screen_c);
+                     
                      if (dist < 0.012) col = vec3(1.0);
                      else if (dist < 0.016) col = vec3(0.0);
                 }
@@ -665,7 +688,7 @@ const GL_CORE = {
         const {gl, cvs, prog} = ctx;
         const dpr = window.devicePixelRatio || 1;
         
-        // Auto-resize canvas buffer
+        // Resize logic
         if (!state.saving) {
             const w = Math.floor(cvs.clientWidth * dpr);
             const h = Math.floor(cvs.clientHeight * dpr);
@@ -688,6 +711,7 @@ const GL_CORE = {
         u('u_c', [state.c.x, state.c.y]);
         u('u_iter', state.p.iter);
         u('u_grid', state.p.grid);
+        
         ui('u_mode', state.mode);
         ui('u_view', isRight ? 1 : 0);
         ui('u_pal', state.p.pal);
@@ -728,12 +752,13 @@ class NebulaRenderer {
         const h = this.cvs.height;
         const cam = isRight ? state.right : state.left;
         
+        // Math Bounds calculation
         const vh = 1.0 / cam.z;
         const vw = (w/h) * vh;
         const minX = cam.x - vw/2;
         const minY = cam.y - vh/2;
         
-        const batch = 25000; 
+        const batch = 30000; 
         const p = state.p;
         const max_i = p.iter;
         const trX = new Float32Array(max_i);
@@ -746,21 +771,25 @@ class NebulaRenderer {
 
         this.frames++;
 
-        // Generate Monte Carlo Trajectories
+        // --- TRAJECTORY GENERATION ---
         for(let i=0; i<batch; i++) {
             let cr, ci, zx, zy, cellX, cellY;
             
             if (isNebulaAtlas) {
-                // Determine tile based on screen UV projection
-                let uvX = (Math.random() - 0.5) * (w/h);
+                // Nebula Atlas Logic
+                let asp = w/h;
+                let uvX = (Math.random() - 0.5) * asp;
                 let uvY = (Math.random() - 0.5); 
-                let worldX = cam.x + uvX * vh;
-                let worldY = cam.y + uvY * vh;
+                
+                // Identify grid cell based on screen UV mapped to world
+                let worldX = cam.x + uvX * (1.0/cam.z);
+                let worldY = cam.y + uvY * (1.0/cam.z);
                 let tileSize = 4.0 / grid;
                 
                 cellX = Math.floor(worldX / tileSize);
                 cellY = Math.floor(worldY / tileSize);
                 
+                // Center C for this tile
                 cr = (cellX + 0.5) * tileSize;
                 ci = (cellY + 0.5) * tileSize;
                 
@@ -769,8 +798,10 @@ class NebulaRenderer {
                 zy = (Math.random() - 0.5) * 3.0;
                 
             } else {
+                // Standard Logic
                 let sr = cam.x + (Math.random()-0.5) * vw * 1.5;
                 let si = cam.y + (Math.random()-0.5) * vh * 1.5;
+                
                 cr = isRight ? state.c.x : sr;
                 ci = isRight ? state.c.y : si;
                 zx = isRight ? sr : 0.0;
@@ -781,19 +812,20 @@ class NebulaRenderer {
             let esc = false;
             let d_min = 1000.0;
             
-            // Equation Loop (CPU Equivalent)
+            // Equation Loop
             while(step < max_i) {
                 trX[step] = zx; trY[step] = zy;
                 let nx, ny;
                 
-                if(eqm === 0) { nx = zx*zx-zy*zy+cr; ny = 2.0*zx*zy+ci; } 
-                else if(eqm === 1) { nx = zx*zx*zx - 3.0*zx*zy*zy + cr; ny = 3.0*zx*zx*zy - zy*zy*zy + ci; } 
-                else if(eqm === 2) { nx = zx*zx*zx*zx - 6.0*zx*zx*zy*zy + zy*zy*zy*zy + cr; ny = 4.0*zx*zx*zx*zy - 4.0*zx*zy*zy*zy + ci; } 
-                else if(eqm === 3) { let r2=zx*zx+zy*zy; let r4=r2*r2; let r5=r4*Math.sqrt(r2); let a=Math.atan2(zy,zx)*5.0; nx=r5*Math.cos(a)+cr; ny=r5*Math.sin(a)+ci; } 
-                else if(eqm === 4) { nx = zx*zx-zy*zy+cr; ny = 2.0*Math.abs(zx*zy)+ci; } 
-                else if(eqm === 5) { nx = zx*zx-zy*zy+cr; ny = -2.0*zx*zy+ci; } 
-                else if(eqm === 6) { let ey=Math.exp(zy), e_y=Math.exp(-zy); nx=Math.sin(zx)*(ey+e_y)/2+cr; ny=Math.cos(zx)*(ey-e_y)/2+ci; } 
-                else if(eqm === 7) { let ey=Math.exp(zy), e_y=Math.exp(-zy); nx=Math.cos(zx)*(ey+e_y)/2+cr; ny=-Math.sin(zx)*(ey-e_y)/2+ci; } 
+                // Optimized Unrolled Math for CPU speed
+                if(eqm === 0) { nx = zx*zx-zy*zy+cr; ny = 2.0*zx*zy+ci; } // z^2
+                else if(eqm === 1) { nx = zx*zx*zx - 3.0*zx*zy*zy + cr; ny = 3.0*zx*zx*zy - zy*zy*zy + ci; } // z^3
+                else if(eqm === 2) { nx = zx*zx*zx*zx - 6.0*zx*zx*zy*zy + zy*zy*zy*zy + cr; ny = 4.0*zx*zx*zx*zy - 4.0*zx*zy*zy*zy + ci; } // z^4
+                else if(eqm === 3) { let r2=zx*zx+zy*zy; let r4=r2*r2; let r5=r4*Math.sqrt(r2); let a=Math.atan2(zy,zx)*5.0; nx=r5*Math.cos(a)+cr; ny=r5*Math.sin(a)+ci; } // z^5
+                else if(eqm === 4) { nx = zx*zx-zy*zy+cr; ny = 2.0*Math.abs(zx*zy)+ci; } // Burning Ship
+                else if(eqm === 5) { nx = zx*zx-zy*zy+cr; ny = -2.0*zx*zy+ci; } // Tricorn
+                else if(eqm === 6) { let ey=Math.exp(zy), e_y=Math.exp(-zy); nx=Math.sin(zx)*(ey+e_y)/2+cr; ny=Math.cos(zx)*(ey-e_y)/2+ci; } // sin
+                else if(eqm === 7) { let ey=Math.exp(zy), e_y=Math.exp(-zy); nx=Math.cos(zx)*(ey+e_y)/2+cr; ny=-Math.sin(zx)*(ey-e_y)/2+ci; } // cos
                 else if(eqm === 8) { let r=Math.sqrt(zx*zx+zy*zy); let a=Math.atan2(zy,zx); let rn=Math.pow(r,cp); nx=rn*Math.cos(a*cp)+cr; ny=rn*Math.sin(a*cp)+ci; } 
                 else { nx = zx*zx-zy*zy+cr; ny = 2.0*zx*zy+ci; } 
                 
@@ -804,27 +836,30 @@ class NebulaRenderer {
                 step++;
             }
             
-            // Trace Accumulation (Only if escaped!)
+            // Plot Trajectory
             if(esc && step > 0) {
-                // Intensity is inversely proportional to closest approach to origin
                 let glow = Math.exp(-d_min * 10.0); 
                 
                 for(let s=0; s<step; s++) {
                     let px, py;
                     
                     if (isNebulaAtlas) {
+                        // Nebula Atlas Projection
                         let tileSize = 4.0 / grid;
                         let wx = (cellX + 0.5) * tileSize + (trX[s] / 3.0) * tileSize;
                         let wy = (cellY + 0.5) * tileSize + (trY[s] / 3.0) * tileSize;
+                        
                         px = Math.floor((wx - minX) / vw * w);
                         py = Math.floor((wy - minY) / vh * h);
+                        
                     } else {
+                        // Standard Projection
                         px = Math.floor((trX[s] - minX) / vw * w);
                         py = Math.floor((trY[s] - minY) / vh * h);
                     }
                     
                     if(px>=0 && px<w && py>=0 && py<h) {
-                        let idx = ((h - 1 - py) * w + px) * 3; // Y-invert
+                        let idx = ((h - 1 - py) * w + px) * 3; // Invert Y
                         if(step > p.r) this.hist[idx] += glow; 
                         if(step > p.g) this.hist[idx+1] += glow; 
                         if(step > p.b) this.hist[idx+2] += glow; 
@@ -833,11 +868,10 @@ class NebulaRenderer {
             }
         }
         
-        // Draw to Image Data
+        // --- TONE MAPPING & DISPLAY ---
         const data = this.imgData.data;
         const len = w * h * 3;
         
-        // Base gain calculation to prevent blowing out early frames
         const baseGain = isRight ? 20.0 : 800.0; 
         const safeFrames = Math.max(1, this.frames);
         const scale = (p.den * baseGain) / safeFrames;
@@ -880,9 +914,10 @@ class NebulaRenderer {
                 data[j++] = 255;
             }
         }
+
         this.ctx.putImageData(this.imgData, 0, 0);
         
-        // Draw White Dot
+        // Draw White Seed Dot on CPU Canvas
         if(!isRight && state.mode !== 2) {
             const sx = (state.c.x - cam.x) / vw * w + (w/2);
             const sy = -(state.c.y - cam.y) / vh * h + (h/2); 
@@ -905,7 +940,11 @@ const app = {
         c: {x: -0.76, y: 0.12},
         left: {x: -0.5, y: 0.0, z: 1.0},
         right: {x: 0.0, y: 0.0, z: 1.0},
-        p: { eqMode: 0, customPow: 2, iter: 300, grid: 10, pal: 0, den: 1.5, r: 200, g: 100, b: 50 },
+        p: { 
+            eqMode: 0, customPow: 2, 
+            iter: 300, grid: 10, pal: 0, 
+            den: 1.5, r: 200, g: 100, b: 50 
+        },
         drag: false, dragPoint: false, active: null, last: {x:0, y:0}
     },
     glCtx: [], nebCtx: [],
@@ -920,6 +959,7 @@ const app = {
 
     loadPreset: function() {
         document.getElementById('inp-eq').value = document.getElementById('sel-preset').value;
+        document.getElementById('menu-inp-eq').value = document.getElementById('sel-preset').value;
         this.compile();
     },
 
@@ -947,14 +987,15 @@ const app = {
     },
 
     updateParams: function() {
+        // Read directly from the number inputs to avoid floating point slider bugs
         const v = id => parseFloat(document.getElementById(id).value);
         const p = this.state.p;
-        p.iter = v('sl-iter');
-        p.grid = v('sl-grid');
-        p.r = v('sl-red');
-        p.g = v('sl-grn');
-        p.b = v('sl-blu');
-        p.den = v('sl-den');
+        p.iter = v('nb-iter');
+        p.grid = v('nb-grid');
+        p.r = v('nb-red');
+        p.g = v('nb-grn');
+        p.b = v('nb-blu');
+        p.den = v('nb-den');
         p.pal = parseInt(document.getElementById('sel-pal').value);
     },
 
@@ -995,12 +1036,6 @@ const app = {
         document.getElementById('lbl-left').innerText=l;
         document.getElementById('lbl-right').innerText=r;
         
-        // Visibility Flags
-        document.getElementById('cpu-left').style.opacity = (m === 1) ? '1' : '0';
-        document.getElementById('cpu-left').style.pointerEvents = (m === 1) ? 'auto' : 'none';
-        document.getElementById('cpu-right').style.opacity = (m === 1 || m === 2) ? '1' : '0';
-        document.getElementById('cpu-right').style.pointerEvents = (m === 1 || m === 2) ? 'auto' : 'none';
-
         ui.updateControlsVisibility();
         this.triggerReset();
     },
@@ -1154,12 +1189,12 @@ const ui = {
             const els = [
                 document.getElementById(`sl-${idBase}`), document.getElementById(`nb-${idBase}`),
                 document.getElementById(`menu-sl-${idBase}`), document.getElementById(`menu-nb-${idBase}`)
-            ].filter(e => e); // remove nulls
+            ].filter(e => e !== null);
             
             els.forEach(el => {
-                el.addEventListener('input', () => {
-                    let val = el.value;
-                    els.forEach(e => { if(e !== el) e.value = val; });
+                el.addEventListener('input', (e) => {
+                    let val = e.target.value;
+                    els.forEach(target => { if (target !== e.target) target.value = val; });
                     app.updateParams();
                     app.triggerReset();
                 });
@@ -1217,15 +1252,13 @@ const ui = {
                     const wx = nx / cam.z + cam.x;
                     const wy = ny / cam.z + cam.y;
                     
-                    // Hit box size
                     const dist = Math.hypot(wx - app.state.c.x, wy - app.state.c.y) * cam.z * r.height;
-                    if (dist < 40) { // Large hit area for touch
+                    if (dist < 40) { 
                         app.state.dragPoint = true; 
                         app.state.drag = false; 
                         return; 
                     }
                     
-                    // Click to teleport dot
                     app.state.c.x = wx; app.state.c.y = wy; 
                     ui.updateCoords(); 
                     app.triggerReset();
@@ -1254,7 +1287,7 @@ const ui = {
                     cam.x -= dx * factor * asp; 
                     cam.y += dy * factor;
                     
-                    if(app.state.mode !== 0) app.triggerReset(); // Only reset progressive renderers
+                    if(app.state.mode !== 0) app.triggerReset(); 
                 }
                 app.state.last = {x: clientX, y: clientY};
             };
@@ -1269,7 +1302,9 @@ const ui = {
             cont.addEventListener('wheel', e => {
                 e.preventDefault(); 
                 const cam = isR ? app.state.right : app.state.left;
-                const spd = parseFloat(document.getElementById('sl-zoom').value) * 0.1; 
+                
+                // Get zoom value directly from input box for accuracy
+                const spd = parseFloat(document.getElementById('nb-zoom').value) * 0.1; 
                 if (e.deltaY < 0) cam.z *= (1+spd); else cam.z /= (1+spd); 
                 if(app.state.mode !== 0) app.triggerReset();
             });
@@ -1316,10 +1351,10 @@ const ui = {
     },
     updateControlsVisibility: () => {
         const m = app.state.mode;
-        const s = (id, show) => { 
+        const s = (id, isVisible) => { 
             let e1 = document.getElementById(id), e2 = document.getElementById('menu-'+id);
-            if(e1) e1.classList.toggle('hidden', !show);
-            if(e2) e2.classList.toggle('hidden', !show);
+            if(e1) e1.style.display = isVisible ? 'flex' : 'none';
+            if(e2) e2.style.display = isVisible ? 'flex' : 'none';
         };
         s('grp-nebula', m !== 0); 
         s('grp-nebula-den', m !== 0);
