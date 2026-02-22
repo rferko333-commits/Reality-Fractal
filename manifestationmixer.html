@@ -81,7 +81,7 @@
         </div>
 
         <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-            <button id="btnTestMic" class="btn-test">🎤 Test Mic (Hold)</button>
+            <button id="btnTestMic" class="btn-test">🎤 Test Mic</button>
             <div style="font-size: 0.8em; color: #94a3b8; align-self: center;">(Hold to check levels)</div>
         </div>
 
@@ -101,7 +101,7 @@
 
     <!-- 2. Binaural Generator & Sequencer -->
     <div class="panel">
-        <h2>2. Binaural Brainwave Engine</h2>
+        <h2>2. Binaural Beats Engine</h2>
         <div class="control-group">
             <label>Load Preset</label>
             <select id="presetSelect" onchange="applyPreset()">
@@ -113,7 +113,7 @@
                     <option value="schumann4">27.3Hz (Harmonic 4)</option>
                     <option value="schumann5">33.8Hz (Harmonic 5)</option>
                 </optgroup>
-                <optgroup label="Brainwaves">
+                <optgroup label="Binaural Beats">
                     <option value="delta">Delta (Deep Sleep - 2Hz)</option>
                     <option value="theta">Theta (Meditation - 6Hz)</option>
                     <option value="alpha">Alpha (Relaxation - 10Hz)</option>
@@ -121,9 +121,16 @@
                     <option value="gamma">Gamma (High Energy - 40Hz)</option>
                 </optgroup>
                 <optgroup label="Solfeggio (Pure Tones)">
-                    <option value="528">528Hz (Miracles)</option>
-                    <option value="417">417Hz (Wipe Negativity)</option>
+                    <option value="174">174Hz (Heal Pain)</option>
+                    <option value="285">285Hz (Rejuvenate)</option>
                     <option value="396">396Hz (Remove Fear)</option>
+                    <option value="417">417Hz (Wipe Negativity)</option>
+                    <option value="528">528Hz (Confidence/Miracles)</option>
+                    <option value="639">639Hz (Love)</option>
+                    <option value="741">741Hz (Problem solving)</option>
+                    <option value="852">852Hz (Intuition)</option>
+                    <option value="963">963Hz (Enlightenment)</option>
+                    
                 </optgroup>
             </select>
         </div>
@@ -145,7 +152,7 @@
         <hr style="border-color: #334155; margin: 15px 0;">
         
         <h3 style="font-size: 1rem; color: var(--accent); margin-bottom: 5px;">3. Frequency Sequencer</h3>
-        <p style="font-size:0.8em; color:#94a3b8;">Create a frequency journey. Applied during Render.</p>
+        <p style="font-size:0.8em; color:#94a3b8;">Create a frequency sequence. Applied during Render.</p>
         
         <div class="seq-controls" style="background:#0f172a; padding:10px; border-radius:6px; align-items:center;">
             <label style="width:auto;">Target Hz:</label>
@@ -214,7 +221,7 @@
                 
                 <div class="checkbox-wrapper" style="margin-bottom: 10px; justify-content: center; background: transparent;">
                     <input type="checkbox" id="lowQuality">
-                    <label for="lowQuality" style="width:auto; cursor:pointer;">Low Quality (Smaller File)</label>
+                    <label for="lowQuality" style="width:auto; cursor:pointer;">Lower Quality (Smaller File)</label>
                 </div>
 
                 <button id="btnRender" onclick="startOfflineRender()" style="width: 100%; padding: 15px; background: var(--success);">⚡ Render & Download</button>
@@ -228,7 +235,7 @@
         <h2>Frequency Guide</h2>
         <div class="info-box">
             <div>
-                <strong>🧠 Brainwaves</strong><br>
+                <strong>🧠 Binaural Beats</strong><br>
                 <ul style="padding-left: 20px; margin-top: 5px;">
                     <li><strong>Delta (1-4Hz):</strong> Deep Healing</li>
                     <li><strong>Theta (4-8Hz):</strong> Meditation</li>
