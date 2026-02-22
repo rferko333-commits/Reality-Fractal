@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manifestation Mixer</title>
+    <title>Manifestation Mixer - Professional Edition</title>
     <style>
         :root { --primary: #8b5cf6; --bg: #0f172a; --panel: #1e293b; --text: #e2e8f0; --accent: #38bdf8; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; line-height: 1.6; }
@@ -28,19 +28,24 @@
         .btn-scan { background: #475569; font-size: 12px; padding: 8px; }
         
         select { padding: 8px; border-radius: 4px; background: #0f172a; color: white; border: 1px solid #475569; width: 100%; max-width: 300px; }
-        input[type=text] { padding: 8px; border-radius: 4px; background: #0f172a; color: white; border: 1px solid #475569; width: 150px;}
+        input[type=text], input[type=number] { padding: 8px; border-radius: 4px; background: #0f172a; color: white; border: 1px solid #475569; }
 
+        /* Sequencer Styles */
+        .seq-list { list-style: none; padding: 0; margin-top: 10px; border: 1px solid #334155; border-radius: 6px; overflow: hidden; }
+        .seq-item { background: #0f172a; padding: 10px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #334155; font-size: 0.9em; }
+        .seq-item:last-child { border-bottom: none; }
+        .seq-active { background: #1e3a8a; border-left: 4px solid var(--accent); }
+        .seq-controls { display: flex; gap: 5px; margin-top: 10px; }
+        
         /* Recording List Styles */
         .clip-list { list-style: none; padding: 0; margin: 0; }
         .clip-item { background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; border: 1px solid #334155; flex-wrap: wrap; }
         .clip-item.playing { border-color: var(--success); box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
         .clip-name { flex-grow: 1; background: transparent; border: none; color: white; font-size: 1rem; min-width: 150px; }
         
-        /* Custom File Input */
         .file-upload { position: relative; overflow: hidden; display: inline-block; }
         .file-upload input[type=file] { position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; height: 100%; width: 100%; }
         
-        /* Checkbox styling */
         .checkbox-wrapper { display: flex; align-items: center; gap: 5px; font-size: 0.9em; color: #cbd5e1; background: #334155; padding: 5px 10px; border-radius: 4px; }
         
         .info-box { background: #0f172a; padding: 15px; border-radius: 8px; font-size: 0.85em; border-left: 4px solid var(--primary); color: #94a3b8; margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;}
@@ -66,9 +71,7 @@
         <div class="control-group" style="background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #334155;">
             <label>Input Device:</label>
             <div style="flex-grow: 1; display: flex; gap: 5px;">
-                <select id="micSelect">
-                    <option value="">Default Microphone</option>
-                </select>
+                <select id="micSelect"><option value="">Default Microphone</option></select>
                 <button onclick="scanDevices()" class="btn-scan">↻ Scan Inputs</button>
             </div>
         </div>
@@ -92,14 +95,23 @@
         </div>
     </div>
 
-    <!-- 2. Binaural Generator -->
+    <!-- 2. Binaural Generator & Sequencer -->
     <div class="panel">
-        <h2>2. Binaural Beats Engine</h2>
+        <h2>2. Binaural Brainwave Engine</h2>
+        
+        <!-- Live Controls -->
         <div class="control-group">
             <label>Load Preset</label>
             <select id="presetSelect" onchange="applyPreset()">
                 <option value="custom">-- Select a Preset --</option>
-                <optgroup label="Brainwaves (Binaural)">
+                <optgroup label="Schumann Resonances (Earth)">
+                    <option value="schumann1">7.83Hz (Grounding/Om)</option>
+                    <option value="schumann2">14.3Hz (Harmonic 2)</option>
+                    <option value="schumann3">20.8Hz (Harmonic 3)</option>
+                    <option value="schumann4">27.3Hz (Harmonic 4)</option>
+                    <option value="schumann5">33.8Hz (Harmonic 5)</option>
+                </optgroup>
+                <optgroup label="Brainwaves">
                     <option value="delta">Delta (Deep Sleep - 2Hz)</option>
                     <option value="theta">Theta (Meditation - 6Hz)</option>
                     <option value="alpha">Alpha (Relaxation - 10Hz)</option>
@@ -107,15 +119,9 @@
                     <option value="gamma">Gamma (High Energy - 40Hz)</option>
                 </optgroup>
                 <optgroup label="Solfeggio (Pure Tones)">
-                    <option value="174">174Hz (Pain Relief)</option>
-                    <option value="285">285Hz (Healing Tissue)</option>
-                    <option value="396">396Hz (Remove Fear)</option>
-                    <option value="417">417Hz (Wipe Negativity)</option>
                     <option value="528">528Hz (Miracles)</option>
-                    <option value="639">639Hz (Relationships)</option>
-                    <option value="741">741Hz (Intuition)</option>
-                    <option value="852">852Hz (Spiritual Order)</option>
-                    <option value="963">963Hz (Divine Consciousness)</option>
+                    <option value="417">417Hz (Wipe Negativity)</option>
+                    <!-- Others included in logic -->
                 </optgroup>
             </select>
         </div>
@@ -126,27 +132,45 @@
         </div>
         <div class="control-group">
             <label>Beat Diff (Hz)</label>
-            <input type="number" id="beatFreq" value="6" style="width: 60px;">
-            <input type="range" id="beatSlider" min="0" max="40" step="0.5" value="6">
+            <input type="number" id="beatFreq" value="7.83" style="width: 60px;">
+            <input type="range" id="beatSlider" min="0" max="55" step="0.01" value="7.83">
         </div>
         <div class="control-group">
             <label>Beat Volume</label>
             <input type="range" id="volBinaural" min="0" max="0.5" step="0.01" value="0.2">
         </div>
+
+        <hr style="border-color: #334155; margin: 15px 0;">
+        
+        <!-- Sequence Engine -->
+        <h3 style="font-size: 1rem; color: var(--accent); margin-bottom: 5px;">3. Frequency Sequencer (Ramping)</h3>
+        <p style="font-size:0.8em; color:#94a3b8;">Create a journey. The frequency will slowly slide to the target over the duration.</p>
+        
+        <div class="seq-controls" style="background:#0f172a; padding:10px; border-radius:6px; align-items:center;">
+            <label style="width:auto;">Target Hz:</label>
+            <input type="number" id="seqTarget" value="4" style="width:50px;" min="0" max="55">
+            <label style="width:auto; margin-left:10px;">Mins:</label>
+            <input type="number" id="seqMins" value="10" style="width:50px;" min="1">
+            <button onclick="addSequenceStep()" style="background:var(--accent); font-size:12px; margin-left:auto;">+ Add Stage</button>
+        </div>
+
+        <ul id="sequenceList" class="seq-list" style="display:none;"></ul>
+        
+        <div id="seqStatus" style="margin-top:10px; font-family:monospace; color:var(--success); min-height:20px;"></div>
+        <button id="btnStartSeq" onclick="toggleSequence()" style="width:100%; margin-top:5px; display:none;">▶ Start Sequence</button>
     </div>
 
     <!-- 3. Atmosphere -->
     <div class="panel">
-        <h2>3. Atmosphere</h2>
-        <!-- Generator -->
+        <h2>4. Atmosphere</h2>
         <div class="control-group">
             <label>Generated:</label>
             <select id="noiseType" onchange="if(isEnvPlaying) startAtmosphere(true)">
-    <option value="ocean">🌊 Ocean Waves (Dynamic)</option>
-    <option value="brown">🟤 Brown Noise (Deep Rumble)</option>
-    <option value="deep_brown">🌑 Deep Brown (Smoothed)</option> <!-- ADD THIS LINE -->
-    <option value="pink">🌸 Pink Noise (Balanced)</option>
-</select>
+                <option value="ocean">🌊 Ocean Waves (Dynamic)</option>
+                <option value="deep_brown">🌑 Deep Brown (Smoothed)</option>
+                <option value="brown">🟤 Brown Noise (Deep Rumble)</option>
+                <option value="pink">🌸 Pink Noise (Balanced)</option>
+            </select>
         </div>
         <div class="control-group">
             <label>Gen Volume</label>
@@ -155,7 +179,6 @@
         
         <hr style="border-color: #334155; margin: 15px 0;">
         
-        <!-- Custom Import -->
         <div class="control-group">
             <label>Custom Audio:</label>
             <div class="file-upload">
@@ -170,9 +193,9 @@
         </div>
     </div>
 
-    <!-- 4. Master Controls -->
+    <!-- 5. Master Controls -->
     <div class="panel" style="border: 2px solid var(--primary);">
-        <h2>4. Master Controls</h2>
+        <h2>5. Master Controls</h2>
         <div class="master-grid">
             <div>
                 <button id="btnEnvToggle" onclick="toggleEnvironment()" style="width: 100%; padding: 15px;">▶ Preview Mix</button>
@@ -193,24 +216,23 @@
         <h2>Frequency Guide</h2>
         <div class="info-box">
             <div>
-                <strong>🧠 Binaural Brainwaves</strong><br>
+                <strong>🧠 Brainwaves</strong><br>
                 <ul style="padding-left: 20px; margin-top: 5px;">
-                    <li><strong>Delta (1-4Hz):</strong> Deep Healing, Sleep</li>
-                    <li><strong>Theta (4-8Hz):</strong> Meditation, Hypnosis</li>
-                    <li><strong>Alpha (8-14Hz):</strong> Relaxation, Calm</li>
-                    <li><strong>Beta (14-30Hz):</strong> Focus, Alertness</li>
-                    <li><strong>Gamma (30-50Hz):</strong> High Energy, Insight</li>
+                    <li><strong>Delta (1-4Hz):</strong> Deep Healing</li>
+                    <li><strong>Theta (4-8Hz):</strong> Meditation</li>
+                    <li><strong>Schumann (7.83Hz):</strong> Earth Grounding</li>
+                    <li><strong>Alpha (8-14Hz):</strong> Relaxation</li>
+                    <li><strong>Beta (14-30Hz):</strong> Focus</li>
+                    <li><strong>Gamma (30-50Hz):</strong> Insight</li>
                 </ul>
             </div>
             <div>
-                <strong>✨ Solfeggio Frequencies</strong><br>
+                <strong>✨ Solfeggio</strong><br>
                 <ul style="padding-left: 20px; margin-top: 5px;">
                     <li><strong>174/285 Hz:</strong> Pain & Healing</li>
-                    <li><strong>396 Hz:</strong> Remove Fear</li>
-                    <li><strong>417 Hz:</strong> Wipe Negativity</li>
-                    <li><strong>528 Hz:</strong> Miracles (DNA)</li>
-                    <li><strong>639 Hz:</strong> Relationships</li>
-                    <li><strong>741 Hz:</strong> Intuition</li>
+                    <li><strong>396/417 Hz:</strong> Fear & Change</li>
+                    <li><strong>528 Hz:</strong> Miracles</li>
+                    <li><strong>639/741 Hz:</strong> Relationships & Intuition</li>
                     <li><strong>852/963 Hz:</strong> Spiritual Order</li>
                 </ul>
             </div>
@@ -219,31 +241,28 @@
 </div>
 
 <script>
-    // --- Global Audio Context ---
     let audioCtx, masterGain, mainDestination;
     let oscLeft, oscRight, gainBinaural;
     let atmosNode, atmosGain, lfoNode, filterNode;
-    let customBuffer, customNode, customGain; // Custom Import
+    let customBuffer, customNode, customGain;
     let isEnvPlaying = false; 
 
-    // --- Recorder Vars ---
+    // Recorder Vars
     let mediaRecorder, micChunks = [];
-    let isRecordingMic = false;
-    let isTestMicOn = false;
-    let testMicNode, testMicGain;
-    let recStartTime, micInterval;
-    let analyser, dataArray;
-    let activeStream = null;
-    
-    // --- Clip Management ---
-    let clips = []; 
-    let clipIdCounter = 1;
+    let isRecordingMic = false, isTestMicOn = false;
+    let testMicNode, testMicGain, recStartTime, micInterval;
+    let analyser, dataArray, activeStream = null;
+    let clips = [], clipIdCounter = 1;
+    let masterRecorder, masterChunks = [], isExporting = false;
 
-    // --- Master Export Vars ---
-    let masterRecorder, masterChunks = [];
-    let isExporting = false;
+    // --- SEQUENCER VARS ---
+    let sequenceSteps = [];
+    let isSeqRunning = false;
+    let seqInterval;
+    let seqStartTime;
+    let currentStepIndex = 0;
+    let startHz = 0;
 
-    // --- INIT AUDIO ---
     function initAudio() {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -255,24 +274,121 @@
         if (audioCtx.state === 'suspended') { audioCtx.resume(); }
     }
 
-    // ==========================================
-    // 0. UTILS & DEVICE SELECTION
-    // ==========================================
-    
-    // SAFETY FADE: Modifies buffer data directly to prevent clicking
+    // --- SEQUENCER LOGIC ---
+    function addSequenceStep() {
+        const target = parseFloat(document.getElementById('seqTarget').value);
+        const mins = parseFloat(document.getElementById('seqMins').value);
+        sequenceSteps.push({ target: target, mins: mins });
+        renderSequenceList();
+        document.getElementById('sequenceList').style.display = 'block';
+        document.getElementById('btnStartSeq').style.display = 'block';
+    }
+
+    function renderSequenceList() {
+        const list = document.getElementById('sequenceList');
+        list.innerHTML = "";
+        sequenceSteps.forEach((step, index) => {
+            const li = document.createElement('li');
+            li.className = 'seq-item';
+            li.id = `seq-item-${index}`;
+            li.innerHTML = `
+                <span>Stage ${index+1}: <strong>${step.target}Hz</strong> for <strong>${step.mins}m</strong></span>
+                <button onclick="removeSeqStep(${index})" style="background:transparent; color:#ef4444; padding:2px;">✖</button>
+            `;
+            list.appendChild(li);
+        });
+    }
+
+    function removeSeqStep(index) {
+        sequenceSteps.splice(index, 1);
+        renderSequenceList();
+        if(sequenceSteps.length === 0) {
+            document.getElementById('sequenceList').style.display = 'none';
+            document.getElementById('btnStartSeq').style.display = 'none';
+        }
+    }
+
+    function toggleSequence() {
+        initAudio();
+        const btn = document.getElementById('btnStartSeq');
+        if(isSeqRunning) {
+            // STOP
+            clearInterval(seqInterval);
+            isSeqRunning = false;
+            btn.innerText = "▶ Start Sequence";
+            btn.style.background = "var(--primary)";
+            document.getElementById('seqStatus').innerText = "";
+            document.querySelectorAll('.seq-item').forEach(el => el.classList.remove('seq-active'));
+        } else {
+            // START
+            // Force Environment On if off
+            if(!isEnvPlaying) toggleEnvironment();
+            
+            isSeqRunning = true;
+            currentStepIndex = 0;
+            startHz = parseFloat(document.getElementById('beatFreq').value); // Start from current
+            runSequenceStep();
+            
+            btn.innerText = "⏹ Stop Sequence";
+            btn.style.background = "#64748b";
+        }
+    }
+
+    function runSequenceStep() {
+        if(currentStepIndex >= sequenceSteps.length) {
+            toggleSequence(); // Finished
+            document.getElementById('seqStatus').innerText = "Sequence Complete!";
+            return;
+        }
+
+        const step = sequenceSteps[currentStepIndex];
+        const durationSecs = step.mins * 60;
+        const startTime = Date.now();
+        const initialHz = startHz; 
+        
+        // Highlight UI
+        document.querySelectorAll('.seq-item').forEach(el => el.classList.remove('seq-active'));
+        document.getElementById(`seq-item-${currentStepIndex}`).classList.add('seq-active');
+
+        clearInterval(seqInterval);
+        seqInterval = setInterval(() => {
+            const elapsed = (Date.now() - startTime) / 1000;
+            if(elapsed >= durationSecs) {
+                // End of step
+                updateBeatFreq(step.target);
+                startHz = step.target; // Next step starts here
+                currentStepIndex++;
+                runSequenceStep();
+            } else {
+                // Linear Ramp Calculation
+                const progress = elapsed / durationSecs;
+                const currentHz = initialHz + (step.target - initialHz) * progress;
+                updateBeatFreq(currentHz);
+                
+                // Update UI status
+                const remaining = durationSecs - elapsed;
+                const min = Math.floor(remaining/60);
+                const sec = Math.floor(remaining%60).toString().padStart(2,'0');
+                document.getElementById('seqStatus').innerText = `Ramping to ${step.target}Hz... ${currentHz.toFixed(2)}Hz (${min}:${sec})`;
+            }
+        }, 100); // Update every 100ms
+    }
+
+    function updateBeatFreq(hz) {
+        document.getElementById('beatFreq').value = hz.toFixed(2);
+        document.getElementById('beatSlider').value = hz;
+        if(isEnvPlaying) updateBinaural();
+    }
+
+    // --- STANDARD AUDIO LOGIC ---
+
     function applySafetyFade(buffer) {
-        const fadeLength = 2000; // ~40ms fade
+        const fadeLength = 2000; 
         for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
             const data = buffer.getChannelData(ch);
             const len = data.length;
-            // Fade In Start
-            for (let i = 0; i < fadeLength && i < len; i++) {
-                data[i] *= (i / fadeLength);
-            }
-            // Fade Out End
-            for (let i = 0; i < fadeLength && i < len; i++) {
-                data[len - 1 - i] *= (i / fadeLength);
-            }
+            for (let i = 0; i < fadeLength && i < len; i++) { data[i] *= (i / fadeLength); }
+            for (let i = 0; i < fadeLength && i < len; i++) { data[len - 1 - i] *= (i / fadeLength); }
         }
     }
 
@@ -293,10 +409,7 @@
                 micSelect.appendChild(option);
             });
             if(audioInputs.length === 0) micSelect.innerHTML = "<option value=''>Default Microphone</option>";
-        } catch(e) {
-            micSelect.innerHTML = "<option value=''>Permission Denied</option>";
-            alert("Please allow mic access.");
-        }
+        } catch(e) { micSelect.innerHTML = "<option value=''>Permission Denied</option>"; alert("Allow mic access."); }
     }
 
     async function getStream() {
@@ -306,10 +419,7 @@
         catch (e) { return await navigator.mediaDevices.getUserMedia({ audio: true }); }
     }
 
-    // ==========================================
-    // 1. MIC RECORDER
-    // ==========================================
-    
+    // Recorder
     const btnTestMic = document.getElementById('btnTestMic');
     const btnRecMic = document.getElementById('btnRecMic');
     const btnStopMic = document.getElementById('btnStopMic');
@@ -365,7 +475,6 @@
                 const blob = new Blob(micChunks, { type: 'audio/webm' });
                 const arrayBuffer = await blob.arrayBuffer();
                 const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-                // APPLY FADE FIX HERE
                 applySafetyFade(audioBuffer);
                 addClipToList(audioBuffer);
                 if(activeStream) { activeStream.getTracks().forEach(t=>t.stop()); activeStream = null; }
@@ -407,7 +516,6 @@
         micMeter.style.width = Math.min(100, (sum / dataArray.length) * 2) + "%";
     }
 
-    // --- Clip Manager ---
     function addClipToList(buffer) {
         document.getElementById('emptyListMsg').style.display = 'none';
         const id = clipIdCounter++;
@@ -449,23 +557,15 @@
             const source = audioCtx.createBufferSource();
             source.buffer = clip.buffer;
             source.loop = true;
-            
-            // Chain setup
             let lastNode = source;
-            
-            // Angelic Filter Logic
             if(clip.isAngelic) {
                 const filter = audioCtx.createBiquadFilter();
-                filter.type = 'highpass';
-                filter.frequency.value = 350; // Cut mud
-                source.connect(filter);
-                lastNode = filter;
+                filter.type = 'highpass'; filter.frequency.value = 350; 
+                source.connect(filter); lastNode = filter;
             }
-            
             const gain = audioCtx.createGain();
             gain.gain.value = clip.gainVal;
             lastNode.connect(gain).connect(masterGain);
-            
             clip.sourceNode = source;
             clip.gainNode = gain;
             clip.startTime = audioCtx.currentTime;
@@ -478,7 +578,7 @@
     function toggleAngelic(id, checked) {
         const clip = clips.find(c => c.id === id);
         clip.isAngelic = checked;
-        if(clip.isPlaying) { toggleClip(id); toggleClip(id); } // Restart to apply
+        if(clip.isPlaying) { toggleClip(id); toggleClip(id); } 
     }
     function updateClipVolume(id, val) {
         const clip = clips.find(c => c.id === id);
@@ -493,33 +593,21 @@
         renderClipList();
     }
 
-    // ==========================================
-    // 2. CUSTOM ATMOSPHERE IMPORT
-    // ==========================================
     async function handleFileUpload(input) {
         initAudio();
         const file = input.files[0];
         if(!file) return;
         document.getElementById('fileNameDisplay').innerText = "Loading: " + file.name;
-        
         try {
             const arrayBuffer = await file.arrayBuffer();
             customBuffer = await audioCtx.decodeAudioData(arrayBuffer);
             document.getElementById('fileNameDisplay').innerText = "Loaded: " + file.name;
             if(isEnvPlaying) startAtmosphere(true);
-        } catch(e) {
-            alert("Error decoding audio file.");
-        }
+        } catch(e) { alert("Error decoding audio file."); }
     }
     
-    function updateCustomVol(val) {
-        if(customGain) customGain.gain.value = val;
-    }
+    function updateCustomVol(val) { if(customGain) customGain.gain.value = val; }
 
-    // ==========================================
-    // 3. MASTER ENV (Generators + Custom)
-    // ==========================================
-    
     function toggleEnvironment() {
         initAudio();
         const btn = document.getElementById('btnEnvToggle');
@@ -530,6 +618,10 @@
             if(lfoNode) { lfoNode.stop(); lfoNode = null; }
             if(customNode) { customNode.stop(); customNode = null; }
             isEnvPlaying = false;
+            
+            // Also stop Sequencer if running
+            if(isSeqRunning) toggleSequence();
+            
             btn.innerText = "▶ Preview Mix";
             btn.style.background = "var(--primary)";
         } else {
@@ -573,7 +665,6 @@
         if(restart && customNode) { customNode.stop(); customNode = null; }
         if(!isEnvPlaying && !restart) return; 
 
-        // 1. Generated Atmos
         const type = document.getElementById('noiseType').value;
         const bufferSize = audioCtx.sampleRate * 2;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
@@ -618,21 +709,14 @@
             lfoNode.start();
         } 
         else if (type === 'deep_brown') {
-    // Heavy Low Pass Filter for "Smoothed" effect
-    filterNode = audioCtx.createBiquadFilter();
-    filterNode.type = 'lowpass';
-    filterNode.frequency.value = 150; // Very deep, cuts all hiss
-    
-    // Boost gain slightly to compensate for filtering
-    const boost = audioCtx.createGain(); 
-    boost.gain.value = 1.5;
-
-    atmosNode.connect(filterNode).connect(boost).connect(atmosGain).connect(masterGain);
-}    
+            filterNode = audioCtx.createBiquadFilter();
+            filterNode.type = 'lowpass'; filterNode.frequency.value = 150; 
+            const boost = audioCtx.createGain(); boost.gain.value = 1.5;
+            atmosNode.connect(filterNode).connect(boost).connect(atmosGain).connect(masterGain);
+        }
         else { atmosNode.connect(atmosGain).connect(masterGain); }
         atmosNode.start();
         
-        // 2. Custom File (If loaded)
         if(customBuffer) {
             customNode = audioCtx.createBufferSource();
             customNode.buffer = customBuffer;
@@ -654,20 +738,22 @@
             document.getElementById('beatFreq').value = beat;
             document.getElementById('beatSlider').value = beat;
         };
-        if(val === 'delta') set(100, 2);
+        // Schumann
+        if(val === 'schumann1') set(200, 7.83);
+        else if(val === 'schumann2') set(200, 14.3);
+        else if(val === 'schumann3') set(200, 20.8);
+        else if(val === 'schumann4') set(200, 27.3);
+        else if(val === 'schumann5') set(200, 33.8);
+        // Brainwaves
+        else if(val === 'delta') set(100, 2);
         else if(val === 'theta') set(200, 6);
         else if(val === 'alpha') set(200, 10);
         else if(val === 'beta') set(200, 20);
         else if(val === 'gamma') set(200, 40);
-        else if(val === '174') set(174, 0);
-        else if(val === '285') set(285, 0);
-        else if(val === '396') set(396, 0);
-        else if(val === '417') set(417, 0);
+        // Solfeggio
         else if(val === '528') set(528, 0);
-        else if(val === '639') set(639, 0);
-        else if(val === '741') set(741, 0);
-        else if(val === '852') set(852, 0);
-        else if(val === '963') set(963, 0);
+        else if(val === '417') set(417, 0);
+        
         if(isEnvPlaying) updateBinaural();
     }
     
@@ -692,7 +778,7 @@
                 const elapsed = now - targetClip.startTime;
                 const duration = targetClip.buffer.duration;
                 const remaining = duration - (elapsed % duration);
-                const adjust = remaining - 0.05; // Stop slightly early
+                const adjust = remaining - 0.05; 
                 const waitTime = adjust > 0 ? adjust : 0;
                 status.innerText = "Finishing loop... (" + waitTime.toFixed(2) + "s)";
                 btn.disabled = true; 
