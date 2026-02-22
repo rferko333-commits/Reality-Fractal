@@ -30,14 +30,12 @@
         select { padding: 8px; border-radius: 4px; background: #0f172a; color: white; border: 1px solid #475569; width: 100%; max-width: 300px; }
         input[type=text], input[type=number] { padding: 8px; border-radius: 4px; background: #0f172a; color: white; border: 1px solid #475569; }
 
-        /* Sequencer Styles */
         .seq-list { list-style: none; padding: 0; margin-top: 10px; border: 1px solid #334155; border-radius: 6px; overflow: hidden; }
         .seq-item { background: #0f172a; padding: 10px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #334155; font-size: 0.9em; }
         .seq-item:last-child { border-bottom: none; }
         .seq-active { background: #1e3a8a; border-left: 4px solid var(--accent); }
         .seq-controls { display: flex; gap: 5px; margin-top: 10px; }
         
-        /* Recording List Styles */
         .clip-list { list-style: none; padding: 0; margin: 0; }
         .clip-item { background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; border: 1px solid #334155; flex-wrap: wrap; }
         .clip-item.playing { border-color: var(--success); box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
@@ -126,7 +124,6 @@
                     <option value="528">528Hz (Miracles)</option>
                     <option value="417">417Hz (Wipe Negativity)</option>
                     <option value="396">396Hz (Remove Fear)</option>
-                    <!-- More handled in logic -->
                 </optgroup>
             </select>
         </div>
@@ -389,23 +386,42 @@
         if(isEnvPlaying) updateBinaural();
     }
 
-    // --- OFFLINE RENDERER (ALL CLIPS + SMALLER FILE OPTION) ---
+    // --- OFFLINE RENDERER (LOOP ALIGNED + CONCAT) ---
     async function startOfflineRender() {
         const btn = document.getElementById('btnRender');
         const status = document.getElementById('renderStatus');
-        const mins = parseFloat(document.getElementById('renderMins').value) || 1;
+        let mins = parseFloat(document.getElementById('renderMins').value) || 1;
         
         btn.disabled = true;
-        status.innerText = "Generating audio (please wait)...";
+        
+        // 1. Calculate Total Voice Duration
+        let voiceChainDuration = 0;
+        if(clips.length > 0) {
+            clips.forEach(c => voiceChainDuration += c.buffer.duration);
+        }
+
+        // 2. Adjust Duration to fit full loops
+        let durationSecs = mins * 60;
+        if(voiceChainDuration > 0) {
+            const loops = Math.ceil(durationSecs / voiceChainDuration);
+            const actualLoops = loops > 0 ? loops : 1;
+            durationSecs = actualLoops * voiceChainDuration;
+            const newMins = (durationSecs / 60).toFixed(2);
+            status.innerText = `Adjusted to ${newMins}m (${actualLoops} loops) to fit voices...`;
+        } else {
+            status.innerText = "Generating audio (please wait)...";
+        }
+
+        // Wait a tick to let UI update
+        await new Promise(r => setTimeout(r, 100));
         
         // Quality Setting
         const lowQuality = document.getElementById('lowQuality').checked;
         const sampleRate = lowQuality ? 22050 : 44100;
-        const durationSecs = mins * 60;
         
         const offlineCtx = new OfflineAudioContext(2, sampleRate * durationSecs, sampleRate);
         
-        // 1. Binaural
+        // 3. Binaural
         const baseFreq = parseFloat(document.getElementById('baseFreq').value);
         let currentBeat = parseFloat(document.getElementById('beatFreq').value);
         const oL = offlineCtx.createOscillator();
@@ -432,7 +448,7 @@
         }
         oL.start(); oR.start();
 
-        // 2. Atmosphere
+        // 4. Atmosphere
         const noiseType = document.getElementById('noiseType').value;
         const noiseVol = document.getElementById('volNoise').value;
         if(noiseVol > 0) {
@@ -443,8 +459,7 @@
             for (let i = 0; i < bufSize; i++) {
                 let white = Math.random() * 2 - 1;
                 if(noiseType === 'brown' || noiseType === 'deep_brown') {
-                     let lastOut = 0;
-                     data[i] = (lastOut + (0.02 * white)) / 1.02; lastOut = data[i]; data[i] *= 8.0; 
+                     let lastOut = 0; data[i] = (lastOut + (0.02 * white)) / 1.02; lastOut = data[i]; data[i] *= 8.0; 
                 } else {
                      b0 = 0.99886*b0+white*0.0555179; b1 = 0.99332*b1+white*0.0750759; b2 = 0.96900*b2+white*0.1538520; b3 = 0.86650*b3+white*0.3104856; b4 = 0.55000*b4+white*0.5329522; b5 = -0.7616*b5-white*0.0168981; data[i]=b0+b1+b2+b3+b4+b5+b6+white*0.5362; data[i]*=0.11; b6=white*0.115926;
                 }
@@ -468,47 +483,56 @@
             noiseSrc.start();
         }
 
-        // 3. VOICE CHAIN (CONCATENATION)
+        // 5. VOICE CHAIN (CONCATENATION & LOOPING)
         if(clips.length > 0) {
-            // Calculate total length of one chain
+            // Calculate total frames required for ONE chain
             let totalFrames = 0;
-            clips.forEach(c => totalFrames += c.buffer.length);
+            clips.forEach(c => totalFrames += Math.floor(c.buffer.duration * sampleRate));
             
-            // Create the chain buffer
-            const chainBuffer = offlineCtx.createBuffer(clips[0].buffer.numberOfChannels, totalFrames, clips[0].buffer.sampleRate);
-            
-            let offset = 0;
-            for(let c of clips) {
-                for(let ch=0; ch < c.buffer.numberOfChannels; ch++) {
-                    // Simple Copy
-                    const chanData = c.buffer.getChannelData(ch);
-                    chainBuffer.copyToChannel(chanData, ch, offset);
-                }
-                
-                // If Angelic, we can't apply it to raw buffer easily without re-processing, 
-                // so we apply the filter node to the whole loop source if ANY clip is angelic? 
-                // Limitation: Concatenation applies global effects in this simple logic.
-                // Improvement: To keep it simple, we loop the raw chain, and apply filter if desired.
-                // But clips might have different volumes. We need to normalize or apply gains?
-                // For this version, we assume user recorded at good volume.
-                offset += c.buffer.length;
+            if(totalFrames > 0) {
+                 const chainBuffer = offlineCtx.createBuffer(2, totalFrames, sampleRate);
+                 
+                 let offset = 0;
+                 // Stitch clips
+                 for(let c of clips) {
+                     // We must resample if needed, but offlineCtx handles playback rate.
+                     // Simple copy assuming sample rates match or browser handles it?
+                     // Browser handles resampling on playback, but copyToChannel does not.
+                     // We must rely on loop logic or create buffer source for EACH clip and schedule them?
+                     // Scheduling is safer for sample rate mismatch.
+                     
+                     // CHANGE OF PLAN: We cannot use copyToChannel easily if sample rates differ.
+                     // Instead, we loop the SEQUENCE of buffer sources.
+                 }
+                 
+                 // Simpler approach for offline ctx: Schedule the chain repeatedly.
+                 const chainDuration = voiceChainDuration; 
+                 let currentTime = 0;
+                 
+                 while(currentTime < durationSecs) {
+                     // Schedule one full chain
+                     for(let c of clips) {
+                         if(currentTime >= durationSecs) break;
+                         
+                         const src = offlineCtx.createBufferSource();
+                         src.buffer = c.buffer;
+                         let node = src;
+                         if(c.isAngelic) {
+                             const f = offlineCtx.createBiquadFilter(); f.type='highpass'; f.frequency.value=350;
+                             src.connect(f); node = f;
+                         }
+                         const g = offlineCtx.createGain();
+                         g.gain.value = c.gainVal;
+                         node.connect(g).connect(offlineCtx.destination);
+                         src.start(currentTime);
+                         
+                         currentTime += c.buffer.duration;
+                     }
+                 }
             }
-
-            const voiceSrc = offlineCtx.createBufferSource();
-            voiceSrc.buffer = chainBuffer;
-            voiceSrc.loop = true;
-            
-            // Check if user wants Angelic on ANY clip?
-            // To be precise, we'd need per-clip scheduling which is complex for loop alignment.
-            // We will apply global volume.
-            const voiceGain = offlineCtx.createGain();
-            voiceGain.gain.value = clips[0].gainVal; // Use first clip's volume as master for chain
-
-            voiceSrc.connect(voiceGain).connect(offlineCtx.destination);
-            voiceSrc.start();
         }
 
-        // 4. Custom Audio
+        // 6. Custom Audio
         if(customBuffer) {
             const custSrc = offlineCtx.createBufferSource();
             custSrc.buffer = customBuffer; custSrc.loop = true;
@@ -562,7 +586,7 @@
         function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
     }
 
-    // --- LIVE PREVIEW ---
+    // --- LIVE PREVIEW & HELPERS ---
     function toggleEnvironment() {
         initAudio();
         const btn = document.getElementById('btnEnvToggle');
@@ -585,10 +609,7 @@
         }
     }
     
-    // ... (Helper functions for Atmosphere/Binaural/Clips kept standard) ...
-    // Note: Due to size limits, I assume standard functions (startAtmosphere, updateBinaural, etc.) 
-    // are understood from previous iterations. The key logic for render is above.
-    
+    // (Standard functions included below)
     function startAtmosphere(restart = false) {
         if(restart && atmosNode) { atmosNode.stop(); if(lfoNode) lfoNode.stop(); }
         if(restart && customNode) { customNode.stop(); customNode = null; }
@@ -625,7 +646,6 @@
         }
     }
 
-    // Listeners and Updates
     document.getElementById('volNoise').oninput = function() { if(atmosGain) atmosGain.gain.value = this.value; }
     document.getElementById('baseSlider').oninput = function() { document.getElementById('baseFreq').value = this.value; if(isEnvPlaying) updateBinaural(); };
     document.getElementById('beatSlider').oninput = function() { document.getElementById('beatFreq').value = this.value; if(isEnvPlaying) updateBinaural(); };
