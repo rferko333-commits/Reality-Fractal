@@ -468,7 +468,7 @@
                 if(noiseType === 'brown' || noiseType === 'deep_brown') {
                      // FIXED: True Brownian integration (Rumbler)
                      // Allow it to wander (add white) then leak slowly (/ 1.02)
-                     data[i] = (lastOut + white) / 1.02; 
+                     data[i] = (lastOut + (0.02 * white)) / 1.02; 
                      lastOut = data[i]; 
                      data[i] *= 3.5; // Gain compensation
                 } else {
@@ -490,7 +490,7 @@
             } else if (noiseType === 'deep_brown') {
                 const filt = offlineCtx.createBiquadFilter(); filt.type='lowpass'; filt.frequency.value=150;
                 // FIXED: Increased Gain Boost for Deep Brown
-                const boost = offlineCtx.createGain(); boost.gain.value = 5.0; 
+                const boost = offlineCtx.createGain(); boost.gain.value = 2.5; 
                 noiseSrc.connect(filt).connect(boost).connect(noiseGain).connect(offlineCtx.destination);
             } else { noiseSrc.connect(noiseGain).connect(offlineCtx.destination); }
             noiseSrc.start();
@@ -616,7 +616,7 @@
              let white = Math.random() * 2 - 1;
              if(type === 'brown' || type === 'deep_brown') {
                  // FIXED: True Brownian integration
-                 data[i] = (lastOut + white) / 1.02; 
+                 data[i] = (lastOut + (0.02* white)) / 1.02; 
                  lastOut = data[i]; 
                  data[i] *= 3.5; 
              } else {
@@ -633,7 +633,7 @@
         } else if (type === 'deep_brown') {
             filterNode = audioCtx.createBiquadFilter(); filterNode.type = 'lowpass'; filterNode.frequency.value = 150; 
             // FIXED: Increased Gain Boost
-            const boost = audioCtx.createGain(); boost.gain.value = 5.0; 
+            const boost = audioCtx.createGain(); boost.gain.value = 2.5; 
             atmosNode.connect(filterNode).connect(boost).connect(atmosGain).connect(masterGain);
         } else { atmosNode.connect(atmosGain).connect(masterGain); }
         atmosNode.start();
