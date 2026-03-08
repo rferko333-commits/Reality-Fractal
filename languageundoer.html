@@ -450,7 +450,7 @@
             { regex: /\b(always|never|everyone|no one|no matter what|everything|nothing|forever|constantly|every time)\b/gi, insight: "Concepts fluctuate. Only Awareness is absolute." },
 
             // 26. Comparison
-            { regex: /\b(better|worse|greater|behind|worthless|unworthy|compared|as|too much|not enough)\b/gi, insight: "Comparison requires two. There is only one." },
+            { regex: /\b(better|worse|greater|behind|worthless|unworthy|compared|as|too much|not enough|too|also|as well|likewise)\b/gi, insight: "Comparison requires two. There is only one." },
 
             // 27. Time (Future/Past)
             { regex: /\b(will|going to|used to|stuck|someday|eventually|regret|future|past|yesterday|tomorrow)\b/gi, insight: "Time is memory or projection. Only Now exists." }
@@ -498,7 +498,7 @@
                     const placeholder = `___BIFURCATION_${replacements.length}___`;
                     replacements.push({
                         id: placeholder,
-                        html: `<span class="illusion" data-insight="${escapeQuotes(p.insight)}" data-word="${escapeQuotes(match)}" onclick="dissolve(this, '${escapeQuotes(p.insight)}', '${escapeQuotes(match)}')">${match}</span>`
+                        html: `<span class="illusion" data-insight="${escapeHtml(p.insight)}" data-word="${escapeHtml(match)}" onclick="dissolveThis(this)">${match}</span>`
                     });
                     return placeholder;
                 });
@@ -509,6 +509,12 @@
             });
 
             document.getElementById('output-stage').innerHTML = workingText;
+        }
+
+        function dissolveThis(element) {
+            const insight = element.getAttribute('data-insight');
+            const word = element.getAttribute('data-word');
+            dissolve(element, insight, word);
         }
 
         function dissolve(element, insight, word) {
@@ -657,9 +663,7 @@
             return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
         }
 
-        function escapeQuotes(text) {
-            return text.replace(/'/g, "\'");
-        }
+
     </script>
 </body>
 </html>
