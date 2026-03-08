@@ -496,117 +496,109 @@ function flipCard(id) {
 // No hover logic — tap/click only. Clean and reliable.
 
 // ── BUDDHABROT ───────────────────────────────────────────────
-// Three separate accumulation buffers by orbit step depth:
-//   blue  = steps 1–49   (fast escapers, outer halo)
-//   green = steps 50–99  (medium, mid structure)
-//   red   = steps 100+   (slow, fine boundary detail)
+// Triple-exposure nebula: short=blue halo, medium=green/yellow, long=red/white core
 (function () {
     const canvas = document.getElementById('buddhabrot-canvas');
     const W = canvas.width  = window.innerWidth;
     const H = canvas.height = window.innerHeight;
     const ctx = canvas.getContext('2d');
 
-    const MAX_ITER = 200;
-    const SAMPLES  = 600000;
-
     const TW = Math.floor(W / 4);
     const TH = Math.floor(H / 4);
     const SZ = TW * TH;
 
-    // Separate hit buffers per color band
-    const blue  = new Uint32Array(SZ); // steps 1–49
-    const green = new Uint32Array(SZ); // steps 50–99
-    const red   = new Uint32Array(SZ); // steps 100–199
+    const short  = new Uint32Array(SZ); // max  50 iters → blue outer halo
+    const medium = new Uint32Array(SZ); // max 200 iters → yellow/green mid
+    const lng    = new Uint32Array(SZ); // max 500 iters → orange/red core
 
-    function sample() {
+    function sampleAt(maxIt, buf) {
         const cr = Math.random() * 3.6 - 2.5;
         const ci = Math.random() * 3.2 - 1.6;
-
         const q = (cr - 0.25) ** 2 + ci * ci;
         if (q * (q + (cr - 0.25)) < 0.25 * ci * ci) return;
         if ((cr + 1) ** 2 + ci * ci < 0.0625) return;
-
         let zr = 0, zi = 0;
         const orb = [];
         let escaped = false;
-        let escapeStep = 0;
-
-        for (let i = 0; i < MAX_ITER; i++) {
+        for (let i = 0; i < maxIt; i++) {
             const nr = zr * zr - zi * zi + cr;
             const ni = 2 * zr * zi + ci;
             zr = nr; zi = ni;
-            orb.push(zr, zi, i + 1); // store step number with each point
-            if (zr * zr + zi * zi > 4) {
-                escaped = true;
-                escapeStep = i + 1;
-                break;
-            }
+            orb.push(zr, zi);
+            if (zr * zr + zi * zi > 4) { escaped = true; break; }
         }
         if (!escaped) return;
-
-        // Paint orbit — each point goes into the buffer matching its step depth
-        for (let k = 0; k < orb.length; k += 3) {
-            const step = orb[k + 2];
-            const px = Math.floor(((orb[k + 1] + 1.6) / 3.2) * TW); // imaginary→x
-            const py = Math.floor(((orb[k]     + 2.5) / 3.6) * TH); // real→y
-            if (px < 0 || px >= TW || py < 0 || py >= TH) continue;
-            const cell = py * TW + px;
-            if      (step < 30)  blue[cell]++;
-            else if (step < 100) green[cell]++;
-            else                 red[cell]++;
+        for (let k = 0; k < orb.length; k += 2) {
+            const px = Math.floor(((orb[k+1] + 1.6) / 3.2) * TW);
+            const py = Math.floor(((orb[k]   + 2.5) / 3.6) * TH);
+            if (px >= 0 && px < TW && py >= 0 && py < TH)
+                buf[py * TW + px]++;
         }
     }
 
-    let done = 0;
+    // Sequential passes — short gets 3x samples for visible halo
+    const N = 500000;
+    let phase = 0, done = 0;
+    const targets = [N * 3, N, N];
+    const bufs = [short, medium, lng];
+    const maxIts = [50, 200, 500];
+
     function runChunk() {
-        const end = Math.min(done + 12000, SAMPLES);
-        for (; done < end; done++) sample();
-        if (done < SAMPLES) { requestAnimationFrame(runChunk); return; }
+        const chunk = 15000;
+        const target = targets[phase];
+        const end = Math.min(done + chunk, target);
+        for (; done < end; done++) sampleAt(maxIts[phase], bufs[phase]);
+        if (done >= target) { phase++; done = 0; }
+        if (phase < 3) { requestAnimationFrame(runChunk); return; }
         draw();
     }
 
+    function norm(buf) {
+        let max = 1;
+        for (let i = 0; i < SZ; i++) if (buf[i] > max) max = buf[i];
+        const out = new Float32Array(SZ);
+        for (let i = 0; i < SZ; i++)
+            out[i] = buf[i] > 0 ? Math.pow(buf[i] / max, 0.32) : 0;
+        return out;
+    }
+
     function draw() {
-        // Normalize each channel independently
-        let maxB = 1, maxG = 1, maxR = 1;
-        for (let i = 0; i < SZ; i++) {
-            if (blue[i]  > maxB) maxB = blue[i];
-            if (green[i] > maxG) maxG = green[i];
-            if (red[i]   > maxR) maxR = red[i];
-        }
+        const S = norm(short);
+        const M = norm(medium);
+        const L = norm(lng);
 
         const offscreen = document.createElement('canvas');
-        offscreen.width  = TW;
-        offscreen.height = TH;
+        offscreen.width = TW; offscreen.height = TH;
         const octx = offscreen.getContext('2d');
-        const img  = octx.createImageData(TW, TH);
-        const d    = img.data;
+        const img = octx.createImageData(TW, TH);
+        const d = img.data;
 
         for (let i = 0; i < SZ; i++) {
-            // Higher gamma = darker, more contrast, less wash-out
-            const b = Math.pow(blue[i]  / maxB, 0.55);
-            const g = Math.pow(green[i] / maxG, 0.55);
-            const r = Math.pow(red[i]   / maxR, 0.55);
+            const s = S[i], m = M[i], l = L[i];
+
+            // Blue halo: pure blue, boosted so diffuse outer ring is visible
+            // Yellow mid: red+green with no blue
+            // White core: all channels max where long exposure is dense
+            const r = Math.min(1, l * 1.3 + m * 0.6);
+            const g = Math.min(1, m * 1.0 + l * 0.5 + s * 0.05);
+            const b = Math.min(1, s * 2.2 + m * 0.08);  // strong blue, minimal green bleed
+
+            // Alpha: blue halo needs enough alpha to show on dark bg
+            const a = Math.min(1, Math.max(s * 1.6, m, l));
 
             const idx = i * 4;
-            // Pure channel mapping — minimal bleed between colors
-            // Blue  → pure blue channel only
-            // Green → pure green channel only  
-            // Red   → pure red channel only
-            // Where they overlap: natural additive mix (e.g. blue+green = cyan)
-            d[idx]     = Math.min(255, Math.floor(r * 220));
-            d[idx + 1] = Math.min(255, Math.floor(g * 220));
-            d[idx + 2] = Math.min(255, Math.floor(b * 220));
-            d[idx + 3] = Math.min(255, Math.floor(Math.max(b, g, r) * 230));
+            d[idx]   = Math.floor(r * 255);
+            d[idx+1] = Math.floor(g * 255);
+            d[idx+2] = Math.floor(b * 255);
+            d[idx+3] = Math.floor(a * 245);
         }
         octx.putImageData(img, 0, 0);
 
         ctx.clearRect(0, 0, W, H);
-        for (let row = 0; row < 4; row++) {
-            for (let col = 0; col < 4; col++) {
+        for (let row = 0; row < 4; row++)
+            for (let col = 0; col < 4; col++)
                 ctx.drawImage(offscreen, col * TW, row * TH, TW, TH);
-            }
-        }
-        canvas.style.opacity = '0.80';
+        canvas.style.opacity = '0.82';
     }
 
     requestAnimationFrame(runChunk);
