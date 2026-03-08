@@ -14,10 +14,10 @@
             --dim: #555570;
             --accent: #7eb8d4;
             --c-atlas:    #3b82f6;
-            --c-integral: #8b5cf6;
+            --c-integral: #10b981;
             --c-ego:      #ec4899;
             --c-language: #d4a373;
-            --c-manifest: #10b981;
+            --c-manifest: #8b5cf6;
 
         }
 
@@ -149,10 +149,10 @@
 
         /* per-tool dim border on front */
         .app-card[data-color="atlas"]    .card-front { border-color: #162850; }
-        .app-card[data-color="integral"] .card-front { border-color: #22174a; }
+        .app-card[data-color="integral"] .card-front { border-color: #082e20; }
         .app-card[data-color="ego"]      .card-front { border-color: #3d0f28; }
         .app-card[data-color="language"] .card-front { border-color: #3a2c18; }
-        .app-card[data-color="manifest"] .card-front { border-color: #082e20; }
+        .app-card[data-color="manifest"] .card-front { border-color: #22174a; }
 
         /* bright border on back */
         .app-card[data-color="atlas"]    .card-back { border-color: var(--c-atlas); }
@@ -343,10 +343,10 @@
                 <div class="card-front" onclick="flipCard('card-integral')" style="cursor:pointer">
                     <img class="card-img" src="" alt="Integral Locator">
                     <svg class="card-icon" viewBox="0 0 36 36" fill="none">
-                        <polygon points="18,2 34,32 2,32"   stroke="#8b5cf6" stroke-width="0.9" fill="none" opacity="0.35"/>
-                        <polygon points="18,9 28,29 8,29"   stroke="#8b5cf6" stroke-width="0.9" fill="none" opacity="0.6"/>
-                        <polygon points="18,16 23,26 13,26" stroke="#8b5cf6" stroke-width="0.9" fill="none" opacity="0.85"/>
-                        <circle cx="18" cy="22" r="1.5" fill="#8b5cf6"/>
+                        <polygon points="18,2 34,32 2,32"   stroke="#10b981" stroke-width="0.9" fill="none" opacity="0.35"/>
+                        <polygon points="18,9 28,29 8,29"   stroke="#10b981" stroke-width="0.9" fill="none" opacity="0.6"/>
+                        <polygon points="18,16 23,26 13,26" stroke="#10b981" stroke-width="0.9" fill="none" opacity="0.85"/>
+                        <circle cx="18" cy="22" r="1.5" fill="#10b981"/>
                     </svg>
                     <span class="tool-name">Integral Locator</span>
                 </div>
@@ -428,11 +428,11 @@
                 <div class="card-front" onclick="flipCard('card-manifest')" style="cursor:pointer">
                     <img class="card-img" src="" alt="Manifestation Mixer">
                     <svg class="card-icon" viewBox="0 0 36 36" fill="none">
-                        <rect x="4"  y="22" width="4" height="10" rx="1.5" fill="#10b981" opacity="0.4"/>
-                        <rect x="10" y="16" width="4" height="16" rx="1.5" fill="#10b981" opacity="0.6"/>
-                        <rect x="16" y="8"  width="4" height="24" rx="1.5" fill="#10b981" opacity="0.85"/>
-                        <rect x="22" y="13" width="4" height="19" rx="1.5" fill="#10b981" opacity="0.65"/>
-                        <rect x="28" y="19" width="4" height="13" rx="1.5" fill="#10b981" opacity="0.4"/>
+                        <rect x="4"  y="22" width="4" height="10" rx="1.5" fill="#8b5cf6" opacity="0.4"/>
+                        <rect x="10" y="16" width="4" height="16" rx="1.5" fill="#8b5cf6" opacity="0.6"/>
+                        <rect x="16" y="8"  width="4" height="24" rx="1.5" fill="#8b5cf6" opacity="0.85"/>
+                        <rect x="22" y="13" width="4" height="19" rx="1.5" fill="#8b5cf6" opacity="0.65"/>
+                        <rect x="28" y="19" width="4" height="13" rx="1.5" fill="#8b5cf6" opacity="0.4"/>
                     </svg>
                     <span class="tool-name">Manifestation Mixer</span>
                 </div>
@@ -496,20 +496,27 @@ function flipCard(id) {
 // No hover logic — tap/click only. Clean and reliable.
 
 // ── BUDDHABROT ───────────────────────────────────────────────
-// Renders into a half-size offscreen tile, then tiles 2x2 onto the main canvas
+// Three separate accumulation buffers by orbit step depth:
+//   blue  = steps 1–49   (fast escapers, outer halo)
+//   green = steps 50–99  (medium, mid structure)
+//   red   = steps 100+   (slow, fine boundary detail)
 (function () {
     const canvas = document.getElementById('buddhabrot-canvas');
     const W = canvas.width  = window.innerWidth;
     const H = canvas.height = window.innerHeight;
     const ctx = canvas.getContext('2d');
 
-    // Tile is quarter the screen size — will be drawn 4x4
+    const MAX_ITER = 200;
+    const SAMPLES  = 600000;
+
     const TW = Math.floor(W / 4);
     const TH = Math.floor(H / 4);
+    const SZ = TW * TH;
 
-    const counts   = new Uint32Array(TW * TH);
-    const MAX_ITER = 200;
-    const SAMPLES  = 400000;
+    // Separate hit buffers per color band
+    const blue  = new Uint32Array(SZ); // steps 1–49
+    const green = new Uint32Array(SZ); // steps 50–99
+    const red   = new Uint32Array(SZ); // steps 100–199
 
     function sample() {
         const cr = Math.random() * 3.6 - 2.5;
@@ -522,22 +529,31 @@ function flipCard(id) {
         let zr = 0, zi = 0;
         const orb = [];
         let escaped = false;
+        let escapeStep = 0;
 
         for (let i = 0; i < MAX_ITER; i++) {
             const nr = zr * zr - zi * zi + cr;
             const ni = 2 * zr * zi + ci;
             zr = nr; zi = ni;
-            orb.push(zr, zi);
-            if (zr * zr + zi * zi > 4) { escaped = true; break; }
+            orb.push(zr, zi, i + 1); // store step number with each point
+            if (zr * zr + zi * zi > 4) {
+                escaped = true;
+                escapeStep = i + 1;
+                break;
+            }
         }
         if (!escaped) return;
 
-        // Vertical: imaginary→x, real→y
-        for (let k = 0; k < orb.length; k += 2) {
-            const px = Math.floor(((orb[k + 1] + 1.6) / 3.2) * TW);
-            const py = Math.floor(((orb[k]     + 2.5) / 3.6) * TH);
-            if (px >= 0 && px < TW && py >= 0 && py < TH)
-                counts[py * TW + px]++;
+        // Paint orbit — each point goes into the buffer matching its step depth
+        for (let k = 0; k < orb.length; k += 3) {
+            const step = orb[k + 2];
+            const px = Math.floor(((orb[k + 1] + 1.6) / 3.2) * TW); // imaginary→x
+            const py = Math.floor(((orb[k]     + 2.5) / 3.6) * TH); // real→y
+            if (px < 0 || px >= TW || py < 0 || py >= TH) continue;
+            const cell = py * TW + px;
+            if      (step < 30)  blue[cell]++;
+            else if (step < 100) green[cell]++;
+            else                 red[cell]++;
         }
     }
 
@@ -550,11 +566,14 @@ function flipCard(id) {
     }
 
     function draw() {
-        // Find max for normalization
-        let maxC = 0;
-        for (let i = 0; i < counts.length; i++) if (counts[i] > maxC) maxC = counts[i];
+        // Normalize each channel independently
+        let maxB = 1, maxG = 1, maxR = 1;
+        for (let i = 0; i < SZ; i++) {
+            if (blue[i]  > maxB) maxB = blue[i];
+            if (green[i] > maxG) maxG = green[i];
+            if (red[i]   > maxR) maxR = red[i];
+        }
 
-        // Draw tile into offscreen canvas
         const offscreen = document.createElement('canvas');
         offscreen.width  = TW;
         offscreen.height = TH;
@@ -562,25 +581,32 @@ function flipCard(id) {
         const img  = octx.createImageData(TW, TH);
         const d    = img.data;
 
-        for (let i = 0; i < counts.length; i++) {
-            const t   = Math.pow(counts[i] / maxC, 0.28); // lower gamma = brighter
+        for (let i = 0; i < SZ; i++) {
+            // Higher gamma = darker, more contrast, less wash-out
+            const b = Math.pow(blue[i]  / maxB, 0.55);
+            const g = Math.pow(green[i] / maxG, 0.55);
+            const r = Math.pow(red[i]   / maxR, 0.55);
+
             const idx = i * 4;
-            // Brighter cyan-white palette
-            d[idx]     = Math.floor(t * 160 + t*t * 90);   // R — warm highlight
-            d[idx + 1] = Math.floor(t * 200 + t*t * 55);   // G
-            d[idx + 2] = Math.floor(t * 255);               // B — strong blue
-            d[idx + 3] = Math.floor(t * 255);               // A — full opacity in tile
+            // Pure channel mapping — minimal bleed between colors
+            // Blue  → pure blue channel only
+            // Green → pure green channel only  
+            // Red   → pure red channel only
+            // Where they overlap: natural additive mix (e.g. blue+green = cyan)
+            d[idx]     = Math.min(255, Math.floor(r * 220));
+            d[idx + 1] = Math.min(255, Math.floor(g * 220));
+            d[idx + 2] = Math.min(255, Math.floor(b * 220));
+            d[idx + 3] = Math.min(255, Math.floor(Math.max(b, g, r) * 230));
         }
         octx.putImageData(img, 0, 0);
 
-        // Tile 4x4 onto main canvas
         ctx.clearRect(0, 0, W, H);
         for (let row = 0; row < 4; row++) {
             for (let col = 0; col < 4; col++) {
                 ctx.drawImage(offscreen, col * TW, row * TH, TW, TH);
             }
         }
-        canvas.style.opacity = '0.72';
+        canvas.style.opacity = '0.80';
     }
 
     requestAnimationFrame(runChunk);
