@@ -375,142 +375,85 @@
         // --- Configuration ---
         const patterns = [
             // 1. Identity Phrases (Multi-word)
-            { regex: /\b(I am|I'm|I've|I'll|my own|myself|kind of person|type of person|who I am|what I am|I know myself|I don't know myself|my identity|my true self|my authentic self|my personality|my character)\b/gi, insight: "Who observes this definition?" },
+            { regex: /\b(I am|I'm|I've|I'll|my own|myself|kind of person)\b/gi, insight: "Who observes this definition?" },
             
             // 2. Separation (The Other)
-            { regex: /\b(you|your|other|others|yours|he|him|his|himself|herself|themself|themselves|she|her|hers|they|them|man|men|woman|women|their|theirs|we|our|us|husband|boyfriend|wife|girlfriend|boy|girl|daughter|son|everyone|everybody|no one|noone|nobody|people|person|stranger|strangers|individual|individuals|crowd|group)\b/gi, insight: "Defining 'them' creates the 'me'. There is only one Observer." },
+            { regex: /\b(you|your|other|others|yours|he|him|his|himself|herself|themself|themselves|she|her|hers|they|them|man|men|woman|women|their|theirs|we|our|us|husband|boyfriend|wife|girlfriend|boy|girl|daughter|son|everyone|everybody|no one|noone|nobody|people|person)\b/gi, insight: "Defining 'them' creates the 'me'. There is only one Observer." },
 
             // 3. Emotions (New Comprehensive List)
-            { regex: /\b(happy|sad|angry|anger|rage|angst|upset|frustrated|frustration|frustrating|worthless|disappointed|disappointment|anxious|anxiety|depressed|depression|excited|excitement|bored|boredom|lonely|loneliness|fear|afraid|scared|joy|joyful|grief|grieving|guilty|guilt|shame|ashamed|jealous|jealousy|envy|envious|disgusted|disgust|surprised|surprise|hopeful|hopeless|numb|empty|overwhelmed|content|restless|irritable|irritated|devastated|hurt|heartbroken|confused|lost|stuck|trapped|free|proud|embarrassed|humiliated|satisfied|unsatisfied|peaceful|calm|tense|stressed|stress|worried|worry|panicked|panic|terror|horrified|elated|miserable|melancholy)\b/gi, insight: "Temporary appearance within awareness. The observer of this feeling is untouched." },
+            { regex: /\b(happy|sad|angry|anger|rage|angst|upset|frustrated|frustration|frustrating|worthless|disappointed|disappointment|anxious|anxiety|depressed|depression|excited|excitement|bored|boredom|lonely|loneliness|fear|afraid|scared|joy|joyful|grief|grieving|guilty|guilt|shame|ashamed|jealous|jealousy|envy|envious|disgusted|disgust|surprised|surprise)\b/gi, insight: "Temporary appearance within awareness." },
 
             // 4. Mental Activities (Thinking/Mind)
-            { regex: /\b(think|thinking|thought|thoughts|imagine|imagining|imagination|wonder|wondering|believe|believing|belief|guess|guessing|assume|assuming|assumption|mental|mind|analyze|analyzing|consider|considering|reflect|reflecting|ponder|pondering|contemplate|contemplating|realize|realizing|understand|understanding|know|knowing|figure out|process|processing|ruminate|ruminating|obsess|obsessing|conclude|concluding|perceive|perceiving|interpret|interpreting)\b/gi, insight: "Thoughts are temporary arisings and passings. Who watches them appear?" },
+            { regex: /\b(think|thinking|thought|thoughts|imagine|imagining|imagination|wonder|wondering|believe|believing|belief|guess|guessing|assume|assuming|assumption|mental|mind|analyze|analyzing|consider|considering)\b/gi, insight: "Thoughts are temporary arisings and passings." },
 
             // 5. Sensations / Impermanence
-            { regex: /\b(pain|painful|pleasure|pleasurable|hurt|hurts|hurting|ache|aching|comfort|comfortable|discomfort|sensation|sensations|feeling|feelings|felt|tense|tension|numb|numbness|tingle|tingling|heavy|lightness|tight|tightness|release|warm|warmth|cold|pressure|pulsing)\b/gi, insight: "This too shall pass. Sensations arise and dissolve in awareness." },
+            { regex: /\b(pain|painful|pleasure|pleasurable|hurt|hurts|hurting|ache|aching|comfort|comfortable|discomfort|sensation|sensations|feeling|feelings|felt)\b/gi, insight: "This too shall pass. Sensations arise and dissolve." },
 
             // 6. Time Units
-            { regex: /\b(second|seconds|minute|minutes|hour|hours|day|days|week|weeks|month|months|year|years|decade|decades|time|times|moment|moments|later|soon|instant|age|era|period|phase|stage|season|century)\b/gi, insight: "Time units measure a distance that doesn't exist. Only Now." },
+            { regex: /\b(second|seconds|minute|minutes|hour|hours|day|days|week|weeks|month|months|year|years|decade|decades|time|times|moment|moments|later|soon)\b/gi, insight: "Time units measure a distance that doesn't exist. Only Now." },
 
-            // 7. Memory / History
-            { regex: /\b(memory|memories|remember|remembers|recent|recently|recall|recalling|reminisce|history|historical|background|past experience|childhood|grew up|back then|in those days|once upon a time|when I was|years ago|long ago)\b/gi, insight: "Memory is a current thought about the past. The past exists only as this present arising." },
+            // 7. Memory/Recency
+            { regex: /\b(memory|memories|remember|remembers|recent|recently)\b/gi, insight: "Memory is a current thought about the past." },
 
             // 8. Conditional
-            { regex: /\b(if|then|when|or|unless|until|provided that|as long as|in case|on condition|suppose|supposing|given that|assuming that)\b/gi, insight: "Conditions create time. Awareness is unconditional and already complete." },
+            { regex: /\b(if|then|when|or)\b/gi, insight: "Conditions create time. Awareness is unconditional." },
 
             // 9. Distinction / Duality
-            { regex: /\b(difference|between|both|friend|enemy|friends|enemies|old|new|opposite|opposing|contrast|versus|vs|separate|separated|apart|divided|split|either|neither|inside|outside|include|exclude|belong|belong to)\b/gi, insight: "Distinction splits the seamless whole into pieces that were never apart." },
+            { regex: /\b(difference|between|both|friend|enemy|friends|enemies|old|new)\b/gi, insight: "Distinction splits the seamless whole." },
 
             // 10. Numbers & Ordinals
-            { regex: /\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten|hundred|thousand|million|first|second|third|last|final|only|single|alone|together|apart)\b/gi, insight: "Quantification creates separation. Reality is One." },
+            { regex: /\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten|hundred|thousand|million|first|second|third|last|final)\b/gi, insight: "Quantification creates separation. Reality is One." },
 
             // 11. Quantity 
-            { regex: /\b(more|less|fewer|little|lot|alot|ton|tons|extra|many|much|enough|too much|too little|not enough|plenty|scarce|abundance|lack|lacking|insufficient|excessive|overwhelming|minimal)\b/gi, insight: "Quantity is a concept. Awareness has no size and needs no amount." },
+            { regex: /\b(more|less|fewer|little|lot|alot|ton|tons|extra|many|much)\b/gi, insight: "Quantity is a concept. Awareness has no size." },
 
             // 12. Difficulty / Intellect
-            { regex: /\b(hard|harder|easy|easier|difficult|struggle|simple|complex|effort|effortless|smart|dumb|genius|idiot|intelligent|stupid|capable|incapable|skilled|unskilled|gifted|talented|average|exceptional|ordinary|extraordinary)\b/gi, insight: "Intellect and difficulty are judgments on what IS. The fractal does not strain." },
+            { regex: /\b(hard|harder|easy|easier|difficult|struggle|simple|complex|effort|effortless|smart|dumb|genius|idiot|intelligent|stupid)\b/gi, insight: "Intellect and difficulty are judgments on what IS." },
 
             // 13. Limiting Language
-            { regex: /\b(can't|cannot|won't|will not|couldn't|could not|unable|impossible|incapable|never able|out of reach|beyond me|too far|not ready|not good enough|not qualified|don't deserve|unworthy of)\b/gi, insight: "Who defines this limit? Potential is unknown until the next moment unfolds." },
+            { regex: /\b(can't|cannot|won't|will not|couldn't|could not|unable|impossible|incapable|never able)\b/gi, insight: "Who defines this limit? Potential is unknown." },
 
             // 14. Competition / Result
-            { regex: /\b(win|lose|won|lost|winning|losing|success|succeeding|failing|failed|succeeded|failure|succeed|fail|achieve|achievement|accomplish|accomplishment|defeat|beaten|champion|loser|winner|rank|ranking|score|compete|competition|rival|rivalry)\b/gi, insight: "Outcomes are narrative points on a continuous process. The river does not compete." },
+            { regex: /\b(win|lose|won|lost|winning|losing|success|succeeding|failing|failed|succeeded|failure|succeed|fail|achieve)\b/gi, insight: "Outcomes are narrative points. The process is continuous." },
 
-            // 15. Judgment & Polarity
-            { regex: /\b(good|bad|nice|mean|boring|bore|exciting|mess|incompetent|evil|right|wrong|terrible|awful|great|horrible|worst|best|kind|cruel|nasty|pleasant|unpleasant|secure|insecure|lazy|lame|asinine|useless|productive|busy|problem|mistake|mistakes|perfect|flawed|broken|fixed|normal|abnormal|weird|strange|crazy|sane|valid|invalid|fair|unfair|appropriate|inappropriate|acceptable|unacceptable)\b/gi, insight: "Labels on a seamless process. Reality just IS, beyond all evaluation." },
+            // 15. Judgment, Polarity (Removed specific emotions moved to #3)
+            { regex: /\b(good|bad|nice|mean|boring|bore|exciting|mess|incompetent|evil|right|wrong|terrible|awful|great|horrible|worst|best|kind|cruel|nasty|pleasant|unpleasant|secure|insecure|lazy|stupid|lame|dumb|asinine|worthless|useless|productive|busy|problem|mistake|mistakes|perfect)\b/gi, insight: "Labels on a seamless process. Reality just IS." },
 
             // 16. Craving & Striving
-            { regex: /\b(want|wants|wanted|need|needs|needed|crave|craving|desire|desires|wish|wishing|hope|hopes|cling|clinging|grasp|grasping|attach|attached|attachment|like|likes|liked|try|trying|tried|get|getting|got|seek|seeking|pursue|pursuing|chase|chasing|hunger|hungry|longing|yearn|yearning|search|searching|looking for|waiting for|after)\b/gi, insight: "Striving affirms a gap between you and completeness. You are already the whole." },
+            { regex: /\b(want|wants|wanted|need|needs|needed|crave|craving|desire|desires|wish|wishing|hope|hopes|cling|clinging|grasp|grasping|attach|attached|attachment|like|likes|liked|try|trying|tried|get|getting|got)\b/gi, insight: "Striving affirms a gap between you and the goal." },
 
-            // 17. Aversion
-            { regex: /\b(hate|hates|hated|dislike|dislikes|reject|rejecting|avoid|avoiding|loathe|detest|resist|resisting|dread|dreading|suffer|suffering|suffered|fault|blame|made me|ignored|ignore|repel|repelled|flee|fleeing|escape|escaping|run from|push away|push back|refuse|refusing|deny|denying|block|blocking)\b/gi, insight: "Resistance creates the story of suffering. What you push against, you give reality to." },
+            // 17. Aversion (Removed fear, moved to emotions)
+            { regex: /\b(hate|hates|hated|dislike|dislikes|reject|rejecting|avoid|avoiding|loathe|detest|resist|resisting|dread|dreading|suffer|suffering|suffered|unfair|fault|blame|made me|ignored|ignore)\b/gi, insight: "Resistance creates the story of suffering." },
 
             // 18. Material / Survival
-            { regex: /\b(money|work|job|career|rich|poor|wealth|income|salary|wage|pay|afford|afford|debt|bills|budget|savings|spend|spending|property|own|ownership|possess|possession|status|status symbol|house|home|car|food|eat|eating|sleep|sleeping|health|healthy|sick|illness|disease|body|physical)\b/gi, insight: "Survival is the body's program running within awareness. Awareness itself needs nothing." },
+            { regex: /\b(money|work|job|career|rich|poor)\b/gi, insight: "Survival is the body's program. Awareness needs nothing." },
 
             // 19. Abstract Narratives
-            { regex: /\b(dream|dreams|situation|timeline|reality|recognition|attention|story|narrative|meaning|purpose|path|journey|destiny|fate|mission|plan|future|vision|goal|goals|chapter|life|lives|world|universe|existence|truth|illusion|concept|idea|theory|belief system)\b/gi, insight: "A mental construct projected onto the screen of Now. What is aware of this concept?" },
+            { regex: /\b(dream|dreams|situation|timeline|reality|recognition|attention|listens)\b/gi, insight: "A mental construct projected onto Now." },
 
-            // 20. Modals (Obligation & Necessity)
-            { regex: /\b(should|shouldn't|should not|must|must not|have to|need to|ought to|supposed to|required to|expected to|obligated to|it is necessary|it is essential|you must|one must|we must|I must)\b/gi, insight: "Obligation argues with what IS. The fractal unfolds as it unfolds." },
+            // 20. Modals
+            { regex: /\b(should|shouldn't|should not|must|must not|have to|need to|ought to|supposed to)\b/gi, insight: "Arguing with what IS creates the illusion of separation." },
 
             // 21. Causality
-            { regex: /\b(because|so that|therefore|means that|implies|caused|reason|since|but|however|although|except|consequently|as a result|due to|leads to|results in|produces|generates|triggers|stems from|comes from|originates|explains|proof|evidence|proves|confirms)\b/gi, insight: "Causality is the glue holding the story together. Events arise together, not from each other." },
+            { regex: /\b(because|so that|therefore|means that|implies|caused|reason|since|but|however|although|except)\b/gi, insight: "This is the glue holding the story together." },
             
             // 22. Doership
-            { regex: /\b(did|do|doing|done|make|made|making|create|created|build|built|destroy|destroyed|act|acting|action|perform|performing|execute|executing|accomplish|produce|producing|cause|causing|force|forcing|control|controlling|decide|deciding|choose|choosing|initiate|initiating|start|started|stop|stopped)\b/gi, insight: "Events happen through the pattern. Who is the doer behind the doing?" },
+            { regex: /\b(did|do|doing|done|make|made|making|create|created)\b/gi, insight: "Events happen. Who is the doer?" },
 
             // 23. To Be Verbs
-            { regex: /\b(is|are|was|were|be|been|am)\b/gi, insight: "Defining 'is-ness' freezes what is always flowing. Awareness is prior to all definition." },
+            { regex: /\b(is|are|was|were|be|been)\b/gi, insight: "Defining 'is-ness' limits the unlimited. Awareness is formless." },
 
-            // 24. First-Person Pronouns
-            { regex: /\b(I|me|my|mine|myself|im)\b/gi, insight: "Where is this 'I' located exactly? Can you find it without using another thought?" },
+            // 24. Identity Words (including "im" typo)
+            { regex: /\b(I|me|my|mine|im)\b/gi, insight: "Where is this 'I' located exactly?" },
 
             // 25. Absolutes
-            { regex: /\b(always|never|everyone|no one|no matter what|everything|nothing|forever|constantly|every time|all|none|total|entirely|completely|absolutely|certainly|definitely|inevitably|without exception|in every case|for sure|of course|obviously|clearly|undeniably|no doubt)\b/gi, insight: "Only awareness is absolute. Everything within it fluctuates." },
+            { regex: /\b(always|never|everyone|no one|no matter what|everything|nothing|forever|constantly|every time)\b/gi, insight: "Concepts fluctuate. Only Awareness is absolute." },
 
             // 26. Comparison
-            { regex: /\b(better|worse|greater|lesser|behind|ahead|worthless|unworthy|compared|comparison|like me|unlike me|too much|not enough|more than|less than|above|below|superior|inferior|equal|unequal|same as|different from|too|also|as well|likewise|similarly|just like|just as)\b/gi, insight: "Comparison requires two. In the fractal, there is only one observer looking at itself." },
+            { regex: /\b(better|worse|greater|behind|worthless|unworthy|compared|as|too much|not enough)\b/gi, insight: "Comparison requires two. There is only one." },
 
-            // 27. Time (Future/Past orientation)
-            { regex: /\b(will|going to|used to|stuck|someday|eventually|regret|future|past|yesterday|tomorrow|before|after|already|not yet|too late|too soon|back then|from now on|one day|in the end|by then|prior|previously|formerly|once|thereafter)\b/gi, insight: "Time is memory or projection. Only Now exists, and Now is all that ever has." },
-
-            // 28. Possession & Ownership
-            { regex: /\b(my life|my mind|my body|my heart|my soul|my thoughts|my feelings|my experience|my reality|my world|my story|my past|my future|my problems|my pain|my joy|my path|my journey|my purpose|my truth|my beliefs|my values|my self|my ego|my consciousness|my awareness|belongs to me|of mine|is mine|that's mine)\b/gi, insight: "Possession requires a possessor separate from what is owned. What if owner and owned are the same movement?" },
-
-            // 29. Spatial Location of Self
-            { regex: /\b(inside me|within me|deep inside|in my chest|in my gut|in my heart|in my head|in my mind|from where I stand|where I am|my position|my place|my location|my perspective|my point of view|from my side|in here|out there|I feel it in|I sense it in|somewhere inside|a part of me|something in me)\b/gi, insight: "Awareness has no address. It is not located inside the body — the body appears inside it." },
-
-            // 30. Becoming & Change of Self
-            { regex: /\b(becoming|I became|I have become|I'm turning into|I used to be|I'm not the same|I've changed|I'm changing|I'm growing|I'm evolving|I'm developing|I'm improving|I'm getting better|I'm getting worse|I'm transforming|who I've become|what I've become|I'm not who I was|I'm different now|growth|personal growth|self-improvement|self-development|healing|my healing|my growth|my transformation|my evolution|my journey)\b/gi, insight: "Becoming implies a self that travels through time. Awareness does not become — it simply is, prior to all change." },
-
-            // 31. Narrative Self-Description
-            { regex: /\b(I'm the kind of|I'm someone who|I'm a person who|I tend to|I always|I never|I usually|I typically|I generally|I naturally|I instinctively|I inherently|I'm naturally|I'm just|that's just me|that's how I am|I can't help it|it's in my nature|I was born|I was raised|I was taught|I was conditioned|it's who I am|it's what I do|I've always been|I've never been)\b/gi, insight: "This is the ego's autobiography — a story told about awareness by awareness. The teller is not the told." },
-
-            // 32. Certainty About Inner States
-            { regex: /\b(I know I feel|I know I am|I'm sure that I|I definitely feel|I clearly feel|I can tell that I|I can feel that|I know exactly|I'm certain that|I'm positive that|I'm convinced that|without a doubt I|there's no question I|I genuinely feel|I truly feel|I really feel|I honestly feel|I actually feel|I deeply feel)\b/gi, insight: "Certainty about awareness is awareness claiming to observe itself as an object. Who is certain of the one who is certain?" },
-
-            // 33. Effort & Self-Improvement
-            { regex: /\b(I'm working on|I'm trying to|I need to work on|I'm struggling with|I'm learning to|I'm practicing|I'm getting better at|I'm improving|self-improvement|self-help|fix myself|fix this about me|change myself|better myself|overcome myself|discipline myself|push myself|motivate myself|hold myself accountable|be more|be less|be different|be better|be worse)\b/gi, insight: "The improver and the improved are the same. Who is the self that fixes the self?" },
-
-            // 34. Credibility & Social Standing
-            { regex: /\b(they think|people think|everyone thinks|no one believes|they said|people say|they told me|I was told|I was made to feel|made to believe|judged|judgment|judging|reputation|how I look|what they think|what people think|what others think|how I come across|how I seem|impressions|perception of me|my image|my reputation|my status|my standing|respected|disrespected|valued|devalued|seen as|viewed as|known as|labeled as|called|called me)\b/gi, insight: "The audience exists only within the same awareness that contains the performer. Who is watching the watcher?" },
-
-            // 35. Explaining & Justifying
-            { regex: /\b(the reason is|the point is|what I mean is|what I'm saying is|to be clear|to be honest|honestly|frankly|truthfully|the truth is|the fact is|the reality is|the thing is|basically|essentially|fundamentally|at the end of the day|when it comes down to it|the bottom line|what it comes down to|I just want to say|I just want to explain|I need to explain|I need you to understand|I want to be understood|I need to be clear)\b/gi, insight: "Explanation constructs a story of cause and effect. What remains when the justification dissolves?" },
-
-            // 36. Attention & Noticing (The Hidden Observer)
-            { regex: /\b(I notice|I noticed|I observe|I observed|I'm aware of|I am aware|I'm watching|I watch|I see that I|I feel that I|I'm paying attention|paying attention|I'm witnessing|I witness|I catch myself|I caught myself|I find myself|I found myself|I'm sensing|I sense that|I'm recognizing|I recognize that|I can see that|I can feel that|I can tell that)\b/gi, insight: "Even the observer is observed. The watcher is not separate from the watched — both arise in the same awareness." },
-
-            // 37. Urgency & Importance
-            { regex: /\b(it matters|it's important|important|significance|it's a big deal|big deal|this is serious|this is critical|this really counts|it's urgent|urgent|it's necessary|necessary|it's vital|vital|it's essential|it's crucial|crucial|priority|priorities|it's relevant|relevant|it means a lot|it means everything|meaningless|meaningful|meaning|pointless|purposeless|purpose)\b/gi, insight: "Awareness assigns no hierarchy to its contents. The 'urgent' thought and the 'trivial' thought are equal arisings." },
-
-            // 38. Authenticity & The True Self
-            { regex: /\b(my true self|my authentic self|true self|authentic self|being real|being genuine|being honest with myself|my real feelings|what I really think|what I really feel|deep down|my real self|my deeper self|my higher self|my inner self|my inner child|my shadow|who I really am|what I really want|my genuine self|being myself|true to myself|real me|the real me|my core|my essence|my soul)\b/gi, insight: "The authentic self is still a self. There is no truer version buried beneath — both the false and the real are constructions arising in awareness." },
-
-            // 39. Permission & Desert
-            { regex: /\b(I deserve|I don't deserve|I'm allowed|I'm not allowed|I have the right|I don't have the right|I'm entitled|I'm not entitled|I earned|I didn't earn|I owe|they owe me|fair share|my share|I'm owed|deserving|undeserving|worthy|unworthy|meriting|I've earned|I haven't earned|I have no right|who am I to|it's not my place)\b/gi, insight: "Deserving requires a moral ledger and an account holder. Who keeps the score, and for whom?" },
-
-            // 40. Meaning-Seeking
-            { regex: /\b(what does it mean|what is the meaning|what is the lesson|what am I supposed to learn|what is this teaching me|what is the universe telling me|what is the message|what is the point|why did this happen|why is this happening|why me|what's the reason|what's the purpose|it happened for a reason|everything happens for a reason|meant to be|meant to happen|supposed to happen|it's a sign|it's a test|the universe is|synchronicity|there are no coincidences)\b/gi, insight: "Meaning-seeking constructs a story addressed to a self. What if experience simply arises, addressed to no one?" },
-
-            // 41. Body Identification
-            { regex: /\b(my brain|my nervous system|my genes|my DNA|my biology|my physiology|my hormones|my chemistry|my gut|my instincts|it's biological|it's chemical|it's hormonal|it's genetic|it's in my DNA|it's hardwired|it's wired into me|neurological|neurologically|physiologically|genetically|biologically|hormonally|my brain says|my body says|my body knows|body memory|somatic|embodied|felt sense)\b/gi, insight: "The body appears within awareness, not the other way around. Awareness is not produced by the brain — the brain is a content of awareness." },
-
-            // 42. Continuity & Behavioral Identity
-            { regex: /\b(I still|I keep|I always end up|I can't stop|I keep doing this|here I go again|I never learn|I always do this|I do this every time|I'm doing it again|same old|same pattern|same mistake|I'm stuck in|I repeat|I'm repeating|I fall into|I fall back into|this always happens|it always goes this way|I self-sabotage|self-sabotage|my pattern|my patterns|my habit|my habits|my tendencies|my tendency|I revert|I regress|I default to)\b/gi, insight: "Continuity of pattern requires a self that persists through time to carry it. Who is the self that 'always does this'?" },
-
-            // 43. Relational Identity
-            { regex: /\b(as a mother|as a father|as a parent|as a partner|as a friend|as a leader|as a teacher|as a student|as a professional|in my role|my role|my responsibility to|my duty to|I owe it to them|for their sake|because of them|on behalf of|in service of|how I show up|showing up for|being there for|I'm there for|I exist for|I live for|I do it for|I'm doing this for|my people|my family|my community|my tribe)\b/gi, insight: "Relational identity defines the self through its connections. But both self and other arise within the same single awareness." },
-
-            // 44. Spiritual Bypassing
-            { regex: /\b(everything happens for a reason|it's all part of the plan|the universe provides|I surrender to|I trust the process|letting go|I release|releasing|radical acceptance|I'm at peace with|it is what it is|what will be will be|going with the flow|divine plan|divine timing|divine guidance|it was meant|it was fated|my higher power|spirit guides|the light|sending love|holding space|my vibration|raising my vibration|high vibe|low vibe|manifesting)\b/gi, insight: "Spiritual language can still carry a self doing the surrendering, to a universe doing the providing. Two things, not one. Does the fractal surrender to itself?" },
-
-            // 45. Framing & Minimizing
-            { regex: /\b(just|only|merely|simply|at least|even so|after all|in fact|actually|really|literally|surely|certainly|apparently|seemingly|supposedly|presumably|evidently|obviously|naturally|needless to say|goes without saying|as you know|everyone knows|as we know)\b/gi, insight: "Framing words shape how reality is presented to a self. They are the narrator's hand adjusting the dial." },
-
-            // 46. Lack & Incompleteness
-            { regex: /\b(I'm missing|I'm lacking|I lack|I don't have|I have no|I'm without|I'm incomplete|I'm not whole|I'm broken|I'm lost|I'm empty|something is missing|there's a hole|I feel hollow|I feel empty|something is wrong with me|what's wrong with me|I'm not enough|not enough|never enough|I'm too much|I can't be|I'll never have|I'll never be|I'll never do|I'm not ready|I'm not there yet|I haven't arrived|I haven't figured it out)\b/gi, insight: "Incompleteness requires a self that is missing something it should have. Awareness is not incomplete — it contains everything, including the sense of lack." }
+            // 27. Time (Future/Past)
+            { regex: /\b(will|going to|used to|stuck|someday|eventually|regret|future|past|yesterday|tomorrow)\b/gi, insight: "Time is memory or projection. Only Now exists." }
         ];
 
         // --- Core Functions ---
@@ -715,7 +658,7 @@
         }
 
         function escapeQuotes(text) {
-            return text.replace(/'/g, "\\'");
+            return text.replace(/'/g, "\'");
         }
     </script>
 </body>
