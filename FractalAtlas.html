@@ -324,6 +324,7 @@
             <button class="tab-btn" onclick="app.setMode(3)">BIFURCATION</button>
         </div>
         <div class="header-right">
+            <button class="icon-btn" onclick="ui.toggleManual()" title="User Manual">❓</button>
             <button class="action-btn" onclick="ui.toggleModal(true)">SAVE VIEW</button>
             <button class="icon-btn" onclick="ui.toggleSettings()">⚙️</button>
         </div>
@@ -498,7 +499,52 @@
             </div>
         </div>
     </div>
+<!-- User Manual Modal -->
+    <div id="manual-modal">
+        <div class="manual-box">
+            <div class="manual-header">
+                <h2>Fractal Atlas User Guide</h2>
+                <button class="close-manual-btn" onclick="ui.toggleManual()">&times;</button>
+            </div>
+            <div class="manual-content">
+                <p>There are 4 tabs to Fractal Atlas, each of which provides a different way of looking at fractal structures. You start off in the "Fractals" tab.</p>
 
+                <h3>1. Fractals</h3>
+                <p>There are 2 windows. The left window shows the base fractal, and the right window shows the Julia set generated with the seed from the left fractal.</p>
+                <p>There is a white dot on the left fractal, which you can drag around in the window. As you drag it, you will see the Julia window update and the <em>c</em> value change in the lower left of the fractal window. You can double-click to lock or unlock the point.</p>
+                <p>You can pan and zoom in both windows. You can also check "Auto Zoom" and set the zoom speed. If you input a negative zoom speed value, then it will zoom out. There is a maximum zoom level that is possible with this implementation, so expect to eventually find the fractals becoming pixelated. Since fractals are self-similar, you will be able to find all of the structures within the zoom limitations of this browser application.</p>
+                <p>You can change the maximum number of iterations to change how the color palettes are applied. The more you zoom in, the higher iterations will be necessary to continue to resolve fractal details well. Fewer iterations will make the fractals appear brighter at lower zoom levels. You can also change the color palette with 9 available options currently.</p>
+                <p>If you want to observe the behavior of a particular starting point, you can check <strong>"Orbits"</strong>, and a trajectory will appear from the white dot. This shows the behavior of applying that coordinate to the fractal equation. There are stable orbits that remain contained within the fractal as well as escaping trajectories.</p>
+                <p>The "Equation" section allows you to change the fractal you are looking at. There are 10 presets that you can choose between, as well as an equation box where you can explore any fractal that is not in the list.</p>
+                <p>The <strong>Reset Camera</strong> button resets the fractal in case you get lost. The <strong>Save View</strong> button allows you to save a PNG of a window. You can name the fractal, select the target window, and select the save file resolution. If you are on mobile, the Left Window will be on top, and the Right Window will be on the bottom.</p>
+                <p>There is a settings gear icon on the upper right, which just mirrors all of the controls below the windows that are used specifically for mobile, where screen real estate is limited.</p>
+
+                <h3>2. Nebulae</h3>
+                <p>These are called Nebulae because they are generated using the same techniques used in astronomy for capturing images of deep sky objects. You will receive photons being emitted from the structure you are observing and will have to collect them over the course of a few minutes to improve the signal to noise ratio. It also requires the user to map particular emissions to particular colors.</p>
+                <p>This tab also contains 2 windows. The left window plots the escaping trajectories of points traversing the fractal in real time. The right window is the corresponding nebula Julia <em>(world's first implementation)</em> from whatever point you have selected in the left window. Whatever point position you had in the "Fractals" tab will carry over to these windows and vice versa. You can pan and zoom in both of these windows just like in the "Fractals" tab. When you change the window, the nebulae will restart plotting points. Let the windows sit for a few minutes for the signal-to-noise ratio to improve.</p>
+                <p>Sometimes the nebulae may not show up if the iterations are too low with some fractal equations, so increasing max iterations may be necessary in some cases. You can change the colors of the fractals by using the Red, Green, and Blue Threshold sliders. That tells the program to color the number of iterations to escape differently. If they are all set to the same value, then the nebulae will appear white.</p>
+                <p>There is also a nebula brightness slider for when particular nebulae are too dark to see clearly. All of the values also allow for manual input, so if the slider range does not cover what you are trying to do, then just type in a value.</p>
+                <p>The <strong>Anti-Nebula</strong> checkbox changes the plot from displaying escaping trajectories to displaying trapped trajectories.</p>
+                <p>Saving fractal nebulae has an additional input asking for the number of samples in the output. The higher the samples, the longer the output will take, but the sharper the final image will be. If you want a fast capture, then you can just save the screen size and that will output exactly what you see on your screen's selected window.</p>
+
+                <h3>3. Atlas</h3>
+                <p>The atlases tile the windows with Julia sets. The Julia set seeds are at the corresponding center of each of the tiles. You can increase the atlas grid to display more Julias simultaneously. You will notice that the tiling of these Julias will result in an emergent fractal that matches the equation the Julias were derived from. This is a good way to get an intuitive understanding of the correspondence between base fractals and their respective Julias.</p>
+                <p>The Nebula Atlas <em>(world's first)</em> shows the nebula Julias generated at the center point of each tile. There are 2 modes. First is <strong>Uniform</strong>, where each tile plots escaping trajectories independently, where there is no preferential starting point. Second is the <strong>Origin-Biased</strong> setting, where all points start at (0,0), and then their trajectories are plotted going through the nebula Julia tiles. As Reality Fractal predicted, this results in the emergence of the shape of the fractal nebula equation used with sufficiently large grid densities.</p>
+                <p>Just as with the previous tabs, you can pan and zoom on both windows. You can also change the maximum number of iterations to highlight certain features, change the nebula brightness, and RGB iteration mappings for the nebula atlas. If you save the nebula atlas window, just as with the Nebulae tab, you can select the number of samples to get the desired output.</p>
+
+                <h3>4. Bifurcation</h3>
+                <p>This tab shows the correspondence between any fractal and its corresponding bifurcation diagram. You can see either the base fractal's or selected Julia's <em>(world's first)</em> bifurcation correspondence from previous windows. You can rotate and zoom, and if you are on a device with right-click, you can also pan the 3D rendering.</p>
+                <p>There is a grid resolution slider that allows you to increase the resolution of the grid. Considering this is a 3D browser rendering, it is best to increase this slowly until at the desired resolution. There is also warmup iterations, which corresponds to the number of iterations performed prior to capturing the fractal (increases precision), and an orbit points slider. The higher the number of orbit points, the brighter and denser the fractal will appear to be.</p>
+                <p>The <strong>Show Plane</strong> checkbox colors points that visit the bifurcation axis so they can be clearly distinguished. The <strong>Show Orbits</strong> <em>(world's first)</em> checkbox allows you to drag a point that has a white circle around it along the plane orthogonal to the bifurcation diagram. It will show the orbits just like it did in 2D on the fractals tab, except here we can see how the orbit of each point changes in 3D.</p>
+
+                <hr style="border: 0; border-top: 1px solid #333; margin: 30px 0;">
+                
+                <p><em>I created this app to explain Reality Fractal, the Theory of Everything that I developed over the past few years. There is a "Read Theory" dropdown that allows you to see the fundamentals of the theory and how it corresponds with everything Fractal Atlas shows.</em></p>
+                <p><em>This is a new frontier of exploration. Please share any interesting fractals you generate on <a href="#" style="color:var(--accent-color); text-decoration:none; font-weight:bold;">Reality Fractal's Discord</a>! I am excited to see what you find!</em></p>
+                <div style="height: 20px;"></div>
+            </div>
+        </div>
+    </div>
 <script>
 /**
  * FRACTAL ATLAS - MASTER EDITION
