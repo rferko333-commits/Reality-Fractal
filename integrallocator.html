@@ -4,248 +4,884 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Integral Level Locator</title>
-    <!-- Chart.js Library for the Visualizations -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+
     <style>
-       :root {
-            --red: #ff4d4d;
-            --amber: #d35400;
-            --orange: #f39c12;
-            --green: #27ae60;
-            --teal: #1abc9c;
+        /* =========================================
+           DESIGN TOKENS
+        ========================================= */
+        :root {
+            --red:       #ff4d4d;
+            --amber:     #d35400;
+            --orange:    #f39c12;
+            --green:     #27ae60;
+            --teal:      #1abc9c;
             --turquoise: #16a085;
-            --bg: #121212;       /* Changed to Dark Gray/Black */
-            --card: #1e1e1e;     /* Changed to Dark Gray Card */
-            --text: #ecf0f1;     /* Changed to Light White Text */
+
+            --bg:        #0d0d0d;
+            --card:      #161616;
+            --card-alt:  #1c1c1c;
+            --border:    #2a2a2a;
+            --border-mid:#333333;
+            --text:      #e8e4dc;
+            --text-dim:  #9a9690;
+            --text-muted:#666260;
+
+            --font-display: 'Cinzel', Georgia, serif;
+            --font-body:    'Raleway', sans-serif;
+
+            --radius:    10px;
+            --radius-sm: 6px;
+            --transition: 0.2s ease;
         }
 
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.6; }
-        .container { max-width: 800px; margin: 0 auto; background: var(--card); padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        
-        h1, h2 { text-align: center; color: var(--text); }
-        .intro { text-align: center; margin-bottom: 30px; font-style: italic; color: #7f8c8d; }
+        /* =========================================
+           BASE
+        ========================================= */
+        *, *::before, *::after { box-sizing: border-box; }
 
-        /* Selection Screen */
-        .line-selector { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .line-checkbox { display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-        /* Update the .line-checkbox:hover style */
-.line-checkbox:hover { 
-    background-color: #ecf0f1; 
-    color: #121212; /* This makes text dark when hovering */
-}
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 30px 20px;
+            line-height: 1.65;
+            min-height: 100vh;
+            background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(26,188,156,0.07) 0%, transparent 70%);
+        }
 
-        .line-checkbox input { margin-right: 10px; transform: scale(1.2); }
-        
-        .start-btn, .next-btn { display: block; width: 100%; padding: 15px; background-color: var(--teal); color: white; border: none; border-radius: 6px; font-size: 1.2rem; cursor: pointer; margin-top: 20px; transition: background 0.3s; }
-        .start-btn:hover, .next-btn:hover { background-color: var(--turquoise); }
-        .start-btn:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+        .container {
+            max-width: 820px;
+            margin: 0 auto;
+            background: var(--card);
+            padding: 50px 50px 40px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            box-shadow: 0 0 0 1px rgba(26,188,156,0.05), 0 20px 60px rgba(0,0,0,0.6);
+        }
 
-        /* Quiz Interface */
+        h1 {
+            font-family: var(--font-display);
+            text-align: center;
+            color: var(--text);
+            font-size: 2rem;
+            letter-spacing: 0.12em;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        h2 {
+            font-family: var(--font-display);
+            text-align: center;
+            color: var(--text);
+            letter-spacing: 0.08em;
+            font-weight: 600;
+        }
+
+        h3 { font-family: var(--font-body); font-weight: 600; color: var(--text); }
+
+        .subtitle {
+            text-align: center;
+            font-size: 0.75rem;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--teal);
+            margin-bottom: 35px;
+            font-weight: 500;
+        }
+
+        /* =========================================
+           INTRO
+        ========================================= */
+        .intro-block {
+            background: var(--card-alt);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--teal);
+            border-radius: var(--radius-sm);
+            padding: 22px 26px;
+            margin-bottom: 35px;
+            font-size: 0.92rem;
+            color: var(--text-dim);
+            line-height: 1.8;
+        }
+
+        .intro-block strong { color: var(--text); font-weight: 600; }
+
+        .intro-meta {
+            margin-top: 14px;
+            font-size: 0.83rem;
+            color: var(--text-muted);
+        }
+
+        /* =========================================
+           LINE SELECTOR
+        ========================================= */
+        .section-label {
+            font-size: 0.72rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .line-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Line selector: glow-card style (like quiz options) */
+        .line-card {
+            padding: 13px 16px;
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+            background: var(--card-alt);
+            user-select: none;
+            font-size: 0.93rem;
+            font-weight: 500;
+            color: var(--text-dim);
+            text-align: center;
+        }
+        .line-card:hover {
+            border-color: var(--teal);
+            background: rgba(26,188,156,0.06);
+            color: var(--text);
+        }
+        .line-card.selected {
+            border-color: var(--teal);
+            background: rgba(26,188,156,0.14);
+            color: var(--text);
+            font-weight: 600;
+            box-shadow: 0 0 0 1px rgba(26,188,156,0.3), 0 0 12px rgba(26,188,156,0.12);
+        }
+
+        /* =========================================
+           BUTTONS
+        ========================================= */
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 16px;
+        }
+
+        .btn-primary { background-color: var(--teal); color: #fff; }
+        .btn-primary:hover { background-color: var(--turquoise); }
+        .btn-primary:disabled { background-color: #2a3a38; color: var(--text-muted); cursor: not-allowed; }
+
+        .btn-download { background-color: var(--orange); color: #fff; }
+        .btn-download:hover { background-color: #e67e22; }
+
+        .btn-retake { background-color: var(--card-alt); color: var(--text-dim); border: 1px solid var(--border-mid); }
+        .btn-retake:hover { border-color: var(--text-dim); color: var(--text); }
+
+        .time-estimate {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--amber);
+            letter-spacing: 0.03em;
+        }
+
+        /* =========================================
+           QUIZ
+        ========================================= */
         #quiz-section { display: none; }
-        .progress-bar { width: 100%; height: 10px; background: #ddd; border-radius: 5px; margin-bottom: 20px; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--teal); width: 0%; transition: width 0.3s; }
-        .question-card { margin-bottom: 20px; }
-        .question-text { font-size: 1.3rem; font-weight: 600; margin-bottom: 20px; }
-        .options-list { list-style: none; padding: 0; }
-        .option-item { padding: 15px; margin-bottom: 10px; border: 2px solid #ecf0f1; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-        /* Update the .option-item:hover style */
-.option-item:hover { 
-    border-color: var(--teal); 
-    background-color: #e8f8f5; 
-    color: #121212; /* This makes text dark when hovering */
-}
-        .option-item.selected { border-color: var(--teal); background-color: var(--teal); color: white; }
 
-        /* Results Interface */
-        #results-section { display: none; }
-        .chart-container { position: relative; height: 400px; width: 100%; margin-bottom: 40px; }
-        .level-bars { margin-top: 30px; }
-        .level-bar-row { display: flex; align-items: center; margin-bottom: 10px; }
-        .level-label { width: 120px; font-weight: bold; }
-        .level-track { flex-grow: 1; height: 20px; background: #eee; border-radius: 10px; overflow: hidden; position: relative; }
-        .level-fill { height: 100%; border-radius: 10px; }
-        .level-score { width: 50px; text-align: right; font-weight: bold; }
-
-        /* Utility */
-        .hidden { display: none; }
-        .time-estimate { text-align: center; margin-top: 10px; font-weight: bold; color: var(--amber); }
-/* NEW STYLES FOR UPGRADE */
-        .cog-box { 
-            background: rgba(26, 188, 156, 0.1); 
-            border: 2px solid var(--teal); 
-            padding: 20px; 
-            border-radius: 8px; 
-            text-align: center; 
-            margin-bottom: 30px; 
+        .quiz-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
         }
-        .cog-title { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: var(--teal); }
-        .cog-value { font-size: 2rem; font-weight: bold; margin: 10px 0; }
-        
-        .insight-card { 
-            background: #2c3e50; /* Darker background for contrast */
-            border-left: 5px solid var(--orange); 
-            padding: 15px; 
-            margin-bottom: 10px; 
+
+        .quiz-counter {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 3px;
+            background: var(--border);
+            border-radius: 999px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--teal), var(--turquoise));
+            width: 0%;
+            transition: width 0.4s ease;
+            border-radius: 999px;
+        }
+
+        .current-line-title {
+            font-size: 0.72rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--teal);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 24px;
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .options-list { list-style: none; padding: 0; margin: 0; }
+
+        .option-item {
+            padding: 14px 18px;
+            margin-bottom: 9px;
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            background: var(--card-alt);
             font-size: 0.95rem;
-            color: #ecf0f1;
+            color: var(--text-dim);
         }
 
-        .legend-container { margin-top: 40px; border-top: 1px solid #333; padding-top: 20px; }
-        .legend-item { margin-bottom: 15px; }
-        .legend-title { font-weight: bold; color: var(--teal); cursor: pointer; }
-        .legend-desc { font-size: 0.9rem; color: #bdc3c7; margin-top: 5px; }
-        .higher-levels { border: 1px dashed var(--orange); padding: 15px; margin-top: 20px; border-radius: 8px; }
+        .option-item:hover { border-color: var(--teal); background: rgba(26,188,156,0.07); color: var(--text); }
+        .option-item.selected { border-color: var(--teal); background: rgba(26,188,156,0.15); color: var(--text); font-weight: 600; }
+
+        .quiz-nav { display: flex; gap: 12px; margin-top: 24px; }
+        .quiz-nav .btn { margin-top: 0; }
+
+        .btn-back {
+            width: auto;
+            padding: 14px 22px;
+            flex-shrink: 0;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-mid);
+            font-size: 0.9rem;
+        }
+        .btn-back:hover { border-color: var(--text-dim); color: var(--text); }
+        .btn-back:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        #nextBtn { display: none; flex: 1; }
+
+        /* =========================================
+           RESULTS
+        ========================================= */
+        #results-section { display: none; }
+
+        .cog-box {
+            background: rgba(26,188,156,0.08);
+            border: 1px solid rgba(26,188,156,0.28);
+            padding: 26px 24px 20px;
+            border-radius: var(--radius);
+            text-align: center;
+            margin-bottom: 30px;
+            transition: background 0.5s ease, border-color 0.5s ease;
+        }
+
+        .cog-title {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--teal);
+            font-weight: 600;
+            transition: color 0.5s ease;
+        }
+
+        .cog-value {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 10px 0 6px;
+            color: var(--text);
+            letter-spacing: 0.06em;
+        }
+
+        .cog-description {
+            font-size: 0.88rem;
+            color: var(--text-dim);
+            margin-bottom: 12px;
+        }
+
+        .cog-note {
+            font-size: 0.82rem;
+            color: var(--text-dim);
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(26,188,156,0.15);
+            line-height: 1.65;
+        }
+
+        .insight-card {
+            background: var(--card-alt);
+            border-left: 4px solid var(--orange);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            font-size: 0.91rem;
+            color: var(--text-dim);
+            line-height: 1.65;
+        }
+
+        .insight-card strong { color: var(--text); }
+
+        .chart-container { position: relative; height: 380px; width: 100%; margin: 30px 0; }
+
+        .level-bars { margin-top: 20px; }
+
+        .level-bar-row { display: flex; align-items: center; margin-bottom: 11px; gap: 14px; }
+
+        .level-label { width: 115px; font-weight: 600; font-size: 0.85rem; color: var(--text-dim); flex-shrink: 0; }
+
+        .level-track { flex-grow: 1; height: 10px; background: var(--border); border-radius: 999px; overflow: hidden; }
+
+        .level-fill { height: 100%; border-radius: 999px; }
+
+        .level-score { width: 38px; text-align: right; font-weight: 700; font-size: 0.88rem; color: var(--text); flex-shrink: 0; }
+
+        /* Participation opt-in */
+        .participation-box {
+            background: var(--card-alt);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius);
+            padding: 20px 22px;
+            margin-top: 30px;
+        }
+
+        .participation-box .p-title {
+            font-size: 0.78rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .participation-box .p-desc {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            line-height: 1.65;
+            margin-bottom: 14px;
+        }
+
+        .participation-toggle {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .participation-toggle input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--teal);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .participation-toggle label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .p-status {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            min-height: 1.2em;
+        }
+
+        /* Legend */
+        .legend-container {
+            margin-top: 40px;
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+        }
+
+        .legend-item { margin-bottom: 14px; }
+
+        .legend-title { font-weight: 600; font-size: 0.9rem; }
+
+        .legend-desc { font-size: 0.85rem; color: var(--text-muted); margin-top: 3px; line-height: 1.55; }
+
+        .higher-levels {
+            border: 1px dashed var(--border-mid);
+            padding: 18px 20px;
+            margin-top: 20px;
+            border-radius: var(--radius-sm);
+        }
+
+        .higher-levels h4 {
+            margin-top: 0;
+            color: var(--orange);
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+        }
+
+        .section-divider { border: none; border-top: 1px solid var(--border); margin: 30px 0; }
+
+        .footer-note {
+            text-align: center;
+            font-size: 0.78rem;
+            margin-top: 24px;
+            color: var(--text-muted);
+            line-height: 1.65;
+        }
+
+
+        /* Shadow range indicator inside bars */
+        .level-track-wrap { flex-grow: 1; position: relative; }
+        .level-range-bar {
+            position: relative;
+            height: 10px;
+            background: var(--border);
+            border-radius: 999px;
+            overflow: visible;
+        }
+        .range-span {
+            position: absolute;
+            top: 0; height: 100%;
+            background: rgba(255,255,255,0.07);
+            border-radius: 999px;
+        }
+        .range-avg-fill {
+            position: absolute;
+            top: 0; left: 0; height: 100%;
+            border-radius: 999px;
+            z-index: 1;
+        }
+        .range-min-tick, .range-max-tick {
+            position: absolute;
+            top: -3px;
+            width: 3px; height: 16px;
+            border-radius: 2px;
+            z-index: 2;
+            opacity: 0.6;
+        }
+        .range-min-tick { background: var(--red); }
+        .range-max-tick { background: var(--teal); }
+        .shadow-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+            line-height: 1.3;
+        }
+        .shadow-label .pull { color: var(--red); font-weight: 600; }
+        .shadow-label .peak { color: var(--teal); font-weight: 600; }
+
+        /* Line interpretation cards */
+        .interp-section {
+            margin-top: 8px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+        .interp-row {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .interp-row:last-child { border-bottom: none; }
+        .interp-line-name {
+            width: 115px;
+            flex-shrink: 0;
+            font-weight: 700;
+            font-size: 0.82rem;
+        }
+        .interp-badge {
+            flex-shrink: 0;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 999px;
+            color: #000;
+            opacity: 0.9;
+            white-space: nowrap;
+            align-self: center;
+        }
+        .interp-text {
+            font-size: 0.84rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+            flex: 1;
+        }
+
+        /* Development recommendation cards */
+        .recs-section {
+            margin-top: 8px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+        .rec-block {
+            background: var(--card-alt);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius-sm);
+            padding: 16px 18px;
+            margin-bottom: 12px;
+        }
+        .rec-line-header {
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .rec-practice {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 0.86rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+        .rec-practice:last-child { margin-bottom: 0; }
+        .rec-num {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(26,188,156,0.15);
+            color: var(--teal);
+            font-size: 0.72rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 1px;
+        }
+
+
+        /* Accordion / collapsible sections */
+        .accordion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 14px 0;
+            border-top: 1px solid var(--border);
+            user-select: none;
+        }
+        .accordion-header:hover .acc-title { color: var(--text); }
+        .acc-title {
+            font-size: 0.72rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+        .acc-arrow {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            transition: transform 0.25s ease;
+            line-height: 1;
+        }
+        .acc-arrow.open { transform: rotate(90deg); }
+        .accordion-body {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.35s ease;
+        }
+        .accordion-body.open { max-height: 9999px; }
+        .accordion-body-inner { padding-bottom: 20px; }
+
+        /* Shadow toggle */
+        .shadow-toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .shadow-toggle-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-track {
+            position: absolute;
+            inset: 0;
+            background: var(--border-mid);
+            border-radius: 999px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .toggle-track::after {
+            content: '';
+            position: absolute;
+            left: 3px; top: 3px;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            transition: transform 0.2s, background 0.2s;
+        }
+        .toggle-switch input:checked + .toggle-track { background: rgba(26,188,156,0.3); }
+        .toggle-switch input:checked + .toggle-track::after {
+            transform: translateX(16px);
+            background: var(--teal);
+        }
+        .shadow-rows { display: none; }
+        .shadow-rows.visible { display: block; }
+        .shadow-ticks { visibility: hidden; }
+        .shadow-ticks.visible { visibility: visible; }
+
+        .hidden { display: none; }
+
+        @media (max-width: 600px) {
+            .container { padding: 30px 22px 28px; }
+            h1 { font-size: 1.5rem; }
+            .level-label { width: 90px; font-size: 0.78rem; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>Integral Level Locator</h1>
-    
-    <!-- STEP 1: SELECT LINES -->
+    <div class="subtitle">Lines &amp; Levels Assessment · Integral Theory</div>
+
+    <!-- STEP 1: SETUP -->
     <div id="setup-section">
-        <h3>Select Lines to Test:</h3>
-        <div class="line-selector" id="lineCheckboxes">
-            <!-- Populated by JS -->
+
+        <div class="intro-block">
+            <strong>What is this?</strong> This assessment maps your developmental profile across multiple <em>lines of intelligence</em>: distinct capacities like emotional maturity, moral reasoning, and spiritual awareness that each grow at their own pace. The framework is drawn from <strong>Integral Theory</strong> (Ken Wilber / AQAL), which identifies altitude levels from egocentric (Red) through worldcentric (Orange/Green) to integral (Teal/Turquoise).<br><br>
+            Your results form a <strong>psychograph</strong>: a radar chart showing where each line sits on the developmental spectrum. Because lines grow independently, most people are advanced in some areas and trailing in others. There is no "good" or "bad" result; the map is useful precisely because it shows where growth energy is most alive.<br><br>
         </div>
-        <p class="time-estimate" id="timeEstimate">Estimated Time: 0 mins</p>
-        <button class="start-btn" id="startBtn" onclick="startQuiz()" disabled>Begin Assessment</button>
+
+        <div class="section-label">Select Lines to Assess <span style="font-weight:400; font-size:0.8em; text-transform:none; letter-spacing:0;">(click to toggle)</span></div>
+        <div class="line-selector" id="lineCheckboxes"></div>
+        <div style="display:flex; gap:10px; margin-top:12px;">
+            <button class="btn" style="flex:1; padding:9px; font-size:0.8rem; background:var(--card-alt); color:var(--text-muted); border:1px solid var(--border-mid); margin-top:0;" onclick="selectAllLines()">Select All</button>
+            <button class="btn" style="flex:1; padding:9px; font-size:0.8rem; background:var(--card-alt); color:var(--text-muted); border:1px solid var(--border-mid); margin-top:0;" onclick="deselectAllLines()">Deselect All</button>
+        </div>
+        <p class="time-estimate" id="timeEstimate">Select lines above to begin</p>
+        <button class="btn btn-primary" id="startBtn" onclick="startQuiz()" disabled>Begin Assessment</button>
     </div>
 
-    <!-- STEP 2: QUIZ INTERFACE -->
+    <!-- STEP 2: QUIZ -->
     <div id="quiz-section">
-        <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
-        <h3 id="currentLineTitle" style="color: var(--teal); text-transform: uppercase; letter-spacing: 1px;"></h3>
-        <div class="question-card">
-            <div class="question-text" id="questionText"></div>
-            <ul class="options-list" id="optionsList">
-                <!-- Options populated by JS -->
-            </ul>
+        <div class="quiz-meta">
+            <div class="current-line-title" id="currentLineTitle"></div>
+            <div class="quiz-counter" id="quizCounter"></div>
         </div>
-        <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Next Question</button>
+        <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
+
+        <div class="question-text" id="questionText"></div>
+        <ul class="options-list" id="optionsList"></ul>
+
+        <div class="quiz-nav">
+            <button class="btn btn-back" id="backBtn" onclick="prevQuestion()" disabled>← Back</button>
+            <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+        </div>
     </div>
 
     <!-- STEP 3: RESULTS -->
     <div id="results-section">
-        
-        <!-- NEW WRAPPER STARTS HERE -->
-        <div id="results-capture" style="padding: 20px; background-color: var(--card); border-radius: 12px;">
+
+        <div id="results-capture" style="padding: 4px; background-color: var(--card); border-radius: 12px;">
             <h2>Your Integral Psychograph</h2>
-            <!-- 1. Center of Gravity Display -->
+
             <div class="cog-box">
-                <div class="cog-title">Your Center of Gravity</div>
+                <div class="cog-title">Center of Gravity</div>
                 <div class="cog-value" id="cogResult">Calculating...</div>
-                <div id="cogDescription" style="font-size: 0.9rem; opacity: 0.8;"></div>
+                <div class="cog-description" id="cogDescription"></div>
+                <div class="cog-note" id="cogNote"></div>
             </div>
 
-            <!-- 2. Imbalance Insights -->
-            <div id="insightContainer">
-                <!-- Insights populated by JS -->
-            </div>
-            <!-- Radar Chart -->
+            <div id="insightContainer"></div>
+
             <div class="chart-container">
                 <canvas id="radarChart"></canvas>
             </div>
 
-            <!-- Bar Breakdown -->
-            <h3>Detailed Levels</h3>
-            <div class="level-bars" id="barContainer">
-                <!-- Bars populated by JS -->
+            <h3 style="font-size:0.78rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--text-muted); font-weight:600; margin-bottom:12px;">Detailed Line Scores</h3>
+            <div class="shadow-toggle-row">
+                <span class="shadow-toggle-label">Show Shadow Profile</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="shadowToggle" onchange="toggleShadow()">
+                    <div class="toggle-track"></div>
+                </label>
+            </div>
+            <div class="level-bars" id="barContainer"></div>
+        </div>
+
+
+        <!-- LINE INTERPRETATIONS (excluded from PNG) -->
+        <div class="interp-section" id="interpSection">
+            <div class="accordion-header" onclick="toggleAccordion('interpBody','interpArrow')">
+                <span class="acc-title">What Your Scores Mean</span>
+                <span class="acc-arrow" id="interpArrow">&#9654;</span>
+            </div>
+            <div class="accordion-body" id="interpBody">
+                <div class="accordion-body-inner">
+                    <div id="interpContainer"></div>
+                </div>
             </div>
         </div>
-        <!-- NEW WRAPPER ENDS HERE -->
-<!-- 3. Legend (Excluded from PNG) -->
-        <div class="legend-container">
-            <h3>Level Descriptions</h3>
-            
+
+        <!-- DEVELOPMENT RECOMMENDATIONS (excluded from PNG) -->
+        <div class="recs-section" id="recsSection">
+            <div class="accordion-header" onclick="toggleAccordion('recsBody','recsArrow')">
+                <span class="acc-title">Growth Edge Practices</span>
+                <span class="acc-arrow" id="recsArrow">&#9654;</span>
+            </div>
+            <div class="accordion-body" id="recsBody">
+                <div class="accordion-body-inner">
+                    <p style="font-size:0.83rem; color:var(--text-muted); margin:0 0 16px;">Targeted practices for your lowest-scoring lines, calibrated to your current center of gravity.</p>
+                    <div id="recsContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legend (outside PNG capture) -->
+        <div class="legend-container" style="border-top:none; padding-top:0;">
+            <div class="accordion-header" onclick="toggleAccordion('legendBody','legendArrow')">
+                <span class="acc-title">Level Descriptions</span>
+                <span class="acc-arrow" id="legendArrow">&#9654;</span>
+            </div>
+            <div class="accordion-body" id="legendBody">
+            <div class="accordion-body-inner">
             <div class="legend-item">
-                <div class="legend-title" style="color: var(--red);">1 Red (Egocentric)</div>
+                <div class="legend-title" style="color:var(--red);">1 · Red (Egocentric)</div>
                 <div class="legend-desc">Impulsive, power-oriented, survival-focused. "My way or the highway."</div>
             </div>
             <div class="legend-item">
-                <div class="legend-title" style="color: var(--amber);">2 Amber (Ethnocentric)</div>
+                <div class="legend-title" style="color:var(--amber);">2 · Amber (Ethnocentric)</div>
                 <div class="legend-desc">Conformist, rule-oriented, disciplined. Values order, tradition, and "us vs. them."</div>
             </div>
             <div class="legend-item">
-                <div class="legend-title" style="color: var(--orange);">3 Orange (Worldcentric-Rational)</div>
+                <div class="legend-title" style="color:var(--orange);">3 · Orange (Worldcentric-Rational)</div>
                 <div class="legend-desc">Achievement-oriented, scientific, strategic. Values logic, meritocracy, and individual success.</div>
             </div>
             <div class="legend-item">
-                <div class="legend-title" style="color: var(--green);">4 Green (Worldcentric-Pluralistic)</div>
+                <div class="legend-title" style="color:var(--green);">4 · Green (Worldcentric-Pluralistic)</div>
                 <div class="legend-desc">Sensitive, egalitarian, relativistic. Values diversity, feelings, and deconstructing hierarchies.</div>
             </div>
             <div class="legend-item">
-                <div class="legend-title" style="color: var(--teal);">5 Teal (Integral-Systemic)</div>
+                <div class="legend-title" style="color:var(--teal);">5 · Teal (Integral-Systemic)</div>
                 <div class="legend-desc">Flex-flow, systemic, multi-perspectival. Integrates previous stages and manages complexity without judgment.</div>
             </div>
             <div class="legend-item">
-                <div class="legend-title" style="color: var(--turquoise);">6 Turquoise (Integral-Holistic)</div>
+                <div class="legend-title" style="color:var(--turquoise);">6 · Turquoise (Integral-Holistic)</div>
                 <div class="legend-desc">Global mind, union of feeling and knowing. Sees the world as a single, living organism.</div>
             </div>
-
-            <!-- HIGHER LEVELS -->
             <div class="higher-levels">
-                <h4 style="margin-top:0; color: var(--orange);">Higher Levels (Not Tested)</h4>
-                <p style="font-size: 0.85rem; color: #999;">These are the transpersonal/spiritual stages beyond standard development. They are difficult to test via multiple choice as they represent states of being rather than conceptual frameworks.</p>
-                
+                <h4>Higher Levels (Not Tested)</h4>
+                <p style="font-size:0.82rem; color:var(--text-muted); margin-top:0;">These transpersonal stages represent states of being rather than conceptual frameworks and are not measurable via multiple choice.</p>
                 <div class="legend-item">
-                    <div class="legend-title" style="color: #8e44ad;">Indigo (Para-Mind)</div>
+                    <div class="legend-title" style="color:#8e44ad;">Indigo (Para-Mind)</div>
                     <div class="legend-desc">The beginning of true trans-rational awareness. Intuition becomes a reliable mode of cognition.</div>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-title" style="color: #9b59b6;">Violet (Meta-Mind)</div>
-                    <div class="legend-desc">Subtle-level awareness. Perception of energy, archetypes, and the "soul" dimension beyond the physical.</div>
+                    <div class="legend-title" style="color:#9b59b6;">Violet (Meta-Mind)</div>
+                    <div class="legend-desc">Subtle-level awareness. Perception of energy, archetypes, and the soul dimension beyond the physical.</div>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-title" style="color: #ffffff;">Ultraviolet (Over-Mind)</div>
+                    <div class="legend-title" style="color:#ccc;">Ultraviolet (Over-Mind)</div>
                     <div class="legend-desc">Causal-level awareness. The Witness. Resting in the pure, empty screen on which reality is projected.</div>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-title" style="color: #ecf0f1; text-shadow: 0 0 5px white;">Clear Light (Super-Mind)</div>
-                    <div class="legend-desc">Non-dual. The collapse of the Witness and the Witnessed. Form is Emptiness, Emptiness is Form. Pure Is-ness.</div>
+                    <div class="legend-title" style="color:var(--text);">Clear Light (Super-Mind)</div>
+                    <div class="legend-desc">Non-dual. The collapse of the Witness and the Witnessed. Form is Emptiness, Emptiness is Form.</div>
                 </div>
             </div>
+            </div><!-- end accordion-body-inner -->
+            </div><!-- end accordion-body -->
         </div>
-        <!-- Buttons represent the stuff being excluded from the image -->
-        <button class="next-btn" style="background-color: var(--orange); margin-bottom: 15px;" onclick="downloadResults()">Download Results as PNG</button>
-        <button class="start-btn" onclick="location.reload()">Retake Assessment</button>
-        
-        <p style="text-align: center; font-size: 0.8rem; margin-top: 20px; color: #999;">
-            Note: Results are estimates based on self-reporting.
+
+        <!-- Voluntary Participation -->
+        <div class="participation-box">
+            <div class="p-title">Voluntary Research Participation</div>
+            <div class="p-desc">
+                Your anonymized results (line scores only, no personal data) may be contributed to an aggregate dataset for studying developmental patterns in the general population. Participation is entirely voluntary and has no effect on your individual results.
+            </div>
+            <div class="participation-toggle">
+                <input type="checkbox" id="participateCheck" onchange="handleParticipation()">
+                <label for="participateCheck">Yes, I consent to contribute my anonymized scores to this study</label>
+            </div>
+            <div class="p-status" id="participationStatus"></div>
+        </div>
+
+        <hr class="section-divider">
+
+        <button class="btn btn-download" onclick="downloadResults()">Download Results as PNG</button>
+        <button class="btn btn-retake" onclick="location.reload()">Retake Assessment</button>
+
+        <p class="footer-note">
+            Results are self-reported estimates and should not be taken as clinical diagnoses.<br>
+            This tool assesses Lines and Levels only. It does not map Quadrants, States, or Types.
         </p>
     </div>
+
+</div>
+
 <script>
 // ==========================================
-// DATA MATRIX (The Content)
-// ==========================================
+// DATA MATRIX
 // Values: 1=Red, 2=Amber, 3=Orange, 4=Green, 5=Teal, 6=Turquoise
+// ==========================================
+
 const ALL_LINES = {
     "Cognitive": [
         { q: "Homelessness persists despite funding. What is your assessment?", options: [
+            { t: "Lack of discipline; only help those who truly deserve it.", v: 1 },
             { t: "They need discipline. Enforce laws strictly.", v: 2 },
-            { t: "Lack of discipline; only help those who deserve it.", v: 1 },
-            { t: "Programs are inefficient. Fund only those with ROI.", v: 3 },
+            { t: "Programs are inefficient. Fund only those with proven ROI.", v: 3 },
             { t: "Society failed them. Provide unconditional support.", v: 4 },
-            { t: "Systemic flow problem. Manage polarity of care vs order.", v: 5 },
-            { t: "Symptom of collective shadow. Heal cultural disconnection.", v: 6 }
+            { t: "A systemic flow problem. Manage the polarity of care versus order.", v: 5 },
+            { t: "A symptom of collective shadow. Heal the cultural disconnection.", v: 6 }
         ]},
         { q: "How do you determine which news story is 'true'?", options: [
             { t: "I trust my gut instinct.", v: 1 },
             { t: "I trust the source that is on my side.", v: 2 },
             { t: "I fact-check and look for logical fallacies.", v: 3 },
-            { t: "I look for bias and marginalized voices.", v: 4 },
-            { t: "I look for the meta-truth explaining why both differ.", v: 5 },
+            { t: "I look for embedded bias and marginalized voices.", v: 4 },
+            { t: "I look for the meta-truth that explains why both sides differ.", v: 5 },
             { t: "I see the event and the reporting as a single unfolding process.", v: 6 }
         ]},
         { q: "How far out do you plan your life?", options: [
             { t: "I focus on getting what I need right now.", v: 1 },
-            { t: "I follow the traditional path (school, job, retirement).", v: 2 },
-            { t: "I have a 5-10 year strategic plan.", v: 3 },
-            { t: "Focus on the journey/authenticity, not the destination.", v: 4 },
-            { t: "Directional vision, iterating rapidly based on feedback.", v: 5 },
-            { t: "Residing in the timeless now, allowing future to unfold.", v: 6 }
+            { t: "I follow the traditional path: school, job, retirement.", v: 2 },
+            { t: "I have a 5 to 10 year strategic plan.", v: 3 },
+            { t: "I focus on the journey and authenticity, not the destination.", v: 4 },
+            { t: "A directional vision I iterate rapidly based on feedback.", v: 5 },
+            { t: "I reside in the timeless now and allow the future to unfold.", v: 6 }
         ]},
         { q: "You hold two contradictory beliefs. What do you do?", options: [
             { t: "Ignore the one I don't like.", v: 1 },
@@ -260,68 +896,68 @@ const ALL_LINES = {
             { t: "People aren't following standard procedures.", v: 2 },
             { t: "We didn't optimize resources correctly.", v: 3 },
             { t: "Toxic team dynamic; people don't feel safe.", v: 4 },
-            { t: "Structure is misaligned with environmental complexity.", v: 5 },
-            { t: "The project has reached its natural end; it is time to compost it for what comes next.", v: 6 }
+            { t: "The structure is misaligned with environmental complexity.", v: 5 },
+            { t: "The project has reached its natural end; time to compost it for what comes next.", v: 6 }
         ]}
     ],
     "Emotional": [
-        { q: "Someone insults your deepest insecurity. Reaction?", options: [
+        { q: "Someone insults your deepest insecurity. What is your reaction?", options: [
             { t: "Rage. I want to hurt them back.", v: 1 },
             { t: "Shame. I wonder if I lost status.", v: 2 },
             { t: "Defensiveness. I list reasons they are wrong.", v: 3 },
             { t: "Hurt. I try to understand their pain.", v: 4 },
-            { t: "Curiosity. Separate data from emotion.", v: 5 },
-            { t: "Compassion. Holding both my pain and their aggression.", v: 6 }
+            { t: "Curiosity. I separate the data from my emotional reaction.", v: 5 },
+            { t: "Compassion. Holding both my pain and their aggression without collapsing.", v: 6 }
         ]},
         { q: "A friend is suffering from a problem they created.", options: [
             { t: "Not my problem.", v: 1 },
             { t: "They should have followed the rules.", v: 2 },
             { t: "I offer a logical solution.", v: 3 },
             { t: "I validate their feelings completely.", v: 4 },
-            { t: "Validate feelings, but point out systemic patterns.", v: 5 },
-            { t: "Feel their suffering, yet remain unattached.", v: 6 }
+            { t: "I validate the feelings, then gently point out the systemic pattern.", v: 5 },
+            { t: "I feel their suffering fully, yet remain unattached to fixing it.", v: 6 }
         ]},
         { q: "You feel 'bad'. How do you label it?", options: [
-            { t: "Just bad/angry.", v: 1 },
+            { t: "Just bad or angry.", v: 1 },
             { t: "Guilty or ashamed.", v: 2 },
             { t: "Stressed about an outcome.", v: 3 },
-            { t: "Melancholy and disappointment.", v: 4 },
-            { t: "I can pinpoint exactly where the feeling sits and identify the specific blend of emotions.", v: 5 },
+            { t: "Melancholy and disappointed.", v: 4 },
+            { t: "I can pinpoint exactly where it sits and identify the specific blend of emotions.", v: 5 },
             { t: "Witnessing energy of contraction.", v: 6 }
         ]},
         { q: "Admitting failure to a superior.", options: [
             { t: "Lie or blame someone else.", v: 1 },
             { t: "Apologize profusely.", v: 2 },
-            { t: "Explain external factors and mitigation plan.", v: 3 },
-            { t: "Share feelings and ask for connection.", v: 4 },
-            { t: "Own it, share learning, model transparency.", v: 5 },
-            { t: "Present it as necessary evolution of the work.", v: 6 }
+            { t: "Explain external factors and present a mitigation plan.", v: 3 },
+            { t: "Share my feelings and ask for connection.", v: 4 },
+            { t: "Own it, share the learning, and model radical transparency.", v: 5 },
+            { t: "Present it as the necessary evolution of the work.", v: 6 }
         ]},
         { q: "Feeling intense anger. What do you do?", options: [
             { t: "Yell or break something.", v: 1 },
             { t: "Suppress it; it's not polite.", v: 2 },
-            { t: "Channel it into work/exercise.", v: 3 },
+            { t: "Channel it into work or exercise.", v: 3 },
             { t: "Talk it out with a therapist.", v: 4 },
-            { t: "Address the boundary violation assertively.", v: 5 },
+            { t: "Address the boundary violation directly and assertively.", v: 5 },
             { t: "Transmute the raw energy into clarity.", v: 6 }
         ]}
     ],
     "Moral": [
-        { q: "Friend breaks a rule that helps them but hurts no one.", options: [
+        { q: "A friend breaks a rule that helps them but hurts no one.", options: [
             { t: "Help them so they owe me.", v: 1 },
             { t: "Report them. Rules are rules.", v: 2 },
-            { t: "Ignore it. Doesn't affect the bottom line.", v: 3 },
-            { t: "Discuss impact on community trust.", v: 4 },
-            { t: "Evaluate if the rule is just, then decide.", v: 5 },
-            { t: "I act based on the highest good for the whole system, even if it contradicts the rule.", v: 6 }
+            { t: "Ignore it. It doesn't affect the bottom line.", v: 3 },
+            { t: "Discuss the impact on community trust.", v: 4 },
+            { t: "Evaluate whether the rule is just, then decide.", v: 5 },
+            { t: "Act based on the highest good for the whole system, even if it contradicts the rule.", v: 6 }
         ]},
-        { q: "Who to save on a sinking lifeboat?", options: [
+        { q: "Who do you save on a sinking lifeboat?", options: [
             { t: "The one who likes me best.", v: 1 },
             { t: "The one from my country.", v: 2 },
-            { t: "The doctor/scientist (contribution).", v: 3 },
-            { t: "The most vulnerable (child).", v: 4 },
-            { t: "The one with highest potential for future evolution.", v: 5 },
-            { t: "Act spontaneously without hierarchical judgment.", v: 6 }
+            { t: "The doctor or scientist who contributes most.", v: 3 },
+            { t: "The most vulnerable person, such as a child.", v: 4 },
+            { t: "The one with the highest potential for future evolution.", v: 5 },
+            { t: "I act spontaneously, without hierarchical judgment.", v: 6 }
         ]},
         { q: "When is it okay to break the law?", options: [
             { t: "When I won't get caught.", v: 1 },
@@ -329,23 +965,23 @@ const ALL_LINES = {
             { t: "When it restricts my success unduly.", v: 3 },
             { t: "When it is oppressive.", v: 4 },
             { t: "When it violates universal human rights.", v: 5 },
-            { t: "When action aligns with the Tao.", v: 6 }
+            { t: "When the action aligns with the Tao.", v: 6 }
         ]},
         { q: "Appropriate justice for a violent crime?", options: [
             { t: "Hurt them back.", v: 1 },
             { t: "Standard legal punishment.", v: 2 },
-            { t: "Rehabilitate if cost-effective.", v: 3 },
-            { t: "Heal the trauma; Restorative Justice.", v: 4 },
-            { t: "Protect society but address systemic causes.", v: 5 },
-            { t: "Justice with love; no separation of sinner/saint.", v: 6 }
+            { t: "Rehabilitate if it is cost-effective.", v: 3 },
+            { t: "Heal the trauma through Restorative Justice.", v: 4 },
+            { t: "Protect society while addressing systemic causes.", v: 5 },
+            { t: "Justice with love; no separation between sinner and saint.", v: 6 }
         ]},
         { q: "Why are 'good' things good?", options: [
             { t: "Because they feel good to me.", v: 1 },
-            { t: "God/Authority said so.", v: 2 },
-            { t: "Greatest happiness for greatest number.", v: 3 },
+            { t: "God or an authority said so.", v: 2 },
+            { t: "They produce the greatest happiness for the greatest number.", v: 3 },
             { t: "They honor the marginalized.", v: 4 },
-            { t: "Align with evolutionary impulse.", v: 5 },
-            { t: "Intrinsic nature of Reality.", v: 6 }
+            { t: "They align with the evolutionary impulse.", v: 5 },
+            { t: "Goodness is the intrinsic nature of Reality itself.", v: 6 }
         ]}
     ],
     "Interpersonal": [
@@ -353,120 +989,120 @@ const ALL_LINES = {
             { t: "Join the strongest side.", v: 1 },
             { t: "Call for order to be restored.", v: 2 },
             { t: "Negotiate a compromise.", v: 3 },
-            { t: "Facilitate a circle to vent feelings.", v: 4 },
-            { t: "Translate value-hierarchies to find synthesis.", v: 5 },
-            { t: "Hold space for conflict to burn through karma.", v: 6 }
+            { t: "Facilitate a circle where each side can vent.", v: 4 },
+            { t: "Translate between their value-hierarchies to find synthesis.", v: 5 },
+            { t: "Hold space for the conflict to burn through its karma.", v: 6 }
         ]},
-        { q: "Leader tells you to do something you disagree with.", options: [
-            { t: "Do it if scared, rebel if not.", v: 1 },
+        { q: "A leader tells you to do something you disagree with.", options: [
+            { t: "Do it if scared; rebel if not.", v: 1 },
             { t: "Do it out of respect for rank.", v: 2 },
-            { t: "Challenge with data/logic.", v: 3 },
-            { t: "Share feelings about impact.", v: 4 },
-            { t: "Propose modification honoring both goals.", v: 5 },
-            { t: "Speak truth without attachment.", v: 6 }
+            { t: "Challenge it with data and logic.", v: 3 },
+            { t: "Share my feelings about its impact.", v: 4 },
+            { t: "Propose a modification that honors both goals.", v: 5 },
+            { t: "Speak truth without attachment to the outcome.", v: 6 }
         ]},
-        { q: "Partner wants 'more space'.", options: [
-            { t: "Get jealous/cling.", v: 1 },
-            { t: "Worry about breaking commitment.", v: 2 },
+        { q: "Your partner wants more space.", options: [
+            { t: "Get jealous or cling.", v: 1 },
+            { t: "Worry about what it means for my commitment.", v: 2 },
             { t: "Negotiate a schedule.", v: 3 },
-            { t: "Support their emotional needs despite hurt.", v: 4 },
-            { t: "Recognize autonomy aids communion.", v: 5 },
-            { t: "Honor spaciousness as ground of connection.", v: 6 }
+            { t: "Support their emotional needs despite my hurt.", v: 4 },
+            { t: "Recognize that autonomy strengthens communion.", v: 5 },
+            { t: "Honor spaciousness as the ground of true connection.", v: 6 }
         ]},
-        { q: "Needy friend keeps calling.", options: [
+        { q: "A needy friend keeps calling at bad times.", options: [
             { t: "Ghost them.", v: 1 },
-            { t: "Answer; it's my duty.", v: 2 },
+            { t: "Answer; it is my duty.", v: 2 },
             { t: "Screen calls for efficiency.", v: 3 },
-            { t: "Answer but feel drained.", v: 4 },
+            { t: "Answer but feel quietly drained.", v: 4 },
             { t: "Set kind, clear boundaries.", v: 5 },
-            { t: "Permeable boundary; love without taking energy.", v: 6 }
+            { t: "Love without merging; a permeable boundary.", v: 6 }
         ]},
-        { q: "Goal of team collaboration.", options: [
-            { t: "Be the star.", v: 1 },
-            { t: "Know my specific role.", v: 2 },
-            { t: "Win with smart people.", v: 3 },
-            { t: "Everyone feels included.", v: 4 },
-            { t: "Leverage unique strengths for systemic outcome.", v: 5 },
-            { t: "Flow state; collective mind.", v: 6 }
+        { q: "What is the goal of team collaboration?", options: [
+            { t: "To be the star.", v: 1 },
+            { t: "To know my specific role and fulfill it.", v: 2 },
+            { t: "To win with smart people.", v: 3 },
+            { t: "To make sure everyone feels included.", v: 4 },
+            { t: "To leverage unique strengths for a systemic outcome.", v: 5 },
+            { t: "Flow state; a collective mind.", v: 6 }
         ]}
     ],
     "Values": [
         { q: "What is a 'successful life'?", options: [
-            { t: "Rich, famous, feared.", v: 1 },
-            { t: "Respected citizen, good family.", v: 2 },
-            { t: "Financial independence, mastery.", v: 3 },
-            { t: "Living authentically, helping others.", v: 4 },
-            { t: "Self-actualizing contribution to evolution.", v: 5 },
-            { t: "Dissolving self into service.", v: 6 }
+            { t: "Rich, famous, and feared.", v: 1 },
+            { t: "Respected citizen with a good family.", v: 2 },
+            { t: "Financial independence and mastery.", v: 3 },
+            { t: "Living authentically while helping others.", v: 4 },
+            { t: "A self-actualizing contribution to collective evolution.", v: 5 },
+            { t: "Dissolving the self into service.", v: 6 }
         ]},
         { q: "How would you spend lottery winnings?", options: [
             { t: "Cars and parties.", v: 1 },
             { t: "Family security and church.", v: 2 },
-            { t: "Invest to grow capital.", v: 3 },
+            { t: "Invest to grow the capital.", v: 3 },
             { t: "Charities fighting inequality.", v: 4 },
-            { t: "Foundation targeting systemic leverage points.", v: 5 },
-            { t: "Support initiatives that heal the relationship between humanity and the biosphere.", v: 6 }
+            { t: "A foundation targeting systemic leverage points.", v: 5 },
+            { t: "Support initiatives healing the relationship between humanity and the biosphere.", v: 6 }
         ]},
         { q: "Why save the rainforest?", options: [
-            { t: "Don't care.", v: 1 },
-            { t: "Stewardship of God's earth.", v: 2 },
-            { t: "Resources/Medicines.", v: 3 },
-            { t: "Animals have rights.", v: 4 },
-            { t: "Critical organ in biosphere system.", v: 5 },
-            { t: "Earth is my own body.", v: 6 }
+            { t: "I don't care about it.", v: 1 },
+            { t: "Stewardship of God's creation.", v: 2 },
+            { t: "Resources and medicines.", v: 3 },
+            { t: "Animals have inherent rights.", v: 4 },
+            { t: "It is a critical organ in the biosphere system.", v: 5 },
+            { t: "The Earth is my own body.", v: 6 }
         ]},
         { q: "Why is diversity important?", options: [
-            { t: "It's not.", v: 1 },
-            { t: "Tolerate if they follow rules.", v: 2 },
-            { t: "Creates better products/profit.", v: 3 },
-            { t: "Include marginalized voices.", v: 4 },
-            { t: "Creates resilience and novelty.", v: 5 },
-            { t: "Refraction of the One light.", v: 6 }
+            { t: "It is not important.", v: 1 },
+            { t: "Tolerate it as long as they follow our rules.", v: 2 },
+            { t: "It creates better products and profit.", v: 3 },
+            { t: "It includes marginalized voices.", v: 4 },
+            { t: "It creates resilience and novelty.", v: 5 },
+            { t: "It is the refraction of the One light.", v: 6 }
         ]},
-        { q: "Best governance model.", options: [
-            { t: "Strongest decides.", v: 1 },
-            { t: "Chain of command.", v: 2 },
+        { q: "What is the best governance model?", options: [
+            { t: "The strongest decides.", v: 1 },
+            { t: "A clear chain of command.", v: 2 },
             { t: "Majority vote.", v: 3 },
-            { t: "Consensus (everyone agrees).", v: 4 },
-            { t: "Dynamic governance (Holacracy).", v: 5 },
-            { t: "Tune into collective wisdom field.", v: 6 }
+            { t: "Consensus where everyone agrees.", v: 4 },
+            { t: "Dynamic governance such as Holacracy.", v: 5 },
+            { t: "Tuning into the collective wisdom field.", v: 6 }
         ]}
     ],
     "Self-Identity": [
-        { q: "Theme of your memoir?", options: [
+        { q: "What is the theme of your memoir?", options: [
             { t: "Me against the world.", v: 1 },
-            { t: "Finding my place in order.", v: 2 },
+            { t: "Finding my place in the right order.", v: 2 },
             { t: "Overcoming obstacles to achieve.", v: 3 },
             { t: "Self-discovery and healing.", v: 4 },
             { t: "Integration of many selves.", v: 5 },
-            { t: "Universe experiencing itself.", v: 6 }
+            { t: "The universe experiencing itself.", v: 6 }
         ]},
-        { q: "What do you do with your shadow (disliked parts)?", options: [
+        { q: "What do you do with your shadow (the parts of yourself you dislike)?", options: [
             { t: "Deny they exist.", v: 1 },
-            { t: "Pray to remove them.", v: 2 },
-            { t: "Fix them.", v: 3 },
-            { t: "Accept/Love them.", v: 4 },
-            { t: "Reintegrate the energy.", v: 5 },
-            { t: "See them as passing clouds.", v: 6 }
+            { t: "Pray to have them removed.", v: 2 },
+            { t: "Identify them and fix them.", v: 3 },
+            { t: "Accept and love them.", v: 4 },
+            { t: "Reintegrate the energy they carry.", v: 5 },
+            { t: "Observe them as passing clouds.", v: 6 }
         ]},
         { q: "Looking back at yourself 10 years ago.", options: [
             { t: "I was weaker.", v: 1 },
             { t: "Less responsible.", v: 2 },
             { t: "Less successful.", v: 3 },
             { t: "Less authentic.", v: 4 },
-            { t: "Different stage; I honor and transcend.", v: 5 },
-            { t: "Previous ripple in the stream.", v: 6 }
+            { t: "A different stage; I honor it and transcend it.", v: 5 },
+            { t: "A previous ripple in the same stream.", v: 6 }
         ]},
-        { q: "Relationship to culture.", options: [
-            { t: "I do what I want.", v: 1 },
-            { t: "Defined by my culture.", v: 2 },
-            { t: "I choose parts to adopt.", v: 3 },
+        { q: "What is your relationship to your culture?", options: [
+            { t: "I do what I want regardless.", v: 1 },
+            { t: "I am defined by my culture.", v: 2 },
+            { t: "I choose which parts to adopt.", v: 3 },
             { t: "Identity is a social construct.", v: 4 },
             { t: "I rewrite cultural scripts.", v: 5 },
-            { t: "I witness the culture.", v: 6 }
+            { t: "I witness the culture from a place of stillness.", v: 6 }
         ]},
-        { q: "Who is reading this?", options: [
-            { t: "I am [My Name], a person with a history.", v: 1 },
+        { q: "Who is reading this question right now?", options: [
+            { t: "I am: a person with a name and a history.", v: 1 },
             { t: "My soul.", v: 2 },
             { t: "My brain.", v: 3 },
             { t: "My heart.", v: 4 },
@@ -475,215 +1111,598 @@ const ALL_LINES = {
         ]}
     ],
     "Kinesthetic": [
-        { q: "You have a persistent ache.", options: [
-            { t: "Makes me angry.", v: 1 },
-            { t: "Take medicine.", v: 2 },
-            { t: "Fix mechanical issue.", v: 3 },
-            { t: "Listen to emotional message.", v: 4 },
-            { t: "Release somatic holding.", v: 5 },
-            { t: "Experience as pure vibration.", v: 6 }
+        { q: "You have a persistent ache. How do you relate to it?", options: [
+            { t: "It makes me angry.", v: 1 },
+            { t: "Take medicine and move on.", v: 2 },
+            { t: "Fix the mechanical issue causing it.", v: 3 },
+            { t: "Listen for the emotional message it carries.", v: 4 },
+            { t: "Release the somatic holding pattern.", v: 5 },
+            { t: "Experience it as pure vibration.", v: 6 }
         ]},
-        { q: "Focus during exercise.", options: [
-            { t: "Winning/Toughness.", v: 1 },
-            { t: "Following instructions.", v: 2 },
-            { t: "Metrics/Performance.", v: 3 },
+        { q: "What do you focus on during exercise?", options: [
+            { t: "Winning and toughness.", v: 1 },
+            { t: "Following the instructor's directions.", v: 2 },
+            { t: "Metrics and performance.", v: 3 },
             { t: "Flow and feeling good.", v: 4 },
-            { t: "Integration of breath/intention.", v: 5 },
-            { t: "Stillness inside motion.", v: 6 }
+            { t: "Integrating breath, movement, and intention.", v: 5 },
+            { t: "Finding stillness inside the motion.", v: 6 }
         ]},
-        { q: "Diet strategy.", options: [
+        { q: "What is your diet strategy?", options: [
             { t: "Whatever tastes good.", v: 1 },
-            { t: "Cultural staples.", v: 2 },
-            { t: "Macros/Calories.", v: 3 },
-            { t: "Organic/Ethical.", v: 4 },
+            { t: "Cultural staples and family traditions.", v: 2 },
+            { t: "Macros and calories.", v: 3 },
+            { t: "Organic and ethically sourced.", v: 4 },
             { t: "Bio-hacking experiments.", v: 5 },
-            { t: "Conscious eating.", v: 6 }
+            { t: "Conscious eating with full presence.", v: 6 }
         ]},
-        { q: "You are exhausted.", options: [
+        { q: "You are deeply exhausted. What do you do?", options: [
             { t: "Drink caffeine.", v: 1 },
-            { t: "Rest (earned).", v: 2 },
-            { t: "Push through.", v: 3 },
-            { t: "Self-care day.", v: 4 },
-            { t: "Audit energy leaks.", v: 5 },
+            { t: "Rest; I have earned it.", v: 2 },
+            { t: "Push through it.", v: 3 },
+            { t: "Take a self-care day.", v: 4 },
+            { t: "Audit my energy leaks.", v: 5 },
             { t: "Drop into source energy.", v: 6 }
         ]},
-        { q: "Body image.", options: [
-            { t: "I look strong/sexy.", v: 1 },
+        { q: "How do you relate to your body image?", options: [
+            { t: "I look strong or sexy.", v: 1 },
             { t: "I look presentable.", v: 2 },
-            { t: "Need to fix flaws.", v: 3 },
-            { t: "Body positivity.", v: 4 },
-            { t: "Vehicle for purpose.", v: 5 },
-            { t: "Luminous, fleeting form.", v: 6 }
+            { t: "I need to fix the flaws.", v: 3 },
+            { t: "Body positivity; all bodies are valid.", v: 4 },
+            { t: "A vehicle for purpose.", v: 5 },
+            { t: "A luminous, fleeting form.", v: 6 }
         ]}
     ],
     "Spiritual": [
         { q: "What happens when you die?", options: [
-            { t: "I don't know / I cease to be.", v: 1 },
-            { t: "Heaven/Hell.", v: 2 },
+            { t: "I don't know, or I simply cease to be.", v: 1 },
+            { t: "Heaven or Hell.", v: 2 },
             { t: "Biological cessation. My consciousness ends.", v: 3 },
-            { t: "Energy returns to universe.", v: 4 },
-            { t: "Consciousness transitions.", v: 5 },
-            { t: "Drop returns to ocean.", v: 6 }
+            { t: "My energy returns to the universe.", v: 4 },
+            { t: "Consciousness transitions to another form.", v: 5 },
+            { t: "The drop returns to the ocean.", v: 6 }
         ]},
-        { q: "Purpose of prayer/meditation.", options: [
+        { q: "What is the purpose of prayer or meditation?", options: [
             { t: "Asking for things.", v: 1 },
             { t: "Repeating holy words.", v: 2 },
             { t: "Reducing stress.", v: 3 },
             { t: "Connecting to inner guidance.", v: 4 },
-            { t: "Witnessing phenomena.", v: 5 },
-            { t: "Resting as Awareness.", v: 6 }
+            { t: "Witnessing the phenomena of the mind.", v: 5 },
+            { t: "Resting as Awareness itself.", v: 6 }
         ]},
         { q: "Why does suffering exist?", options: [
             { t: "People are mean.", v: 1 },
-            { t: "Sin/Karma.", v: 2 },
+            { t: "Sin or karma.", v: 2 },
             { t: "Biological feedback.", v: 3 },
-            { t: "Lost connection to love.", v: 4 },
-            { t: "Friction of evolution.", v: 5 },
-            { t: "Illusion of separate self.", v: 6 }
+            { t: "A lost connection to love.", v: 4 },
+            { t: "The friction of evolution.", v: 5 },
+            { t: "The illusion of a separate self.", v: 6 }
         ]},
-        { q: "Definition of Divine.", options: [
-            { t: "Powerful wish-granter.", v: 1 },
-            { t: "Creator/Judge.", v: 2 },
-            { t: "Laws of Physics.", v: 3 },
-            { t: "Love/Spirit within.", v: 4 },
-            { t: "Evolutionary impulse.", v: 5 },
-            { t: "Suchness of this moment.", v: 6 }
+        { q: "How do you define the Divine?", options: [
+            { t: "A powerful wish-granter.", v: 1 },
+            { t: "Creator and Judge.", v: 2 },
+            { t: "The laws of physics.", v: 3 },
+            { t: "Love or Spirit within.", v: 4 },
+            { t: "The evolutionary impulse.", v: 5 },
+            { t: "The suchness of this moment.", v: 6 }
         ]},
-        { q: "Peak experience.", options: [
+        { q: "Describe your most meaningful peak experience.", options: [
             { t: "Winning.", v: 1 },
-            { t: "Church/Holy Spirit.", v: 2 },
-            { t: "Scientific awe.", v: 3 },
-            { t: "Oneness with nature.", v: 4 },
-            { t: "Flow state.", v: 5 },
-            { t: "Non-dual cessation.", v: 6 }
+            { t: "A church experience or feeling the Holy Spirit.", v: 2 },
+            { t: "A moment of profound scientific awe.", v: 3 },
+            { t: "A feeling of oneness with nature.", v: 4 },
+            { t: "A flow state.", v: 5 },
+            { t: "A non-dual cessation.", v: 6 }
         ]}
     ],
     "Aesthetic": [
         { q: "What makes art 'good'?", options: [
             { t: "Cool colors.", v: 1 },
-            { t: "Realistic skill.", v: 2 },
+            { t: "Realistic technical skill.", v: 2 },
             { t: "Compositional balance.", v: 3 },
-            { t: "Emotional reaction.", v: 4 },
-            { t: "Shifts perspective.", v: 5 },
-            { t: "Transmits the Sublime.", v: 6 }
+            { t: "The emotional reaction it provokes.", v: 4 },
+            { t: "It shifts my perspective.", v: 5 },
+            { t: "It transmits the Sublime.", v: 6 }
         ]},
         { q: "Watching a sunset.", options: [
             { t: "It's pretty.", v: 1 },
-            { t: "God's glory.", v: 2 },
-            { t: "I appreciate the scientific complexity (light refraction).", v: 3 },
-            { t: "Peaceful feeling.", v: 4 },
-            { t: "Interplay of light/shadow.", v: 5 },
+            { t: "God's glory on display.", v: 2 },
+            { t: "I appreciate the scientific complexity of light refraction.", v: 3 },
+            { t: "A peaceful, beautiful feeling.", v: 4 },
+            { t: "The interplay of light and shadow.", v: 5 },
             { t: "I am the sunset.", v: 6 }
         ]},
         { q: "Can ugliness be beautiful?", options: [
             { t: "No.", v: 1 },
-            { t: "No, sign of evil.", v: 2 },
+            { t: "No; it is a sign of evil.", v: 2 },
             { t: "If it serves a function.", v: 3 },
-            { t: "If it tells true story.", v: 4 },
-            { t: "Essential part of life cycle.", v: 5 },
+            { t: "If it tells a true story.", v: 4 },
+            { t: "It is an essential part of the life cycle.", v: 5 },
             { t: "Yes, in non-dual awareness.", v: 6 }
         ]},
-        { q: "Function of music.", options: [
-            { t: "Get hyped.", v: 1 },
+        { q: "What is the function of music?", options: [
+            { t: "To get hyped.", v: 1 },
             { t: "Tradition.", v: 2 },
             { t: "Stimulation.", v: 3 },
-            { t: "Express feelings.", v: 4 },
-            { t: "Alter consciousness.", v: 5 },
-            { t: "Resonance with universe.", v: 6 }
+            { t: "To express feelings.", v: 4 },
+            { t: "To alter consciousness.", v: 5 },
+            { t: "Resonance with the universe.", v: 6 }
         ]},
-        { q: "Source of creativity.", options: [
+        { q: "Where does creativity come from?", options: [
             { t: "Me.", v: 1 },
-            { t: "Talent I was given.", v: 2 },
+            { t: "A talent I was given.", v: 2 },
             { t: "Brain synthesis.", v: 3 },
-            { t: "Muse/Heart.", v: 4 },
-            { t: "Collective unconscious.", v: 5 },
+            { t: "A muse or heart.", v: 4 },
+            { t: "The collective unconscious.", v: 5 },
             { t: "I get out of the way.", v: 6 }
         ]}
     ],
     "Psychosexual": [
         { q: "What creates attraction?", options: [
-            { t: "Hot body.", v: 1 },
-            { t: "Shared values.", v: 2 },
+            { t: "Physical appearance.", v: 1 },
+            { t: "Shared values and beliefs.", v: 2 },
             { t: "Intellect.", v: 3 },
             { t: "Emotional connection.", v: 4 },
             { t: "Polarity play.", v: 5 },
             { t: "Soul recognition.", v: 6 }
         ]},
-        { q: "Masculine/Feminine views.", options: [
+        { q: "How do you view masculine and feminine energy?", options: [
             { t: "Men are men, women are women.", v: 1 },
-            { t: "Strict roles.", v: 2 },
+            { t: "Strict, God-given roles.", v: 2 },
             { t: "Social constructs.", v: 3 },
-            { t: "Fluid spectrum.", v: 4 },
+            { t: "A fluid spectrum.", v: 4 },
             { t: "Distinct energetic poles.", v: 5 },
-            { t: "Shiva/Shakti dance.", v: 6 }
+            { t: "The Shiva/Shakti dance.", v: 6 }
         ]},
-        { q: "Goal of sex.", options: [
+        { q: "What is the goal of sex?", options: [
             { t: "Release.", v: 1 },
             { t: "Procreation.", v: 2 },
-            { t: "Fun/Relief.", v: 3 },
+            { t: "Fun and relief.", v: 3 },
             { t: "Intimacy.", v: 4 },
             { t: "Energetic exchange.", v: 5 },
             { t: "Dissolution into bliss.", v: 6 }
         ]},
-        { q: "Taboo thoughts.", options: [
+        { q: "How do you relate to taboo thoughts?", options: [
             { t: "Hide them.", v: 1 },
-            { t: "Feel guilty.", v: 2 },
-            { t: "Explore if safe.", v: 3 },
-            { t: "Accept without shame.", v: 4 },
-            { t: "Explore shadow energy.", v: 5 },
+            { t: "Feel guilty about them.", v: 2 },
+            { t: "Explore them if safe.", v: 3 },
+            { t: "Accept them without shame.", v: 4 },
+            { t: "Explore the shadow energy.", v: 5 },
             { t: "Just energy play.", v: 6 }
         ]},
-        { q: "Sexuality and Spirituality.", options: [
+        { q: "What is the relationship between sexuality and spirituality?", options: [
             { t: "Unrelated.", v: 1 },
             { t: "Opposites.", v: 2 },
-            { t: "Bio vs Psych.", v: 3 },
-            { t: "Expression of love.", v: 4 },
-            { t: "Tantric practice.", v: 5 },
-            { t: "No difference.", v: 6 }
+            { t: "Biology versus psychology.", v: 3 },
+            { t: "An expression of love.", v: 4 },
+            { t: "A Tantric practice.", v: 5 },
+            { t: "There is no difference.", v: 6 }
+        ]}
+    ],
+    "Needs": [
+        { q: "What is your primary life concern right now?", options: [
+            { t: "Basic survival and physical safety.", v: 1 },
+            { t: "Security, stability, and belonging to my group.", v: 2 },
+            { t: "Achievement, status, and career success.", v: 3 },
+            { t: "Authentic connection and self-esteem.", v: 4 },
+            { t: "Self-actualization through purpose.", v: 5 },
+            { t: "Transcendence; contributing beyond the self.", v: 6 }
+        ]},
+        { q: "What would make you feel completely 'safe'?", options: [
+            { t: "Food, shelter, and physical safety.", v: 1 },
+            { t: "A stable job, family support, and clear rules.", v: 2 },
+            { t: "Financial independence and measurable success.", v: 3 },
+            { t: "Being fully accepted and loved for who I am.", v: 4 },
+            { t: "Living from my deepest values with full integrity.", v: 5 },
+            { t: "Recognizing that there is nothing to protect.", v: 6 }
+        ]},
+        { q: "If all your material needs were perfectly met, what would you pursue?", options: [
+            { t: "More pleasure, power, and entertainment.", v: 1 },
+            { t: "Stronger family and community bonds.", v: 2 },
+            { t: "Even greater achievement and mastery.", v: 3 },
+            { t: "Deeper relationships and self-discovery.", v: 4 },
+            { t: "Wisdom, teaching, and systemic contribution.", v: 5 },
+            { t: "Dissolution into pure presence and service.", v: 6 }
+        ]},
+        { q: "What motivates you most on a daily basis?", options: [
+            { t: "Immediate pleasure and avoiding pain.", v: 1 },
+            { t: "Duty, loyalty, and reputation within my group.", v: 2 },
+            { t: "Achieving measurable goals and competing.", v: 3 },
+            { t: "Connecting deeply and growing emotionally.", v: 4 },
+            { t: "Contributing to something larger than myself.", v: 5 },
+            { t: "Simply being present; service without agenda.", v: 6 }
+        ]},
+        { q: "What is love, at its core?", options: [
+            { t: "Getting what I want from someone.", v: 1 },
+            { t: "Commitment and loyalty to my tribe.", v: 2 },
+            { t: "Mutual benefit and admiration.", v: 3 },
+            { t: "Emotional validation and acceptance.", v: 4 },
+            { t: "Conscious relating and co-evolution.", v: 5 },
+            { t: "The ground of all being; what remains when the ego dissolves.", v: 6 }
+        ]}
+    ],
+    "Linguistic": [
+        { q: "How do you communicate when you strongly disagree with someone?", options: [
+            { t: "Bluntly or aggressively.", v: 1 },
+            { t: "With appeals to authority or tradition.", v: 2 },
+            { t: "With logical arguments and evidence.", v: 3 },
+            { t: "With 'I' statements and emotional sharing.", v: 4 },
+            { t: "By reframing the meta-level of the disagreement.", v: 5 },
+            { t: "With spacious clarity; no emotional charge in my words.", v: 6 }
+        ]},
+        { q: "How do you use metaphor?", options: [
+            { t: "I rarely use it; things are literal.", v: 1 },
+            { t: "I use religious or cultural metaphors.", v: 2 },
+            { t: "I use data-driven or technical analogies.", v: 3 },
+            { t: "I use psychological or nature metaphors.", v: 4 },
+            { t: "I use systemic, holographic metaphors.", v: 5 },
+            { t: "The entire world is my metaphor.", v: 6 }
+        ]},
+        { q: "When listening to someone, you primarily...", options: [
+            { t: "Wait for my turn to speak.", v: 1 },
+            { t: "Check whether what they say aligns with the rules.", v: 2 },
+            { t: "Evaluate the logic and quality of their argument.", v: 3 },
+            { t: "Feel into their emotional state.", v: 4 },
+            { t: "Track multiple layers: content, emotional, and systemic.", v: 5 },
+            { t: "Rest in pure witnessing; everything is heard.", v: 6 }
+        ]},
+        { q: "How do you handle silence in conversation?", options: [
+            { t: "Fill it immediately.", v: 1 },
+            { t: "It feels awkward or improper.", v: 2 },
+            { t: "It is inefficient; I move things along.", v: 3 },
+            { t: "It can be intimate and meaningful.", v: 4 },
+            { t: "Silence holds information; I sit in it.", v: 5 },
+            { t: "Silence is the ground from which words arise.", v: 6 }
+        ]},
+        { q: "Your relationship to your own internal narrative is:", options: [
+            { t: "I am my thoughts; they tell me who I am.", v: 1 },
+            { t: "My thoughts echo what I have been taught is right.", v: 2 },
+            { t: "My thoughts are tools I use to solve problems.", v: 3 },
+            { t: "My thoughts and feelings are how I know myself.", v: 4 },
+            { t: "I notice the patterns in my thinking.", v: 5 },
+            { t: "I am the awareness observing thought; I am not the story.", v: 6 }
+        ]}
+    ],
+    "Ego Development": [
+        { q: "When you make a serious mistake, your deepest response is:", options: [
+            { t: "Blame someone else or deny it.", v: 1 },
+            { t: "Shame; I have broken the rules.", v: 2 },
+            { t: "Analyze what went wrong and fix it.", v: 3 },
+            { t: "Explore what it means about my emotional patterns.", v: 4 },
+            { t: "Integrate the feedback into my evolving self-model.", v: 5 },
+            { t: "The mistake, the learner, and the lesson are all empty of a fixed self.", v: 6 }
+        ]},
+        { q: "How would you describe your 'self'?", options: [
+            { t: "My wants, my body, my power.", v: 1 },
+            { t: "My role, my duties, my reputation.", v: 2 },
+            { t: "My achievements, my capabilities, my goals.", v: 3 },
+            { t: "My authentic feelings and genuine relationships.", v: 4 },
+            { t: "A dynamic process, not a fixed thing.", v: 5 },
+            { t: "An open field of awareness without a center.", v: 6 }
+        ]},
+        { q: "How do you relate to people at very different worldviews?", options: [
+            { t: "They are weak or wrong.", v: 1 },
+            { t: "They are outside my group; be cautious.", v: 2 },
+            { t: "I can debate them; logic will win.", v: 3 },
+            { t: "I try to understand where they're coming from.", v: 4 },
+            { t: "I see their view as a valid altitude with genuine insights.", v: 5 },
+            { t: "I see myself in them; the boundary between us is constructed.", v: 6 }
+        ]},
+        { q: "What does personal 'growth' mean to you?", options: [
+            { t: "Getting stronger and taking more.", v: 1 },
+            { t: "Becoming a better member of my faith or community.", v: 2 },
+            { t: "Achieving more and developing more skills.", v: 3 },
+            { t: "Becoming more authentic and emotionally whole.", v: 4 },
+            { t: "Deepening self-awareness while expanding care.", v: 5 },
+            { t: "Recognizing that there is no separate self to grow.", v: 6 }
+        ]},
+        { q: "Faced with a life-shaking event such as illness, divorce, or failure, you...", options: [
+            { t: "Fight or flee.", v: 1 },
+            { t: "Seek comfort in tradition or community.", v: 2 },
+            { t: "Problem-solve and control what you can.", v: 3 },
+            { t: "Process the emotions and seek meaning.", v: 4 },
+            { t: "See it as an initiatory passage.", v: 5 },
+            { t: "Welcome it as the universe rearranging itself.", v: 6 }
         ]}
     ]
 };
 
-// ==========================================
-// LOGIC
-// ==========================================
 
-const COLOR_MAP = ["#ff4d4d", "#d35400", "#f39c12", "#27ae60", "#1abc9c", "#16a085"];
-const LEVEL_NAMES = ["Red (Egocentric)", "Amber (Ethnocentric)", "Orange (Rational)", "Green (Pluralistic)", "Teal (Integral)", "Turquoise (Holistic)"];
+// ==========================================
+// LINE INTERPRETATIONS
+// ==========================================
+const LINE_INTERPRETATIONS = {
+    "Cognitive": [
+        "Thinking is reactive and self-referential; cause and effect are conflated with desire.",
+        "Thinking is concrete and rule-based; truth is whatever authority confirms.",
+        "Thinking is analytical and evidence-driven; logic is the primary arbiter of reality.",
+        "Thinking is pluralistic and contextual; multiple valid perspectives are held simultaneously.",
+        "Thinking is systemic and meta-cognitive; you can observe your own observing.",
+        "Thinking becomes transparent to what it points at; concepts are held lightly as gestures toward the real."
+    ],
+    "Emotional": [
+        "Emotions are raw and explosive; feelings drive immediate action without reflection.",
+        "Emotions are suppressed or channeled through role-appropriate forms; shame and pride dominate.",
+        "Emotions are managed efficiently; stress and achievement-anxiety are the primary textures.",
+        "Emotions are honored as essential data; a rich vocabulary of feeling states is developing.",
+        "Emotions are processed with precision and discharged cleanly; you locate feelings in the body.",
+        "Emotions arise and pass in open awareness; even intense states are witnessed without identification."
+    ],
+    "Moral": [
+        "Ethics is entirely self-serving; right is defined by what benefits me or my circle.",
+        "Ethics is externally imposed and rule-based; deviation brings shame or punishment.",
+        "Ethics is consequentialist; actions are judged by rational utility and measured outcomes.",
+        "Ethics centers on care, inclusion, and protection of the marginalized.",
+        "Ethics is principled and context-sensitive; rules serve justice rather than replace it.",
+        "Ethics flows from direct perception of the unity of all beings; harm to any is harm to self."
+    ],
+    "Interpersonal": [
+        "Relationships are transactional and power-based; others are resources or threats.",
+        "Relationships are defined by roles and loyalty; belonging to the group is paramount.",
+        "Relationships are strategic networks; respectful, useful, but emotionally contained.",
+        "Relationships are the ground of authentic self-expression; depth and vulnerability are prized.",
+        "Relationships are seen systemically; each person functions within a larger developmental field.",
+        "Relationships dissolve into recognition; all others are expressions of the same awareness."
+    ],
+    "Values": [
+        "Values center on power, survival, and immediate gratification.",
+        "Values center on order, duty, family, and adherence to a sacred code.",
+        "Values center on achievement, progress, meritocracy, and individual freedom.",
+        "Values center on equality, authenticity, ecological care, and inclusion of all beings.",
+        "Values center on integration, complexity, and evolutionary contribution.",
+        "Values center on the sacred unity of existence; service without remainder."
+    ],
+    "Self-Identity": [
+        "Identity is defined by immediate desires, physical dominance, and raw will.",
+        "Identity is defined by role, group membership, and conformity to norms.",
+        "Identity is a project of optimization; the self is its achievements and capabilities.",
+        "Identity is an ongoing process of self-discovery; authenticity is the highest value.",
+        "Identity is understood as a dynamic process; multiple sub-personalities are acknowledged and integrated.",
+        "Identity is seen as a construction; awareness itself is recognized as the ground beneath all selfing."
+    ],
+    "Kinesthetic": [
+        "The body is a tool for pleasure, power, or survival; sensation drives behavior.",
+        "The body is managed according to social norms; appearance and basic health are matters of propriety.",
+        "The body is a performance machine; metrics, output, and optimization dominate.",
+        "The body is a source of feeling and meaning; somatic signals are beginning to be heard.",
+        "The body is a sophisticated intelligence; subtle sensations carry important developmental data.",
+        "The body is the ground of all experience; form and awareness are recognized as inseparable."
+    ],
+    "Spiritual": [
+        "Spirituality is transactional; the divine is petitioned for protection and favors.",
+        "Spirituality is institutional and doctrinal; salvation requires strict adherence to the true path.",
+        "Spirituality is viewed with skepticism; science provides the framework and religion is a cultural artifact.",
+        "Spirituality is personal and experiential; the divine is found in nature, art, and inner feeling.",
+        "Spirituality is non-dogmatic; all traditions are partial maps of the same territory.",
+        "Spirituality is the recognition of what is already always the case; the seeker dissolves into the sought."
+    ],
+    "Aesthetic": [
+        "Aesthetic response is immediate and sensory; beauty is what stimulates or impresses.",
+        "Aesthetic response follows cultural norms; beauty is what is familiar, skilled, or uplifting.",
+        "Aesthetic response is analytical; beauty is recognized through proportion, technique, and composition.",
+        "Aesthetic response is emotional; art is valued for the feelings it evokes and the truth it carries.",
+        "Aesthetic response is participatory; beauty is recognized as a transformation of consciousness.",
+        "Aesthetic response dissolves the observer; beauty becomes a window into the ground of being."
+    ],
+    "Psychosexual": [
+        "Sexuality is primarily about conquest, release, and assertion of power.",
+        "Sexuality is embedded in duty, procreation, and the sanctioned roles of tradition.",
+        "Sexuality is recreational and mutual; pleasure and emotional safety are the primary frame.",
+        "Sexuality is relational; vulnerability, intimacy, and authentic connection are central.",
+        "Sexuality is seen as an energetic and developmental domain; polarity, shadow, and depth are explored.",
+        "The boundary between sexual and spiritual dissolves; eros becomes a vehicle for recognizing non-duality."
+    ],
+    "Needs": [
+        "Motivation is organized around physical survival, safety, and avoidance of pain.",
+        "Motivation is organized around belonging, security, and fulfillment of role-based duties.",
+        "Motivation is organized around status, achievement, and accumulation of resources.",
+        "Motivation is organized around authentic connection, self-esteem, and meaningful contribution.",
+        "Motivation is organized around self-actualization, systemic contribution, and wisdom.",
+        "Motivation dissolves into spontaneous service; action arises from presence rather than agenda."
+    ],
+    "Linguistic": [
+        "Language is used to assert, demand, and command; communication serves immediate power needs.",
+        "Language follows prescribed forms; authority and group norms constrain what can be said.",
+        "Language is a precision tool; clarity, logic, and persuasion are highly developed.",
+        "Language is relational and exploratory; nuance, metaphor, and emotional honesty are prized.",
+        "Language tracks multiple levels simultaneously; meta-communication and reframing are natural.",
+        "Language points beyond itself; words are held lightly as gestures toward the inexpressible."
+    ],
+    "Ego Development": [
+        "The ego is impulsive and undifferentiated; little capacity for self-reflection exists.",
+        "The ego is conformist and rule-bound; worth is derived from approval and group membership.",
+        "The ego is self-authoring and goal-oriented; inner authority has been established.",
+        "The ego is self-questioning; the self is seen as a dynamic, revisable narrative.",
+        "The ego is self-transforming; it holds multiple frames and observes its own construction.",
+        "The ego is recognized as a useful fiction; the witness sees itself, and then dissolves."
+    ]
+};
 
+// ==========================================
+// DEVELOPMENT RECOMMENDATIONS
+// ==========================================
+const DEVELOPMENT_RECS = {
+    "Cognitive": [
+        "Actively steel-man positions you disagree with before critiquing them: write out the strongest possible case for the opposing view.",
+        "Study a discipline entirely foreign to your usual thinking. If analytical, explore phenomenology or somatic philosophy; if intuitive, study formal systems dynamics.",
+        "Begin a metacognitive journal: each evening, write one belief you held today and ask what framework generated it."
+    ],
+    "Emotional": [
+        "Learn to name emotions with granularity using a vocabulary map (Plutchik's wheel is a good starting point). Practice a 3-breath emotional check-in before responding in any charged situation.",
+        "Work with a somatic-oriented therapist or bodyworker. Much emotional material is stored below the cognitive threshold and cannot be accessed through talk alone.",
+        "Practice staying present with someone whose emotional state you typically find overwhelming. Notice the impulse to fix, dismiss, or merge, and simply remain."
+    ],
+    "Moral": [
+        "Read moral philosophy from at least two competing traditions (e.g., Kantian deontology and Confucian virtue ethics). Notice where your instincts align and where they resist.",
+        "Identify a recent decision where your ethical reasoning and your emotional response pointed in opposite directions. Sit with the tension rather than resolving it quickly.",
+        "Seek out moral feedback from someone whose ethical worldview you initially dismiss. Try to receive it without defending your position."
+    ],
+    "Interpersonal": [
+        "Practice asking for and receiving feedback without explaining, justifying, or minimizing the other person's experience. Just listen and say thank you.",
+        "Map your relational patterns: identify one person you systematically avoid emotional depth with and one you tend to merge with. Practice moving toward the first and staying distinct from the second.",
+        "Study Nonviolent Communication (Rosenberg) or Circling practice. Both are precision tools for deepening relational presence."
+    ],
+    "Values": [
+        "Map your stated values against how you actually spend your time and money over one week. Note the gaps without judgment, then ask what they reveal.",
+        "Read one serious thinker from a values tradition you find repellent (e.g., a serious traditionalist if you are pluralistic; a serious pragmatist if you are idealistic). Find the genuine insight they hold.",
+        "Ask yourself: which of my current values are inherited and which have I consciously chosen? Distinguish them and examine each."
+    ],
+    "Self-Identity": [
+        "Practice writing in the third person about yourself, as if you were a character in a novel. Note what becomes visible that first-person narration hides.",
+        "Study ego development research (Cook-Greuter, Kegan). Understanding the map can accelerate the territory, not by giving you an identity to perform, but by showing you the water you swim in.",
+        "Identify one sub-personality you disavow (the critic, the pleaser, the rebel) and engage it in written dialogue. Ask it what it is protecting."
+    ],
+    "Kinesthetic": [
+        "Commit to one somatic practice (yoga, qi gong, martial arts, or authentic movement) done slowly and attentively for 20 minutes daily. Performance metrics are irrelevant; sensation is the object.",
+        "Practice eating one meal per week in silence, without screens, attending only to taste, texture, and satiety signals.",
+        "Before making any significant decision, pause and scan the body for sensation. Ask: where does this feel contracted? Where does it feel open? Let that data inform the decision."
+    ],
+    "Spiritual": [
+        "Establish a daily contemplative practice of at least 10 minutes: not relaxation, but deliberate inquiry. Suitable entry points: breath awareness, open-focus meditation, or self-inquiry ('What is aware right now?').",
+        "Read across traditions: a Sufi text, a Zen collection, a Vedantic commentary, and a serious contemporary neuroscience perspective on consciousness. Notice where they converge.",
+        "Find and work with a teacher in a living transmission lineage, not just books. Maps are useful; territory requires direct guidance."
+    ],
+    "Aesthetic": [
+        "Spend 20 minutes per week with a single work of art (one painting, one piece of music, one poem) in sustained attention. Let the experience change across sessions.",
+        "Learn a creative discipline from scratch as a beginner: drawing, music, writing, dance. The humility of not-knowing is the teaching.",
+        "Practice asking: what does this art want from me, rather than what do I want from it? Notice how the relationship changes."
+    ],
+    "Psychosexual": [
+        "Bring honest curiosity to the parts of your sexuality that carry shame or confusion. Journaling in private, without reaching for a resolution, can begin to metabolize material that avoidance keeps frozen.",
+        "Study one serious text on relational depth or polarity (David Deida, John Welwood, or Marion Woodman depending on your orientation) and notice where it activates resistance in you.",
+        "Practice disclosing one layer deeper than you normally would in an intimate relationship, then notice the somatic response: contraction, expansion, or numbness."
+    ],
+    "Needs": [
+        "Identify which of Maslow's levels feels most unresolved in your life right now. Notice whether your current daily activities address that level or consistently skip over it toward higher ones.",
+        "Practice sitting with an unmet need for 10 minutes without seeking to fulfill or suppress it. Simply acknowledge its presence and its texture.",
+        "Ask: is there a need I am meeting through indirect means (e.g., meeting a need for significance through busyness, or a need for love through achievement)? Name it directly."
+    ],
+    "Linguistic": [
+        "Practice listening to completion, allowing someone to fully finish before your internal response generates. Notice what you miss when you are already formulating a reply.",
+        "Spend one week replacing the word 'but' with 'and' in all conversations. Notice how it changes the relational field.",
+        "Study your metaphors: keep a small log of the recurring metaphors you use about work, relationships, and self. The metaphors you live inside shape the reality you can perceive."
+    ],
+    "Ego Development": [
+        "Read Robert Kegan's 'In Over Our Heads' or Susanne Cook-Greuter's work on ego development stages. The act of seeing your current structure from the outside begins to loosen its grip.",
+        "Identify one belief you currently hold as simply 'obvious' or 'how things are' and subject it to serious inquiry: Where did it come from? What would the world look like if it were false?",
+        "Find a trusted peer or coach who will give you honest developmental feedback: not therapeutic support, but genuine perspective on where you may be operating from an earlier center of gravity than you believe."
+    ]
+};
+
+// ==========================================
+// CONSTANTS
+// ==========================================
+const COLOR_MAP   = ["#ff4d4d","#d35400","#f39c12","#27ae60","#1abc9c","#16a085"];
+const LEVEL_NAMES = ["Red (Egocentric)","Amber (Ethnocentric)","Orange (Rational)","Green (Pluralistic)","Teal (Integral)","Turquoise (Holistic)"];
+
+// ==========================================
+// STATE
+// ==========================================
 let selectedLines = [];
-let quizQueue = [];
+let quizQueue     = [];
 let currentQIndex = 0;
-let results = {}; // Stores { LineName: [scores...] }
+let results       = {};
+let savedAnswers  = {};
 
-// Initialize Line Selector
+// ==========================================
+// SETUP - glow-card line selector
+// ==========================================
 const selectorContainer = document.getElementById('lineCheckboxes');
+// Track selected lines as a Set
+const selectedLineSet = new Set(Object.keys(ALL_LINES)); // all selected by default
+
 Object.keys(ALL_LINES).forEach(line => {
     const div = document.createElement('div');
-    div.className = 'line-checkbox';
-    div.innerHTML = `<input type="checkbox" value="${line}" onchange="updateTimeEstimate()" checked> <label>${line}</label>`;
+    div.className = 'line-card selected'; // start selected
+    div.textContent = line;
+    div.dataset.line = line;
+    div.onclick = () => {
+        if (selectedLineSet.has(line)) {
+            selectedLineSet.delete(line);
+            div.classList.remove('selected');
+        } else {
+            selectedLineSet.add(line);
+            div.classList.add('selected');
+        }
+        updateTimeEstimate();
+    };
     selectorContainer.appendChild(div);
 });
-updateTimeEstimate();
 
-function updateTimeEstimate() {
-    const checkboxes = document.querySelectorAll('#lineCheckboxes input:checked');
-    const count = checkboxes.length * 5; // 5 questions per line
-    const minutes = Math.ceil(count * 0.75); // approx 45 sec per question
-    document.getElementById('timeEstimate').innerText = `Estimated Time: ${minutes} - ${minutes+5} mins (${count} questions)`;
-    document.getElementById('startBtn').disabled = checkboxes.length === 0;
+function selectAllLines() {
+    document.querySelectorAll('.line-card').forEach(card => {
+        selectedLineSet.add(card.dataset.line);
+        card.classList.add('selected');
+    });
+    updateTimeEstimate();
 }
 
+function deselectAllLines() {
+    document.querySelectorAll('.line-card').forEach(card => {
+        selectedLineSet.delete(card.dataset.line);
+        card.classList.remove('selected');
+    });
+    updateTimeEstimate();
+}
+
+function updateTimeEstimate() {
+    const count = selectedLineSet.size * 5;
+    document.getElementById('startBtn').disabled = selectedLineSet.size === 0;
+    if (count === 0) {
+        document.getElementById('timeEstimate').innerText = 'Select at least one line above';
+        return;
+    }
+    const fastSec = count * 30;
+    const slowSec = count * 60;
+
+    function fmtTime(sec) {
+        if (sec < 60) return `${sec}s`;
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        return s > 0 ? `${m}m ${s}s` : `${m}m`;
+    }
+
+    document.getElementById('timeEstimate').innerText =
+        `Estimated time: ${fmtTime(fastSec)} to ${fmtTime(slowSec)}  (${count} questions across ${selectedLineSet.size} line${selectedLineSet.size > 1 ? 's' : ''})`;
+}
+updateTimeEstimate();
+
+// ==========================================
+// ACCORDION TOGGLE
+// ==========================================
+function toggleAccordion(bodyId, arrowId) {
+    const body  = document.getElementById(bodyId);
+    const arrow = document.getElementById(arrowId);
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    arrow.classList.toggle('open', !isOpen);
+}
+
+// ==========================================
+// SHADOW PROFILE TOGGLE
+// ==========================================
+function toggleShadow() {
+    const on = document.getElementById('shadowToggle').checked;
+    document.querySelectorAll('.shadow-rows').forEach(el => {
+        el.classList.toggle('visible', on);
+    });
+    document.querySelectorAll('.shadow-ticks').forEach(el => {
+        el.classList.toggle('visible', on);
+    });
+}
+
+// ==========================================
+// QUIZ
+// ==========================================
 function startQuiz() {
-    selectedLines = Array.from(document.querySelectorAll('#lineCheckboxes input:checked')).map(cb => cb.value);
-    
-    // Build Queue
+    selectedLines = Array.from(selectedLineSet);
     quizQueue = [];
+    results   = {};
+    savedAnswers = {};
+    currentQIndex = 0;
+
     selectedLines.forEach(line => {
-        results[line] = []; // Init score array
-        ALL_LINES[line].forEach(qObj => {
-            quizQueue.push({ line: line, ...qObj });
-        });
+        results[line] = [];
+        ALL_LINES[line].forEach(qObj => quizQueue.push({ line, ...qObj }));
     });
 
     document.getElementById('setup-section').classList.add('hidden');
@@ -692,270 +1711,415 @@ function startQuiz() {
 }
 
 function renderQuestion() {
-    if (currentQIndex >= quizQueue.length) {
-        showResults();
-        return;
-    }
+    if (currentQIndex >= quizQueue.length) { showResults(); return; }
 
     const qData = quizQueue[currentQIndex];
-    
-    // Update Progress
-    const pct = ((currentQIndex) / quizQueue.length) * 100;
-    document.getElementById('progressBar').style.width = pct + '%';
-    
-    document.getElementById('currentLineTitle').innerText = `${qData.line} Line`;
-    document.getElementById('questionText').innerText = qData.q;
+    const pct   = (currentQIndex / quizQueue.length) * 100;
+
+    document.getElementById('progressBar').style.width    = pct + '%';
+    document.getElementById('currentLineTitle').innerText = qData.line + ' Line';
+    document.getElementById('quizCounter').innerText      = `${currentQIndex + 1} / ${quizQueue.length}`;
+    document.getElementById('questionText').innerText     = qData.q;
+    document.getElementById('backBtn').disabled           = currentQIndex === 0;
 
     const list = document.getElementById('optionsList');
     list.innerHTML = '';
 
-    // Shuffle options so the order (1-6) isn't obvious to the user
-    const shuffledOptions = [...qData.options].sort(() => Math.random() - 0.5);
+    if (!savedAnswers[currentQIndex]) savedAnswers[currentQIndex] = {};
+    if (!savedAnswers[currentQIndex].shuffledOptions) {
+        savedAnswers[currentQIndex].shuffledOptions = [...qData.options].sort(() => Math.random() - 0.5);
+    }
 
-    shuffledOptions.forEach(opt => {
+    savedAnswers[currentQIndex].shuffledOptions.forEach(opt => {
         const li = document.createElement('li');
         li.className = 'option-item';
         li.innerText = opt.t;
+        if (savedAnswers[currentQIndex].val === opt.v) li.classList.add('selected');
         li.onclick = () => selectOption(li, qData.line, opt.v);
         list.appendChild(li);
     });
 
-    document.getElementById('nextBtn').disabled = true;
+    document.getElementById('nextBtn').style.display =
+        savedAnswers[currentQIndex].val !== undefined ? 'block' : 'none';
 }
 
-let currentSelection = null;
-
 function selectOption(el, line, val) {
-    // UI Highlight
     document.querySelectorAll('.option-item').forEach(i => i.classList.remove('selected'));
     el.classList.add('selected');
-    
-    currentSelection = { line, val };
-    document.getElementById('nextBtn').disabled = false;
+    savedAnswers[currentQIndex].line = line;
+    savedAnswers[currentQIndex].val  = val;
+    document.getElementById('nextBtn').style.display = 'block';
 }
 
 function nextQuestion() {
-    if (currentSelection) {
-        results[currentSelection.line].push(currentSelection.val);
+    if (savedAnswers[currentQIndex] && savedAnswers[currentQIndex].val !== undefined) {
         currentQIndex++;
-        currentSelection = null;
         renderQuestion();
     }
 }
 
-// ==========================================
-// SCORING & VISUALIZATION
-// ==========================================
+function prevQuestion() {
+    if (currentQIndex > 0) { currentQIndex--; renderQuestion(); }
+}
 
+// ==========================================
+// RESULTS
+// ==========================================
 function showResults() {
-    document.getElementById('quiz-section').style.display = 'none';
+    results = {};
+    selectedLines.forEach(line => { results[line] = []; });
+    quizQueue.forEach((qData, i) => {
+        if (savedAnswers[i] && savedAnswers[i].val !== undefined) {
+            results[qData.line].push(savedAnswers[i].val);
+        }
+    });
+
+    document.getElementById('quiz-section').style.display    = 'none';
     document.getElementById('results-section').style.display = 'block';
 
-    const labels = [];
+    const labels   = [];
     const averages = [];
-    const colors = [];
-    
-    // Variables for Center of Gravity
-    let totalScoreSum = 0;
-    let totalQuestionsCount = 0;
+    const colors   = [];
+    let totalSum   = 0;
+    let totalCount = 0;
 
     const barContainer = document.getElementById('barContainer');
-    barContainer.innerHTML = ''; // Clear previous results
+    barContainer.innerHTML = '';
 
     Object.keys(results).forEach(line => {
         const scores = results[line];
-        if(scores.length > 0) {
-            const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-            
-            // Add to Grand Total
-            totalScoreSum += scores.reduce((a, b) => a + b, 0);
-            totalQuestionsCount += scores.length;
-
+        if (scores.length > 0) {
+            const avg      = scores.reduce((a, b) => a + b, 0) / scores.length;
+            const minScore = Math.min(...scores);
+            const maxScore = Math.max(...scores);
+            totalSum   += scores.reduce((a, b) => a + b, 0);
+            totalCount += scores.length;
             labels.push(line);
             averages.push(avg);
-            
             const colorIndex = Math.min(Math.floor(avg) - 1, 5);
-            const color = COLOR_MAP[Math.max(0, colorIndex)];
+            const color      = COLOR_MAP[Math.max(0, colorIndex)];
             colors.push(color);
 
-            const widthPct = (avg / 6) * 100;
-            const html = `
-                <div class="level-bar-row">
+            const avgPct = (avg / 6) * 100;
+            const minPct = ((minScore - 0.5) / 6) * 100;
+            const maxPct = (maxScore / 6) * 100;
+            const rangeWidth = maxPct - minPct;
+
+            // Shadow label (only show if meaningful spread)
+            let shadowHTML = '';
+            if (maxScore - minScore >= 2) {
+                const shadowName  = LEVEL_NAMES[Math.max(0, minScore - 1)];
+                const peakName    = LEVEL_NAMES[Math.min(5, maxScore - 1)];
+                shadowHTML = `<div class="shadow-label">
+                    <span class="pull">Shadow pull: ${shadowName}</span>
+                    &nbsp;·&nbsp;
+                    <span class="peak">Peak glimpse: ${peakName}</span>
+                </div>`;
+            }
+
+            barContainer.innerHTML += `
+                <div class="level-bar-row" style="flex-wrap:wrap; align-items:center;">
                     <div class="level-label">${line}</div>
-                    <div class="level-track">
-                        <div class="level-fill" style="width: ${widthPct}%; background-color: ${color};"></div>
+                    <div class="level-track-wrap" style="flex:1;">
+                        <div class="level-range-bar">
+                            <div class="range-span" style="left:${minPct}%; width:${rangeWidth}%;"></div>
+                            <div class="range-avg-fill" style="width:${avgPct}%; background-color:${color};"></div>
+                            <div class="shadow-ticks">
+                                <div class="range-min-tick" style="left:${minPct}%;"></div>
+                                <div class="range-max-tick" style="left:${Math.min(maxPct, 99)}%;"></div>
+                            </div>
+                        </div>
+                        <div class="shadow-rows">${shadowHTML}</div>
                     </div>
-                    <div class="level-score">${avg.toFixed(1)}</div>
-                </div>
-            `;
-            barContainer.innerHTML += html;
+                    <div class="level-score" style="margin-left:14px;">${avg.toFixed(1)}</div>
+                </div>`;
         }
     });
 
-    // ------------------------------------------
-    // 1. CALCULATE CENTER OF GRAVITY
-    // ------------------------------------------
-    const grandAvg = totalScoreSum / totalQuestionsCount;
-    let cogLabel = "";
-    if (grandAvg < 1.5) cogLabel = "Red (Egocentric)";
-    else if (grandAvg < 2.5) cogLabel = "Amber (Ethnocentric)";
-    else if (grandAvg < 3.5) cogLabel = "Orange (Rational)";
-    else if (grandAvg < 4.5) cogLabel = "Green (Pluralistic)";
-    else if (grandAvg < 5.5) cogLabel = "Teal (Integral)";
-    else cogLabel = "Turquoise (Holistic)";
+    // ---- CENTER OF GRAVITY ----
+    const grandAvg = totalSum / totalCount;
+    let cogLabel = grandAvg < 1.5 ? "Red (Egocentric)"
+                 : grandAvg < 2.5 ? "Amber (Ethnocentric)"
+                 : grandAvg < 3.5 ? "Orange (Rational)"
+                 : grandAvg < 4.5 ? "Green (Pluralistic)"
+                 : grandAvg < 5.5 ? "Teal (Integral)"
+                 : "Turquoise (Holistic)";
 
-    document.getElementById('cogResult').innerText = cogLabel;
-    document.getElementById('cogDescription').innerText = `Aggregate Score: ${grandAvg.toFixed(2)}`;
+    document.getElementById('cogResult').innerText      = cogLabel;
+    document.getElementById('cogDescription').innerText = `Aggregate Score: ${grandAvg.toFixed(2)} / 6.00`;
+    document.getElementById('cogNote').innerHTML        =
+        `Calculated as a weighted average across all selected lines. In strict Integral Theory, the Cognitive line often acts as a <em>ceiling</em> rather than a component of the average: no line can stably exceed the cognitive altitude. Treat this number as a useful heuristic, not a precise diagnosis.`;
 
-   // ------------------------------------------
-    // 2. GENERATE INSIGHTS (IMBALANCE DETECTOR)
-    // ------------------------------------------
-    const insightContainer = document.getElementById('insightContainer');
-    insightContainer.innerHTML = ''; // Clear old
-
-    // 1. Find Max and Min lines to determine the "Spread"
-    let maxVal = -1;
-    let minVal = 10; // Start higher than max possible score (6)
-    let maxLine = "";
-    let minLine = "";
-
-    labels.forEach((label, index) => {
-        const val = averages[index];
-        if (val > maxVal) { maxVal = val; maxLine = label; }
-        if (val < minVal) { minVal = val; minLine = label; }
-    });
-
-    const spread = maxVal - minVal;
-    let hasInsight = false;
-
-    // 2. Check for Specific Integral Traps (Hardcoded Logic)
-    const getScore = (name) => {
-        const idx = labels.indexOf(name);
-        return idx !== -1 ? averages[idx] : null;
+    // Dynamic COG box color matching the result level
+    const COG_LEVEL_COLORS = {
+        "Red (Egocentric)":       { hex: "#ff4d4d", rgb: "255,77,77"   },
+        "Amber (Ethnocentric)":   { hex: "#d35400", rgb: "211,84,0"    },
+        "Orange (Rational)":      { hex: "#f39c12", rgb: "243,156,18"  },
+        "Green (Pluralistic)":    { hex: "#27ae60", rgb: "39,174,96"   },
+        "Teal (Integral)":        { hex: "#1abc9c", rgb: "26,188,156"  },
+        "Turquoise (Holistic)":   { hex: "#16a085", rgb: "22,160,133"  }
     };
-    
-    const cogScore = getScore("Cognitive");
-    const emoScore = getScore("Emotional");
-    const morScore = getScore("Moral");
-    const spiScore = getScore("Spiritual");
-    const valScore = getScore("Values");
+    const cogColor = COG_LEVEL_COLORS[cogLabel] || COG_LEVEL_COLORS["Teal (Integral)"];
+    const cogBox   = document.querySelector('.cog-box');
+    const cogTitle = document.querySelector('.cog-title');
+    const cogNote  = document.querySelector('.cog-note');
+    cogBox.style.background   = `rgba(${cogColor.rgb}, 0.10)`;
+    cogBox.style.borderColor  = `rgba(${cogColor.rgb}, 0.35)`;
+    cogTitle.style.color      = cogColor.hex;
+    cogNote.style.borderTopColor = `rgba(${cogColor.rgb}, 0.20)`;
 
-    // Trap A: Head/Heart Gap (Specific check)
-    if (cogScore && emoScore && (cogScore - emoScore > 1.2)) {
-        insightContainer.innerHTML += `<div class="insight-card"><strong>⚠️ Head/Heart Gap:</strong> Your Cognitive development (${cogScore.toFixed(1)}) is significantly ahead of your Emotional line (${emoScore.toFixed(1)}). You may be intellectualizing your feelings rather than processing them.</div>`;
-        hasInsight = true;
+    // ---- INSIGHTS ----
+    const insightContainer = document.getElementById('insightContainer');
+    insightContainer.innerHTML = '';
+
+    const getScore = name => { const i = labels.indexOf(name); return i !== -1 ? averages[i] : null; };
+
+    const cogScore  = getScore("Cognitive");
+    const emoScore  = getScore("Emotional");
+    const morScore  = getScore("Moral");
+    const spiScore  = getScore("Spiritual");
+    const valScore  = getScore("Values");
+    const kinScore  = getScore("Kinesthetic");
+    const intScore  = getScore("Interpersonal");
+    const needScore = getScore("Needs");
+    const lingScore = getScore("Linguistic");
+    const egoScore  = getScore("Ego Development");
+    const sexScore  = getScore("Psychosexual");
+    const aesScore  = getScore("Aesthetic");
+    const idScore   = getScore("Self-Identity");
+
+    let insights = [];
+
+    // A: Head/Heart Gap
+    if (cogScore !== null && emoScore !== null && cogScore - emoScore > 1.2) {
+        insights.push({ color: 'var(--orange)', text: `<strong>Head/Heart Gap:</strong> Your Cognitive line (${cogScore.toFixed(1)}) is significantly ahead of your Emotional line (${emoScore.toFixed(1)}). You may be intellectualizing feelings rather than processing them. Somatic or depth-therapy practices are likely high-leverage.` });
     }
-    
-    // Trap B: Spiritual Bypassing (Specific check)
-    if (spiScore && morScore && (spiScore - morScore > 1.5)) {
-        insightContainer.innerHTML += `<div class="insight-card"><strong>⚠️ Spiritual Bypassing Risk:</strong> Your Spiritual line is much higher than your Moral line. Be careful not to use spiritual concepts to avoid dealing with ethical responsibilities.</div>`;
-        hasInsight = true;
+
+    // B: Spiritual Bypassing
+    if (spiScore !== null && morScore !== null && spiScore - morScore > 1.5) {
+        insights.push({ color: 'var(--orange)', text: `<strong>Spiritual Bypassing Risk:</strong> Your Spiritual line (${spiScore.toFixed(1)}) is much higher than your Moral line (${morScore.toFixed(1)}). There is a risk of using spiritual concepts to sidestep ethical responsibilities or relational accountability.` });
     }
 
-    // 3. General "Trailing Line" Detector (Dynamic Logic)
-    // If the spread is huge (> 1.5) and we haven't already flagged it above
-    if (spread > 1.5) {
-        // We only show this if it wasn't already covered by the specific traps above
-        // OR if the trailing line is different than the ones caught above.
-        const isNewInsight = (minLine !== "Emotional" || !hasInsight) && (minLine !== "Moral" || !hasInsight);
-        
-        if (isNewInsight) {
-            insightContainer.innerHTML += `<div class="insight-card" style="border-left-color: var(--red);"><strong>⚠️ Significant Asymmetry:</strong> There is a large gap (${spread.toFixed(1)} levels) between your leading line (${maxLine}) and your trailing line (${minLine}). <br><br>In Integral Theory, we often "anchor" at our lowest line under stress. Consider focusing your development practices specifically on <strong>${minLine}</strong>.</div>`;
-            hasInsight = true;
-        }
+    // C: Spiritual Bypassing vs. Emotional
+    if (spiScore !== null && emoScore !== null && spiScore - emoScore > 1.5) {
+        insights.push({ color: 'var(--orange)', text: `<strong>Transcendence Without Integration:</strong> Your Spiritual line (${spiScore.toFixed(1)}) substantially outpaces your Emotional line (${emoScore.toFixed(1)}). Spiritual altitude without emotional depth can lead to bypassing genuine human feeling in favor of detached equanimity.` });
     }
 
-    // 4. Balanced Fallback
-    if (!hasInsight) {
-        insightContainer.innerHTML = `<div class="insight-card" style="border-left-color: var(--green);"><strong>✅ Balanced Growth:</strong> Your lines of development are tight (Spread: ${spread.toFixed(1)}). You are growing in a healthy, integrated way across the selected domains.</div>`;
+    // D: Moral/Values Dissociation
+    if (morScore !== null && valScore !== null && Math.abs(morScore - valScore) > 1.3) {
+        const [leader, trailer, lScore, tScore] = morScore > valScore
+            ? ["Moral", "Values", morScore, valScore]
+            : ["Values", "Moral", valScore, morScore];
+        insights.push({ color: 'var(--amber)', text: `<strong>Values/Morality Gap:</strong> Your ${leader} line (${lScore.toFixed(1)}) scores noticeably higher than your ${trailer} line (${tScore.toFixed(1)}). This pattern often surfaces as a gap between stated principles and lived priorities. It is worth examining where the disconnect originates.` });
     }
 
-    // ------------------------------------------
-    // 3. RENDER CHART
-    // ------------------------------------------
-    // Destroy old chart if exists to prevent glitching on retake
-    if(window.myRadarChart) window.myRadarChart.destroy();
+    // E: Mind/Body Dissociation
+    if (cogScore !== null && kinScore !== null && cogScore - kinScore > 1.5) {
+        insights.push({ color: 'var(--orange)', text: `<strong>Mind/Body Dissociation:</strong> Your Cognitive line (${cogScore.toFixed(1)}) far exceeds your Kinesthetic line (${kinScore.toFixed(1)}). You may live primarily from the neck up, missing somatic intelligence. Embodiment practices such as movement, breathwork, or body-centered therapy could unlock stuck growth.` });
+    }
 
+    // F: Lone Genius (Cognitive vs. Interpersonal)
+    if (cogScore !== null && intScore !== null && cogScore - intScore > 1.3) {
+        insights.push({ color: 'var(--orange)', text: `<strong>Lone Genius Pattern:</strong> Your Cognitive line (${cogScore.toFixed(1)}) significantly outpaces your Interpersonal line (${intScore.toFixed(1)}). Advanced thinking without equally developed relational capacity tends to create friction in leadership and intimate relationships.` });
+    }
+
+    // G: Cognitive vs. Ego Development
+    if (cogScore !== null && egoScore !== null && cogScore - egoScore > 1.3) {
+        insights.push({ color: 'var(--amber)', text: `<strong>Map Without Territory:</strong> Your Cognitive line (${cogScore.toFixed(1)}) exceeds your Ego Development line (${egoScore.toFixed(1)}). You can likely describe higher-altitude concepts accurately without yet having the ego structure to embody them. This gap sometimes generates overconfidence in one's own development.` });
+    }
+
+    // H: Linguistic vs. Interpersonal
+    if (lingScore !== null && intScore !== null && lingScore - intScore > 1.3) {
+        insights.push({ color: 'var(--amber)', text: `<strong>Words Outpacing Presence:</strong> Your Linguistic line (${lingScore.toFixed(1)}) is ahead of your Interpersonal line (${intScore.toFixed(1)}). You may use sophisticated communication frameworks without the relational attunement to make them land effectively with others.` });
+    }
+
+    // I: Needs vs. Values mismatch
+    if (needScore !== null && valScore !== null && Math.abs(needScore - valScore) > 1.3) {
+        const [higher, lower, hScore, lScore] = needScore > valScore
+            ? ["Needs", "Values", needScore, valScore]
+            : ["Values", "Needs", valScore, needScore];
+        insights.push({ color: 'var(--amber)', text: `<strong>Aspiration/Motivation Gap:</strong> Your ${higher} line (${hScore.toFixed(1)}) is significantly higher than your ${lower} line (${lScore.toFixed(1)}). This often indicates that day-to-day motivations and deeper values are pulling in different directions.` });
+    }
+
+    // J: Psychosexual vs. Interpersonal lag
+    if (sexScore !== null && intScore !== null && sexScore - intScore > 1.3) {
+        insights.push({ color: 'var(--amber)', text: `<strong>Eros Without Agape:</strong> Your Psychosexual line (${sexScore.toFixed(1)}) outpaces your Interpersonal line (${intScore.toFixed(1)}). Capacity for deep energetic or transpersonal intimacy without equivalent relational maturity can create confusion or intensity in partnerships.` });
+    }
+
+    // K: High Aesthetic, low Cognitive (untested intuition)
+    if (aesScore !== null && cogScore !== null && aesScore - cogScore > 1.3) {
+        insights.push({ color: 'var(--teal)', text: `<strong>Felt Knowing Ahead of Conceptual Knowing:</strong> Your Aesthetic line (${aesScore.toFixed(1)}) scores higher than your Cognitive line (${cogScore.toFixed(1)}). You likely access higher-altitude knowing through beauty, art, or felt sense before you can articulate it conceptually. This is a genuine gift; developing the cognitive vocabulary to match it would be powerful.` });
+    }
+
+    // L: Green trap (High Values/Green, lower Cognitive/systemic)
+    if (valScore !== null && cogScore !== null && valScore >= 3.8 && valScore <= 4.4 && cogScore < valScore - 0.5) {
+        insights.push({ color: 'var(--green)', text: `<strong>Green Plateau Indicator:</strong> Your Values line is solidly at Green (${valScore.toFixed(1)}) while your Cognitive line (${cogScore.toFixed(1)}) has not yet fully caught up. This is a very common pattern. The move from Green to Teal often stalls precisely here: the values are right but the second-tier, systems-level cognitive framework has not yet consolidated.` });
+    }
+
+    // M: Self-Identity vs. Ego Development gap
+    if (idScore !== null && egoScore !== null && Math.abs(idScore - egoScore) > 1.2) {
+        const [higher, lower, hScore, lScore] = idScore > egoScore
+            ? ["Self-Identity", "Ego Development", idScore, egoScore]
+            : ["Ego Development", "Self-Identity", egoScore, idScore];
+        insights.push({ color: 'var(--amber)', text: `<strong>Identity Complexity Mismatch:</strong> Your ${higher} line (${hScore.toFixed(1)}) diverges noticeably from your ${lower} line (${lScore.toFixed(1)}). How you narrate your self and how your ego structure actually operates may be out of alignment.` });
+    }
+
+    // N: General trailing line
+    let maxVal = -1, minVal = 10, maxLine = "", minLine = "";
+    labels.forEach((label, i) => {
+        if (averages[i] > maxVal) { maxVal = averages[i]; maxLine = label; }
+        if (averages[i] < minVal) { minVal = averages[i]; minLine = label; }
+    });
+    const spread = maxVal - minVal;
+    const specificTrailers = ["Emotional","Moral","Kinesthetic","Interpersonal","Ego Development","Needs","Linguistic"];
+    const alreadyCaught = specificTrailers.includes(minLine) && insights.length > 0;
+    if (spread > 1.5 && !alreadyCaught) {
+        insights.push({ color: 'var(--red)', text: `<strong>Significant Asymmetry:</strong> There is a ${spread.toFixed(1)}-level gap between your leading line (${maxLine}) and your trailing line (${minLine}). Under stress, people typically regress to their lowest line. Focusing development energy specifically on ${minLine} would produce the most integrated growth.` });
+    }
+
+    // Balanced fallback
+    if (insights.length === 0) {
+        insights.push({ color: 'var(--green)', text: `<strong>Balanced Profile:</strong> Your lines of development are tightly clustered (spread: ${spread.toFixed(1)}). You are growing in an integrated way across the selected domains. Continue your current practices and intentionally explore the hallmark qualities of the next level.` });
+    }
+
+    insights.forEach(ins => {
+        insightContainer.innerHTML += `<div class="insight-card" style="border-left-color:${ins.color};">${ins.text}</div>`;
+    });
+
+    // ---- RADAR CHART ----
+    if (window.myRadarChart) window.myRadarChart.destroy();
     const ctx = document.getElementById('radarChart').getContext('2d');
     window.myRadarChart = new Chart(ctx, {
         type: 'radar',
         data: {
-            labels: labels,
+            labels,
             datasets: [{
                 label: 'Integral Psychograph',
                 data: averages,
-                backgroundColor: 'rgba(26, 188, 156, 0.2)',
-                borderColor: '#1abc9c',
+                backgroundColor: `rgba(${cogColor.rgb}, 0.12)`,
+                borderColor: cogColor.hex,
                 pointBackgroundColor: colors,
+                pointRadius: 5,
                 borderWidth: 2
             }]
         },
         options: {
             scales: {
                 r: {
-                    min: 0,
-                    max: 6,
-                    ticks: { stepSize: 1, showLabelBackdrop: false, color: '#666' },
-                    pointLabels: { font: { size: 14 }, color: '#ccc' },
-                    grid: { color: '#444' },
-                    angleLines: { color: '#444' }
+                    min: 0, max: 6,
+                    ticks: { stepSize: 1, showLabelBackdrop: false, color: '#666', font: { size: 10 } },
+                    pointLabels: { font: { size: 12, family: "'Raleway', sans-serif" }, color: '#bbb' },
+                    grid: { color: '#2a2a2a' },
+                    angleLines: { color: '#2a2a2a' }
                 }
             },
-            plugins: {
-                legend: { display: false }
-            }
+            plugins: { legend: { display: false } }
         }
+    });
+
+    // Store for optional participation
+    window._lastResults  = results;
+    window._lastAverages = Object.fromEntries(labels.map((l, i) => [l, averages[i]]));
+
+    // ---- LINE INTERPRETATIONS ----
+    const interpContainer = document.getElementById('interpContainer');
+    interpContainer.innerHTML = '';
+    labels.forEach((line, i) => {
+        const avg       = averages[i];
+        const levelIdx  = Math.min(Math.max(Math.round(avg) - 1, 0), 5);
+        const color     = colors[i];
+        const levelName = LEVEL_NAMES[levelIdx];
+        const interp    = LINE_INTERPRETATIONS[line];
+        if (!interp) return;
+        const desc = interp[levelIdx];
+        interpContainer.innerHTML += `
+            <div class="interp-row">
+                <div class="interp-line-name" style="color:${color};">${line}</div>
+                <span class="interp-badge" style="background:${color};">${avg.toFixed(1)} · ${levelName}</span>
+                <div class="interp-text">${desc}</div>
+            </div>`;
+    });
+
+    // ---- DEVELOPMENT RECOMMENDATIONS ----
+    const recsContainer = document.getElementById('recsContainer');
+    recsContainer.innerHTML = '';
+    // Identify 3 lowest lines
+    const sorted = labels.map((l, i) => ({ line: l, avg: averages[i], color: colors[i] }))
+                         .sort((a, b) => a.avg - b.avg)
+                         .slice(0, 3);
+    sorted.forEach(({ line, avg, color }) => {
+        const practices = DEVELOPMENT_RECS[line];
+        if (!practices) return;
+        const levelName = LEVEL_NAMES[Math.min(Math.max(Math.round(avg) - 1, 0), 5)];
+        let practicesHTML = practices.map((p, idx) =>
+            `<div class="rec-practice"><div class="rec-num">${idx + 1}</div><div>${p}</div></div>`
+        ).join('');
+        recsContainer.innerHTML += `
+            <div class="rec-block">
+                <div class="rec-line-header" style="color:${color};">${line} Line &nbsp;<span style="font-weight:400; opacity:0.7;">currently at ${levelName} (${avg.toFixed(1)})</span></div>
+                ${practicesHTML}
+            </div>`;
     });
 }
 
 // ==========================================
-// BACKEND INTEGRATION (Placeholder)
+// PARTICIPATION
 // ==========================================
+function handleParticipation() {
+    const checked = document.getElementById('participateCheck').checked;
+    const status  = document.getElementById('participationStatus');
+
+    if (checked) {
+        status.style.color = 'var(--teal)';
+        status.innerText   = 'Thank you. Your anonymized scores have been queued for submission.';
+        sendDataToBackend(window._lastResults, window._lastAverages);
+    } else {
+        status.style.color = 'var(--text-muted)';
+        status.innerText   = 'Your data will not be submitted.';
+    }
+}
 
 function sendDataToBackend(rawResults, computedAverages) {
     const payload = {
         timestamp: new Date().toISOString(),
-        raw: rawResults,
-        averages: computedAverages
+        averages:  computedAverages   // anonymized: no raw per-question data sent
     };
 
-    console.log("Data ready to send:", payload);
+    console.log("Participation payload ready:", payload);
 
     // ---------------------------------------------------------
-    // INSTRUCTIONS TO CONNECT TO GOOGLE SHEETS:
-    // 1. Create a Google Form or Google Sheet + Apps Script Web App.
-    // 2. Get the Web App URL (e.g., https://script.google.com/macros/s/..../exec).
-    // 3. Uncomment the code below and insert your URL.
+    // TO CONNECT TO GOOGLE SHEETS:
+    // 1. Create a Google Sheet with Apps Script Web App.
+    // 2. Paste your deployment URL below and uncomment.
     // ---------------------------------------------------------
-
     /*
     fetch('YOUR_GOOGLE_APPS_SCRIPT_URL', {
         method: 'POST',
-        mode: 'no-cors', // standard for Google Scripts
+        mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     }).then(() => {
-        console.log("Data sent successfully");
-    }).catch(err => console.error("Error sending data", err));
+        document.getElementById('participationStatus').innerText = 'Scores submitted successfully. Thank you.';
+    }).catch(err => {
+        console.error("Submission error:", err);
+        document.getElementById('participationStatus').innerText = 'Submission failed. Please try again later.';
+    });
     */
 }
+
+// ==========================================
+// DOWNLOAD
+// ==========================================
 function downloadResults() {
     const filename = prompt("Enter a name for your file:", "My_Integral_Profile");
     if (!filename) return;
-
-    // Scroll to top to ensure capture isn't cut off
-    window.scrollTo(0,0);
-    
-    // TARGET THE NEW ID HERE
-    const element = document.getElementById("results-capture");
-    
-    html2canvas(element, {
-        backgroundColor: "#1e1e1e", // Matches your dark card color
-        scale: 2 // Higher resolution
+    window.scrollTo(0, 0);
+    html2canvas(document.getElementById("results-capture"), {
+        backgroundColor: "#161616", scale: 2
     }).then(canvas => {
-        const link = document.createElement('a');
+        const link    = document.createElement('a');
         link.download = filename + '.png';
-        link.href = canvas.toDataURL("image/png");
+        link.href     = canvas.toDataURL("image/png");
         link.click();
     });
 }
