@@ -1,3 +1,5 @@
+--- START OF FILE FractalAtlas.html ---
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -287,12 +289,11 @@
 
         .hidden { display: none !important; }
 
-        /* --- SAVE MODAL --- */
+        /* --- MODALS --- */
         #save-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 500; align-items: center; justify-content: center; }
         .modal-box { background: #181818; border: 1px solid #444; padding: 25px; width: 90%; max-width: 350px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
 
-        /* --- MANUAL MODAL --- */
-        #manual-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 1000; align-items: center; justify-content: center; user-select: text; -webkit-user-select: text;}
+        #manual-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 2000; align-items: center; justify-content: center; user-select: text; -webkit-user-select: text;}
         .manual-box { background: #151515; border: 1px solid #444; padding: 0; width: 95%; max-width: 800px; height: 90%; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; position: relative; }
         .manual-header { padding: 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; border-radius: 8px 8px 0 0; }
         .manual-header h2 { margin: 0; color: white; font-size: 20px; }
@@ -301,7 +302,7 @@
         .manual-content { flex: 1; overflow-y: auto; padding: 30px; color: #ccc; font-size: 15px; line-height: 1.7; font-family: -apple-system, sans-serif; }
         .manual-content p { margin-bottom: 20px; }
         .manual-content h3 { color: var(--accent-color); margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        
+
        /* --- MOBILE RESPONSIVENESS --- */
         @media (max-width: 768px) {
             header { padding: 0 4px; }
@@ -314,6 +315,7 @@
             .canvas-container { border-right: none; border-bottom: 1px solid #333; }
             #bottom-controls { display: none; }
             #settings-menu { width: 85%; }
+            .manual-content { padding: 15px; font-size: 14px; }
         }
     </style>
 </head>
@@ -335,9 +337,9 @@
             <button class="tab-btn" onclick="app.setMode(3)">BIFURCATION</button>
         </div>
         <div class="header-right">
-            <button class="icon-btn" onclick="ui.toggleManual()" title="User Manual">❓</button>
             <button class="action-btn" onclick="ui.toggleModal(true)">SAVE VIEW</button>
-            <button class="icon-btn" onclick="ui.toggleSettings()">⚙️</button>
+            <button class="icon-btn" onclick="ui.toggleManual()" title="User Manual" style="color: #ff4444; font-size: 22px; font-weight: bold; margin-right: 5px;">❓</button>
+            <button class="icon-btn" onclick="ui.toggleSettings()" title="Settings">⚙️</button>
         </div>
     </header>
 
@@ -368,7 +370,7 @@
 
     <!-- BIFURCATION 3D VIEW -->
     <div id="bifurcation-view">
-        <div id="bif-hint">Drag to rotate · Scroll to zoom · Middle/Right/Shift+drag to pan · Drag Seed to move orbits</div>
+        <div id="bif-hint">Click to enter fly mode · Mouse to look · WASD to fly · ESC to exit · Scroll to zoom · Drag Seed to move orbits</div>
         <canvas id="bif-canvas"></canvas>
         <div id="bif-toolbar">
             <div class="ctrl-grid">
@@ -443,6 +445,13 @@
                     </div>
                 </div>
                 <div class="control-group">
+                    <label>Fly Speed</label>
+                    <div class="hybrid-input">
+                        <input type="range" id="bif-flyspeed" min="0" max="1" step="0.05" value="0.3">
+                        <input type="number" id="bif-flyspeed-n" value="0.3" min="0" max="1" step="0.05">
+                    </div>
+                </div>
+                <div class="control-group">
                     <label>&nbsp;</label>
                     <div style="display:flex;gap:8px;">
                         <button class="action-btn" id="bif-reset" style="flex:1;">RESET VIEW</button>
@@ -462,6 +471,33 @@
     </div>
 
     <!-- Save Modal -->
+    <div id="share-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:600; align-items:center; justify-content:center;">
+        <div class="modal-box" style="text-align:center; max-width:400px;">
+            <div style="font-size:22px; margin-bottom:8px;">✦</div>
+            <h3 style="margin:0 0 18px; color:white; font-size:16px; letter-spacing:2px;">SHARE YOUR FRACTAL</h3>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+                <button class="action-btn" onclick="ui.shareTo('twitter')" style="display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    X / Twitter
+                </button>
+                <button class="action-btn" onclick="ui.shareTo('bluesky')" style="display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.02.275-.039.415-.056-.138.022-.276.04-.415.056-3.912.58-7.387 2.005-2.83 7.078 5.013 5.19 6.87-1.113 7.823-4.308.953 3.195 2.05 9.271 7.733 4.308 4.267-4.308 1.172-6.498-2.74-7.078a8.741 8.741 0 0 1-.415-.056c.14.017.279.036.415.056 2.67.297 5.568-.628 6.383-3.364.246-.828.624-5.79.624-6.478 0-.69-.139-1.861-.902-2.204-.659-.298-1.664-.62-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8z"/></svg>
+                    Bluesky
+                </button>
+                <button class="action-btn" onclick="ui.shareTo('facebook')" style="display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                    Facebook
+                </button>
+                <button class="action-btn" onclick="ui.shareTo('reddit')" style="display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+                    Reddit
+                </button>
+            </div>
+            <p style="color:#555; font-size:11px; margin:0 0 14px;">Instagram: save the image and post manually</p>
+            <button class="action-btn" onclick="document.getElementById('share-modal').style.display='none'" style="width:100%;">Done</button>
+        </div>
+    </div>
+
     <div id="save-modal">
         <div class="modal-box">
             <h3 style="margin-top:0; color:white; margin-bottom:15px;">Save Image</h3>
@@ -510,7 +546,8 @@
             </div>
         </div>
     </div>
-<!-- User Manual Modal -->
+
+    <!-- User Manual Modal -->
     <div id="manual-modal">
         <div class="manual-box">
             <div class="manual-header">
@@ -518,44 +555,45 @@
                 <button class="close-manual-btn" onclick="ui.toggleManual()">&times;</button>
             </div>
             <div class="manual-content">
-                <p>There are 4 tabs to Fractal Atlas, each of which provides a different way of looking at fractal structures. You start off in the <strong>Fractals</strong> tab.</p>
+                <p>There are 4 tabs to Fractal Atlas, each of which provides a different way of looking at fractal structures. You start off in the "Fractals" tab.</p>
 
                 <h3>1. Fractals</h3>
-                <p>There are 2 windows. The left window shows the base fractal, and the right window shows the Julia set generated with the seed from the left fractal.</p>
-                <p>There is a white dot on the left fractal, which you can drag around in the window. As you drag it, you will see the Julia window update and the <em>c</em> value change in the lower left of the fractal window. You can double-click to lock or unlock the point.</p>
-                <p>You can pan and zoom in both windows. You can also check <strong>Auto Zoom</strong> and set the zoom speed. If you input a negative zoom speed value, then it will zoom out. There is a maximum zoom level that is possible with this implementation, so expect to eventually find the fractals becoming pixelated. Since fractals are self-similar, you will be able to find all of the structures within the zoom limitations of this browser application.</p>
+                <p>There are 2 windows. The left window shows the base fractal and the right window shows the Julia set generated with the seed from the left fractal.</p>
+                <p>There is a white dot on the left fractal which you can drag around in the window. As you drag it, you will see the Julia window update and the <em>c</em> value change in the lower left of the fractal window. You can double-click to lock or unlock the point.</p>
+                <p>You can pan and zoom in both windows. You can also check "Auto Zoom" and set the zoom speed. If you input a negative zoom speed value, then it will zoom out. There is a maximum zoom level that is possible with this implementation, so expect to eventually find the fractals becoming pixelated. Since fractals are self-similar, you will be able to find all of the structures within the zoom limitations of this browser application.</p>
                 <p>You can change the maximum number of iterations to change how the color palettes are applied. The more you zoom in, the higher iterations will be necessary to continue to resolve fractal details well. Fewer iterations will make the fractals appear brighter at lower zoom levels. You can also change the color palette with 9 available options currently.</p>
-                <p>If you want to observe the behavior of a particular starting point, you can check <strong>Orbits</strong>, and a trajectory will appear from the white dot. This shows the behavior of applying that coordinate to the fractal equation. There are stable orbits that remain contained within the fractal as well as escaping trajectories.</p>
-                <p>The <strong>Equation</strong> section allows you to change the fractal you are looking at. There are 10 presets that you can choose between, as well as an equation box where you can explore any fractal that is not in the list.</p>
-                <p>The <strong>Reset Camera</strong> button resets the fractal in case you get lost. The <strong>Save View</strong> button allows you to save a PNG of a window. You can name the fractal, select the target window, and select the save file resolution. If you are on mobile, the Left Window will be on top, and the Right Window will be on the bottom.</p>
-                <p>There is a settings gear icon on the upper right, which just mirrors all of the controls below the windows that are used specifically for mobile, where screen real estate is limited.</p>
+                <p>If you want to observe the behavior of a particular starting point, you can check <strong>"Orbits"</strong> and a trajectory will appear from the white dot. This shows the behavior of applying that coordinate to the fractal equation. There are stable orbits which remain contained within the fractal as well as escaping trajectories.</p>
+                <p>The "Equation" section allows you to change the fractal you are looking at. There are 10 presets that you can choose between as well as an equation box where you can explore any fractal that is not in the list.</p>
+                <p>The <strong>Reset Camera</strong> button resets the fractal in case you get lost. The <strong>Save View</strong> button allows you to save a PNG of a window. You can name the fractal, select the target window, and select the save file resolution. If you are on mobile, the Left Window will be on top and the Right Window will be on the bottom.</p>
+                <p>There is a settings gear icon on the upper right which just mirrors all of the controls below the windows that are used specifically for mobile where screen real estate is limited.</p>
 
                 <h3>2. Nebulae</h3>
                 <p>These are called Nebulae because they are generated using the same techniques used in astronomy for capturing images of deep sky objects. You will receive photons being emitted from the structure you are observing and will have to collect them over the course of a few minutes to improve the signal to noise ratio. It also requires the user to map particular emissions to particular colors.</p>
-                <p>This tab also contains 2 windows. The left window plots the escaping trajectories of points traversing the fractal in real time. The right window is the corresponding nebula Julia <em>(world's first implementation)</em> from whatever point you have selected in the left window. Whatever point position you had in the <strong>Fractals</strong> tab will carry over to these windows and vice versa. You can pan and zoom in both of these windows just like in the <strong>Fractals</strong> tab. When you change the window, the nebulae will restart plotting points. Let the windows sit for a few minutes for the signal-to-noise ratio to improve.</p>
+                <p>This tab also contains 2 windows. The left window plots the escaping trajectories of points traversing the fractal in real time. The right window is the corresponding nebula Julia <em>(world's first implementation)</em> from whatever point you have selected in the left window. Whatever point position you had in the "Fractals" tab will carry over to these windows and vice versa. You can pan and zoom in both of these windows just like in the "Fractals" tab. When you change the window, the nebulae will restart plotting points. Let the windows sit for a few minutes for the signal to noise ratio to improve.</p>
                 <p>Sometimes the nebulae may not show up if the iterations are too low with some fractal equations, so increasing max iterations may be necessary in some cases. You can change the colors of the fractals by using the Red, Green, and Blue Threshold sliders. That tells the program to color the number of iterations to escape differently. If they are all set to the same value, then the nebulae will appear white.</p>
-                <p>There is also a nebula brightness slider for when particular nebulae are too dark to see clearly. All of the values also allow for manual input, so if the slider range does not cover what you are trying to do, then just type in a value.</p>
+                <p>There is also a nebula brightness slider for when particular nebulae are too dark to see clearly. All of the values also allow for manual input so if the slider range does not cover what you are trying to do, then just type in a value.</p>
                 <p>The <strong>Anti-Nebula</strong> checkbox changes the plot from displaying escaping trajectories to displaying trapped trajectories.</p>
                 <p>Saving fractal nebulae has an additional input asking for the number of samples in the output. The higher the samples, the longer the output will take, but the sharper the final image will be. If you want a fast capture, then you can just save the screen size and that will output exactly what you see on your screen's selected window.</p>
 
                 <h3>3. Atlas</h3>
                 <p>The atlases tile the windows with Julia sets. The Julia set seeds are at the corresponding center of each of the tiles. You can increase the atlas grid to display more Julias simultaneously. You will notice that the tiling of these Julias will result in an emergent fractal that matches the equation the Julias were derived from. This is a good way to get an intuitive understanding of the correspondence between base fractals and their respective Julias.</p>
-                <p>The <strong>Nebula Atlas</strong> <em>(world's first)</em> shows the nebula Julias generated at the center point of each tile. There are 2 modes. First is <strong>Uniform</strong>, where each tile plots escaping trajectories independently, where there is no preferential starting point. Second is the <strong>Origin-Biased</strong> setting, where all points start at (0,0), and then their trajectories are plotted going through the nebula Julia tiles. As Reality Fractal predicted, this results in the emergence of the shape of the fractal nebula equation used with sufficiently large grid densities.</p>
+                <p>The Nebula Atlas <em>(world's first)</em> shows the nebula Julias generated at the center point of each tile. There are 2 modes. First is <strong>Uniform</strong>, where each tile plots escaping trajectories independently, where there is no preferential starting point. Second is the <strong>Origin-Biased</strong> setting, where all points start at (0,0) and then their trajectories are plotted going through the nebula Julia tiles. As Reality Fractal predicted, this results in the emergence of the shape of the fractal nebula equation used with sufficiently large grid densities.</p>
                 <p>Just as with the previous tabs, you can pan and zoom on both windows. You can also change the maximum number of iterations to highlight certain features, change the nebula brightness, and RGB iteration mappings for the nebula atlas. If you save the nebula atlas window, just as with the Nebulae tab, you can select the number of samples to get the desired output.</p>
 
                 <h3>4. Bifurcation</h3>
                 <p>This tab shows the correspondence between any fractal and its corresponding bifurcation diagram. You can see either the base fractal's or selected Julia's <em>(world's first)</em> bifurcation correspondence from previous windows. You can rotate and zoom, and if you are on a device with right-click, you can also pan the 3D rendering.</p>
-                <p>There is a <strong>grid resolution</strong> slider that allows you to increase the resolution of the grid. Considering this is a 3D browser rendering, it is best to increase this slowly until at the desired resolution. There is also <strong>warmup iterations</strong>, which corresponds to the number of iterations performed prior to capturing the fractal (increases precision), and an <strong>orbit points</strong> slider. The higher the number of orbit points, the brighter and denser the fractal will appear to be.</p>
-                <p>The <strong>Show Plane</strong> checkbox colors points that visit the bifurcation axis so they can be clearly distinguished. The <strong>Show Orbits</strong> <em>(world's first)</em> checkbox allows you to drag a point that has a white circle around it along the plane orthogonal to the bifurcation diagram. It will show the orbits just like it did in 2D on the fractals tab, except here we can see how the orbit of each point changes its position over time in 3D.</p>
+                <p>There is the grid resolution slider which allows you to increase the resolution of the grid. Considering this is a 3D browser rendering, it is best to increase this slowly until at the desired resolution. There is also warmup iterations, which corresponds to the number of iterations performed prior to capturing the fractal (increases precision), and an orbit points slider. The higher the number of orbit points, the brighter and denser the fractal will appear to be.</p>
+                <p>The <strong>Show Bifurcation Diagram</strong> checkbox colors points that visit the bifurcation axis so they can be clearly distinguished. The <strong>Show Orbits</strong> <em>(world's first)</em> checkbox allows you to drag a point that has a white circle around it along the plane orthogonal to the bifurcation diagram. It will show the orbits just like it did in 2D on the fractals tab, except here we can see how the orbit of each point changes in 3D.</p>
 
                 <hr style="border: 0; border-top: 1px solid #333; margin: 30px 0;">
                 
-                <p><em>I created this app to explain Reality Fractal, the Theory of Everything that I developed over the past few years. There is a <strong>Read Theory</strong> dropdown that allows you to see the fundamentals of the theory and how it corresponds with everything Fractal Atlas shows.</em></p>
-                <p><em>This is a new frontier of exploration. Please share any interesting fractals you generate on <a href="https://discord.com/invite/tU3zKczFZS" style="color:var(--accent-color); text-decoration:none; font-weight:bold;">Reality Fractal's Discord (join in the main hub or open the link in a new tab)</a>! I am excited to see what you find!</em></p>
+                <p><em>I created this app to explain Reality Fractal, the Theory of Everything that I developed over the past few years. There is a "Read Theory" dropdown that allows you to see the fundamentals of the theory and how it corresponds with everything Fractal Atlas shows.</em></p>
+                <p><em>This is a new frontier of exploration. Please share any interesting fractals you generate on <a href="https://discord.gg/N6eWfRk4" target="_blank" style="color:var(--accent-color); text-decoration:none; font-weight:bold;">Reality Fractal's Discord</a>! I am excited to see what you find!</em></p>
                 <div style="height: 20px;"></div>
             </div>
         </div>
     </div>
+
 <script>
 /**
  * FRACTAL ATLAS - MASTER EDITION
@@ -1010,7 +1048,6 @@ class NebulaRenderer {
         }
         this.ctx.putImageData(this.imgData, 0, 0);
 
-        // Restored: Draw seed marker for Nebula tab
         if(!isRight && state.mode !== 2) {
             const sx = ((state.c.x - (cam.x - vw/2)) / vw) * w;
             const sy = h - ((state.c.y - (cam.y - vh/2)) / vh) * h;
@@ -1020,6 +1057,28 @@ class NebulaRenderer {
             this.ctx.lineWidth = 2; this.ctx.strokeStyle = 'black'; this.ctx.stroke();
         }
     }
+}
+
+function stampSignature(srcCanvas) {
+    const w = srcCanvas.width, h = srcCanvas.height;
+    const out = document.createElement('canvas');
+    out.width = w; out.height = h;
+    const ctx = out.getContext('2d');
+    ctx.drawImage(srcCanvas, 0, 0);
+    const size = Math.max(14, Math.round(h * 0.018));
+    ctx.font = `300 ${size}px 'Helvetica Neue', Helvetica, Arial, sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'bottom';
+    const text = 'Reality Fractal';
+    const pad = Math.round(size * 0.8);
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = '#000000';
+    ctx.fillText(text, w - pad + 2, h - pad + 2);
+    ctx.globalAlpha = 0.22;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(text, w - pad, h - pad);
+    ctx.globalAlpha = 1.0;
+    return out;
 }
 
 const app = {
@@ -1138,8 +1197,9 @@ const app = {
     loop: function() {
         if (this.state.autoZoom && (this.state.mode === 0 || this.state.mode === 2)) {
             const spd = parseFloat(document.getElementById('nb-zoom').value) * 0.005;
-            this.state.left.z *= (1 + spd);
-            this.state.right.z *= (1 + spd);
+            const zFactor = spd >= 0 ? (1 + spd) : 1 / (1 - spd);
+            this.state.left.z *= zFactor;
+            this.state.right.z *= zFactor;
             if (this.state.mode === 2) this.nebCtx[1].reset();
         }
 
@@ -1217,9 +1277,9 @@ const app = {
         app.updateTitles();
         
         document.getElementById('cpu-left').style.opacity = (m === 1 || m === 0) ? '1' : '0';
-        document.getElementById('cpu-left').style.pointerEvents = (m === 1) ? 'auto' : 'none';
+        document.getElementById('cpu-left').style.pointerEvents = (m === 1 || m === 0) ? 'auto' : 'none';
         document.getElementById('cpu-right').style.opacity = (m === 1 || m === 2 || m === 0) ? '1' : '0';
-        document.getElementById('cpu-right').style.pointerEvents = (m === 1 || m === 2) ? 'auto' : 'none';
+        document.getElementById('cpu-right').style.pointerEvents = (m === 1 || m === 2 || m === 0) ? 'auto' : 'none';
         
         ui.updateControlsVisibility();
         this.triggerReset();
@@ -1317,7 +1377,7 @@ const app = {
                     } else {
                         const a = document.createElement('a');
                         a.download = `${fName}.png`;
-                        a.href = ctx.cvs.toDataURL('image/png');
+                        a.href = stampSignature(ctx.cvs).toDataURL('image/png');
                         a.click();
                         
                         ctx.cvs.width = oldW; ctx.cvs.height = oldH;
@@ -1325,6 +1385,7 @@ const app = {
                         btn.innerText = "Download";
                         btn.disabled = false;
                         ui.toggleModal(false);
+                        ui.showSharePrompt();
                         this.triggerReset();
                     }
                 };
@@ -1335,7 +1396,7 @@ const app = {
                 let targetCvs = isRight ? this.nebCtx[1].cvs : this.nebCtx[0].cvs;
                 const a = document.createElement('a');
                 a.download = `${fName}.png`;
-                a.href = targetCvs.toDataURL('image/png');
+                a.href = stampSignature(targetCvs).toDataURL('image/png');
                 a.click();
             }
         } else {
@@ -1348,7 +1409,7 @@ const app = {
             
             const a = document.createElement('a');
             a.download = `${fName}.png`;
-            a.href = ctx.cvs.toDataURL('image/png');
+            a.href = stampSignature(ctx.cvs).toDataURL('image/png');
             a.click();
             
             ctx.cvs.width = ctx.cvs.clientWidth * (window.devicePixelRatio||1);
@@ -1361,6 +1422,13 @@ const app = {
 };
 
 const ui = {
+    toggleManual: () => {
+        const modal = document.getElementById('manual-modal');
+        if (modal) {
+            modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        }
+    },
+    
     buildControls: (prefix = '') => `
         <div class="ctrl-grid">
             <div class="control-group" style="grid-column: span 2; max-width: 400px;">
@@ -1453,8 +1521,8 @@ const ui = {
             <div class="control-group">
                 <label>Zoom Speed</label>
                 <div class="hybrid-input">
-                    <input type="range" id="${prefix}sl-zoom" min="0.1" max="5.0" step="0.1" value="1.0">
-                    <input type="number" id="${prefix}nb-zoom" value="1.0" step="0.1" style="width:60px;">
+                    <input type="range" id="${prefix}sl-zoom" min="-3" max="3" step="0.1" value="0">
+                    <input type="number" id="${prefix}nb-zoom" value="0" step="0.5" min="-10" max="10" style="width:60px;">
                 </div>
             </div>
 
@@ -1635,8 +1703,7 @@ const ui = {
             cont.addEventListener('wheel', e => {
                 e.preventDefault(); 
                 const cam = isR ? app.state.right : app.state.left;
-                const spd = parseFloat(document.getElementById('nb-zoom').value) * 0.1; 
-                if (e.deltaY < 0) cam.z *= (1+spd); else cam.z /= (1+spd); 
+                if (e.deltaY < 0) cam.z *= 1.1; else cam.z /= 1.1; 
                 if(app.state.mode !== 0) app.triggerReset();
             });
 
@@ -1667,18 +1734,60 @@ const ui = {
         const stopDrag = () => { app.state.drag = false; app.state.dragPoint = false; };
         window.addEventListener('mouseup', stopDrag);
         window.addEventListener('touchend', stopDrag);
+
+        // WASD navigation — single loop, outside forEach
+        const _wasdKeys = {};
+        document.addEventListener('keydown', e => {
+            const tag = document.activeElement && document.activeElement.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+            _wasdKeys[e.code] = true;
+        });
+        document.addEventListener('keyup', e => { _wasdKeys[e.code] = false; });
+        (function wasdLoop() {
+            requestAnimationFrame(wasdLoop);
+            const W = _wasdKeys['KeyW'], A = _wasdKeys['KeyA'], S = _wasdKeys['KeyS'], D = _wasdKeys['KeyD'];
+            if (!W && !A && !S && !D) return;
+            if (app.state.mode === 3) {
+                const dx = (D ? 1 : 0) - (A ? 1 : 0);
+                const dz = (W ? 1 : 0) - (S ? 1 : 0);
+                if (typeof bif !== 'undefined' && bif.pan) bif.pan(dx, dz);
+            } else {
+                const camKey = app.state.active === 'r' ? 'right' : 'left';
+                const cam = app.state[camKey] || app.state.left;
+                if (!cam) return;
+                const speed = 0.008 / cam.z;
+                if (W) cam.y += speed;
+                if (S) cam.y -= speed;
+                if (A) cam.x -= speed;
+                if (D) cam.x += speed;
+                if (app.state.mode !== 0) app.triggerReset();
+            }
+        })();
+
     },
     
     updateCoords: () => document.getElementById('c-coords').innerText = `C: ${app.state.c.x.toFixed(4)}, ${app.state.c.y.toFixed(4)}`,
     
     toggleSettings: () => document.getElementById('settings-menu').classList.toggle('open'),
-// ---> ADD THIS FUNCTION RIGHT HERE <---
-    toggleManual: () => {
-        const modal = document.getElementById('manual-modal');
-        if (modal) {
-            modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
-        }
+
+
+    shareTo: function(platform) {
+        const text = encodeURIComponent("Share your fractal — generated with Reality Fractal");
+        const url = encodeURIComponent("https://rferko333-commits.github.io/Reality-Fractal/");
+        const urls = {
+            twitter:  `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
+            bluesky:  `https://bsky.app/intent/compose?text=${text}%20${url}`,
+            facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`,
+            reddit:   `https://www.reddit.com/submit?url=${url}&title=${text}`
+        };
+        if (urls[platform]) window.open(urls[platform], '_blank');
+        document.getElementById('share-modal').style.display = 'none';
     },
+
+    showSharePrompt: function() {
+        document.getElementById('share-modal').style.display = 'flex';
+    },
+
     toggleModal: (show) => { 
         document.getElementById('save-modal').style.display = show ? 'flex' : 'none'; 
         if(show) ui.checkSaveMode();
@@ -1743,8 +1852,8 @@ const bif = (() => {
     let raycaster = new THREE.Raycaster();
     let floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
-    const CAM = { th: 0.5, ph: 1.1, r: 7.5, px: 0, py: 0 };
-    const TARGET = { x: -0.5, y: 0, z: 0 };
+    const CAM = { th: 0.5, ph: 1.0, r: 22, px: 0, py: 0 };
+    const TARGET = { x: -0.3, y: 0, z: 0 };
     
     let EQ = 0, CPOW = 2, PAL = 0, WARMUP = 100, ORBS = 50, GRID_RES = 0.5;
     let isJulia = false;
@@ -1989,29 +2098,33 @@ const bif = (() => {
     function updateDynamicOrbit() {
         if (!orbitLine || !app.state.showOrbit) return;
         
+        let cx = isJulia ? app.state.c.x : bifSeed.x;
+        let cy = isJulia ? app.state.c.y : bifSeed.y;
+
+        // Find attractor height for seed marker position only
+        let ax = 0, ay = 0;
+        for (let i = 0; i < 60; i++) {
+            step(ax, ay, cx, cy);
+            ax = NEXT_X; ay = NEXT_Y;
+            if (ax*ax + ay*ay > 100) { ax = 0; ay = 0; break; }
+        }
         const scale = Math.max(0.5, CAM.r * 0.15);
         seedMarker.scale.set(scale, scale, scale);
-        seedMarker.position.set(bifSeed.x, 0.01, bifSeed.y);
+        seedMarker.position.set(cx, 0.01, cy);
 
-        let ox = bifSeed.x;
-        let oz = bifSeed.y;
-        let cx = isJulia ? app.state.c.x : ox;
-        let cy = isJulia ? app.state.c.y : oz;
-        let z0x = isJulia ? ox : 0;
-        let z0y = isJulia ? oz : 0;
+        let z0x = isJulia ? bifSeed.x : 0;
+        let z0y = isJulia ? bifSeed.y : 0;
 
         const pos = orbitLine.geometry.attributes.position.array;
         let idx = 0;
         
-        // 3D Tornado Path: X = Real(z_n), Z = Imag(z_n), Y = Iteration
         for (let i = 0; i < 300; i++) {
-            pos[idx++] = z0x;
-            pos[idx++] = i * 0.015;
-            pos[idx++] = z0y;
-            
             step(z0x, z0y, cx, cy);
             z0x = NEXT_X; z0y = NEXT_Y;
             if (z0x*z0x + z0y*z0y > 1000) break;
+            pos[idx++] = z0x;  // X = Re(z)
+            pos[idx++] = z0x;  // Y = Re(z) — same value, lobe height visible from Re(c) axis
+            pos[idx++] = z0y;  // Z = Im(z)
         }
         
         orbitLine.geometry.setDrawRange(0, idx / 3);
@@ -2030,7 +2143,7 @@ const bif = (() => {
         if (cloudMesh) { scene.remove(cloudMesh); cloudMesh.geometry.dispose(); cloudMesh.material.dispose(); cloudMesh = null; }
         if (planeMesh) { scene.remove(planeMesh); planeMesh.geometry.dispose(); planeMesh.material.dispose(); planeMesh = null; }
 
-        const ptSz = Math.max(0.018, 0.036 * (CAM.r / 7.5));
+        const ptSz = 0.018;
 
         const vd = await buildVolumeAsync((pct) => {
             if (btn) btn.innerText = `BUILDING... ${pct}%`;
@@ -2051,7 +2164,8 @@ const bif = (() => {
     }
 
     function animate() { 
-        requestAnimationFrame(animate); 
+        requestAnimationFrame(animate);
+        applyCam();
         if (orbitGroup) orbitGroup.visible = !!app.state.showOrbit;
         if (seedMarker) seedMarker.visible = !!app.state.showOrbit;
         renderer.render(scene, camera); 
@@ -2069,20 +2183,44 @@ const bif = (() => {
     let isDraggingSeed = false;
 
     function bindInput() {
+        let pointerLocked = false;
+
+        // --- Pointer lock (FPS mode) ---
+        canvas.addEventListener('click', e => {
+            if (!pointerLocked) canvas.requestPointerLock();
+        });
+
+        document.addEventListener('pointerlockchange', () => {
+            pointerLocked = document.pointerLockElement === canvas;
+            const hint = document.getElementById('bif-hint');
+            if (hint) hint.textContent = pointerLocked
+                ? 'WASD to fly · Mouse to look · ESC to exit · Scroll to zoom'
+                : 'Click to enter fly mode · Drag to rotate · Right-drag to pan · Scroll to zoom';
+        });
+
+        // --- Mouse look (only while pointer locked) ---
+        document.addEventListener('mousemove', e => {
+            if (!pointerLocked) return;
+            CAM.th -= e.movementX * 0.003;
+            CAM.ph = Math.max(0.05, Math.min(Math.PI - 0.05, CAM.ph - e.movementY * 0.003));
+            applyCam();
+            if (app.state.showOrbit) updateDynamicOrbit();
+        });
+
+        // --- Mouse drag (only when NOT pointer locked) ---
         canvas.addEventListener('mousedown', e => {
-            drag.on = true; drag.lx = e.clientX; drag.ly = e.clientY; drag.btn = e.button; 
-            
+            if (pointerLocked) return;
+            drag.on = true; drag.lx = e.clientX; drag.ly = e.clientY; drag.btn = e.button;
+
             if (e.button === 0 && !e.shiftKey && app.state.showOrbit) {
                 const rect = canvas.getBoundingClientRect();
                 const mx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
                 const my = -((e.clientY - rect.top) / rect.height) * 2 + 1;
                 raycaster.setFromCamera({x: mx, y: my}, camera);
-                
                 const hit = new THREE.Vector3();
                 if (raycaster.ray.intersectPlane(floorPlane, hit)) {
                     const dist = Math.hypot(hit.x - bifSeed.x, hit.z - bifSeed.y);
-                    const grabRadius = Math.max(0.1, CAM.r * 0.08); 
-                    if (dist < grabRadius) {
+                    if (dist < Math.max(0.1, CAM.r * 0.08)) {
                         isDraggingSeed = true;
                         e.preventDefault();
                         return;
@@ -2091,12 +2229,12 @@ const bif = (() => {
             }
             e.preventDefault();
         });
-        
+
         canvas.addEventListener('contextmenu', e => e.preventDefault());
 
         window.addEventListener('mousemove', e => {
-            if (!drag.on) return;
-            
+            if (pointerLocked || !drag.on) return;
+
             if (isDraggingSeed) {
                 const rect = canvas.getBoundingClientRect();
                 const mx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
@@ -2104,13 +2242,8 @@ const bif = (() => {
                 raycaster.setFromCamera({x: mx, y: my}, camera);
                 const hit = new THREE.Vector3();
                 if (raycaster.ray.intersectPlane(floorPlane, hit)) {
-                    bifSeed.x = hit.x;
-                    bifSeed.y = hit.z;
-                    if (!isJulia) {
-                        app.state.c.x = hit.x;
-                        app.state.c.y = hit.z;
-                        ui.updateCoords();
-                    }
+                    bifSeed.x = hit.x; bifSeed.y = hit.z;
+                    if (!isJulia) { app.state.c.x = hit.x; app.state.c.y = hit.z; ui.updateCoords(); }
                     updateDynamicOrbit();
                 }
                 return;
@@ -2120,54 +2253,50 @@ const bif = (() => {
             drag.lx = e.clientX; drag.ly = e.clientY;
 
             if (e.shiftKey || drag.btn === 1 || drag.btn === 2) {
-                const fovFactor = 2 * Math.tan((50 * Math.PI) / 360);
-                const sp = (CAM.r * fovFactor) / canvas.clientHeight;
-                const rx = Math.cos(CAM.th), rz = -Math.sin(CAM.th);
-                TARGET.x -= rx * dx * sp;
-                TARGET.z -= rz * dx * sp;
+                const sp = (CAM.r * 2 * Math.tan((50 * Math.PI) / 360)) / canvas.clientHeight;
+                TARGET.x -= Math.cos(CAM.th) * dx * sp;
+                TARGET.z += Math.sin(CAM.th) * dx * sp;
                 TARGET.y += dy * sp;
             } else {
                 CAM.th -= dx * 0.007;
-                CAM.ph  = Math.max(0.01, Math.min(Math.PI - 0.01, CAM.ph - dy * 0.007));
+                CAM.ph = Math.max(0.01, Math.min(Math.PI - 0.01, CAM.ph - dy * 0.007));
             }
             applyCam();
-            if(app.state.showOrbit) updateDynamicOrbit(); 
+            if (app.state.showOrbit) updateDynamicOrbit();
         });
-        
+
         window.addEventListener('mouseup', () => { drag.on = false; isDraggingSeed = false; });
 
         canvas.addEventListener('wheel', e => {
             e.preventDefault();
-            const zoomSpd = parseFloat(document.getElementById('nb-zoom').value) * 0.1 || 0.1;
-            if (e.deltaY > 0) CAM.r *= (1 + zoomSpd);
-            else CAM.r /= (1 + zoomSpd);
-            CAM.r = Math.max(0.1, Math.min(200, CAM.r));
+            const zoomSpd = 0.1;
+            CAM.r = Math.max(0.1, Math.min(200, CAM.r * (e.deltaY > 0 ? 1 + zoomSpd : 1 / (1 + zoomSpd))));
             applyCam();
-            if(app.state.showOrbit) updateDynamicOrbit();
+            if (app.state.showOrbit) updateDynamicOrbit();
         }, { passive: false });
 
         let td = 0, tt = [];
         canvas.addEventListener('touchstart', e => {
             e.preventDefault();
             tt = Array.from(e.touches);
-            if (tt.length === 1 && !e.shiftKey && app.state.showOrbit) {
+            if (tt.length === 1 && app.state.showOrbit) {
                 const rect = canvas.getBoundingClientRect();
                 const mx = ((tt[0].clientX - rect.left) / rect.width) * 2 - 1;
                 const my = -((tt[0].clientY - rect.top) / rect.height) * 2 + 1;
                 raycaster.setFromCamera({x: mx, y: my}, camera);
                 const hit = new THREE.Vector3();
                 if (raycaster.ray.intersectPlane(floorPlane, hit)) {
-                    const dist = Math.hypot(hit.x - bifSeed.x, hit.z - bifSeed.y);
-                    const grabRadius = Math.max(0.1, CAM.r * 0.15); 
-                    if (dist < grabRadius) {
-                        isDraggingSeed = true;
-                        return;
+                    if (Math.hypot(hit.x - bifSeed.x, hit.z - bifSeed.y) < Math.max(0.1, CAM.r * 0.15)) {
+                        isDraggingSeed = true; return;
                     }
                 }
             }
+            drag.on = true;
+            drag.lx = tt[0] ? tt[0].clientX : 0;
+            drag.ly = tt[0] ? tt[0].clientY : 0;
             if (tt.length === 2) td = Math.hypot(tt[0].clientX - tt[1].clientX, tt[0].clientY - tt[1].clientY);
         }, { passive: false });
-        
+
         canvas.addEventListener('touchmove', e => {
             e.preventDefault();
             if (isDraggingSeed && e.touches.length === 1) {
@@ -2262,6 +2391,12 @@ const bif = (() => {
         });
         
         const wuN = document.getElementById('bif-wu-n');
+        const flyspeedSl = document.getElementById('bif-flyspeed');
+        const flyspeedN  = document.getElementById('bif-flyspeed-n');
+        if (flyspeedSl && flyspeedN) {
+            flyspeedSl.addEventListener('input', () => { flyspeedN.value = flyspeedSl.value; });
+            flyspeedN.addEventListener('input',  () => { flyspeedSl.value = flyspeedN.value; });
+        }
         const opN = document.getElementById('bif-op-n');
         const resN = document.getElementById('bif-res-n');
 
@@ -2289,8 +2424,8 @@ const bif = (() => {
         }
 
         if (reset) reset.addEventListener('click', () => {
-            CAM.th=0.5; CAM.ph=1.1; CAM.r=7.5; CAM.px=0; CAM.py=0;
-            TARGET.x=-0.5; TARGET.y=0; TARGET.z=0;
+            CAM.th=0.5; CAM.ph=1.0; CAM.r=22; CAM.px=0; CAM.py=0;
+            TARGET.x=-0.3; TARGET.y=0; TARGET.z=0;
             applyCam();
             if(app.state.showOrbit) updateDynamicOrbit();
         });
@@ -2365,10 +2500,26 @@ const bif = (() => {
         },
         
         getCanvas() { return canvas; },
+
+        pan(dx, dz) {
+            const cosT = Math.cos(CAM.th), sinT = Math.sin(CAM.th);
+            const flyEl = document.getElementById('bif-flyspeed');
+            const flySpd = flyEl ? parseFloat(flyEl.value) : 1.0;
+            const speed = CAM.r * 0.012 * flySpd;
+            // W/S = forward/back, A/D = strafe left/right (camera-relative)
+            TARGET.x -= (sinT * dz - cosT * dx) * speed;
+            TARGET.z -= (cosT * dz + sinT * dx) * speed;
+        },
+
+        getCamR() { return CAM.r; },
         
         exportImage(w, h, filename) {
             const oldW = canvas.clientWidth, oldH = canvas.clientHeight;
             
+            // Hide orbit markers for clean export
+            if (seedMarker) seedMarker.visible = false;
+            if (orbitGroup) orbitGroup.visible = false;
+
             renderer.setSize(w, h, false);
             camera.aspect = w / h;
             camera.updateProjectionMatrix();
@@ -2376,9 +2527,13 @@ const bif = (() => {
             
             const a = document.createElement('a');
             a.download = `${filename}.png`;
-            a.href = canvas.toDataURL('image/png');
+            a.href = stampSignature(canvas).toDataURL('image/png');
             a.click();
             
+            // Restore orbit markers
+            if (seedMarker) seedMarker.visible = !!app.state.showOrbit;
+            if (orbitGroup) orbitGroup.visible = !!app.state.showOrbit;
+
             renderer.setSize(oldW, oldH, false);
             camera.aspect = oldW / oldH;
             camera.updateProjectionMatrix();
