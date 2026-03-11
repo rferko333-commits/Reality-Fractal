@@ -370,7 +370,7 @@
 
     <!-- BIFURCATION 3D VIEW -->
     <div id="bifurcation-view">
-        <div id="bif-hint">Click to enter fly mode · Mouse to look · WASD to fly · ESC to exit · Scroll to zoom · Drag Seed to move orbits</div>
+        <div id="bif-hint">F — enter fly mode · WASD to fly · Mouse to look · ESC to exit · Drag to rotate · Scroll to zoom</div>
         <canvas id="bif-canvas"></canvas>
         <div id="bif-esc-hint" style="display:none; position:absolute; top:12px; left:12px; background:rgba(0,0,0,0.55); color:#fff; font-size:12px; font-family:monospace; padding:5px 10px; border-radius:4px; pointer-events:none; z-index:10; letter-spacing:1px;">ESC — exit fly mode</div>
         <div id="bif-toolbar">
@@ -1089,7 +1089,6 @@ const app = {
         saving: false,
         showOrbit: false,
         anti: false,
-        autoZoom: false,
         zHover: {x: 0, y: 0},
         c: {x: -0.76, y: 0.12},
         left: {x: -0.5, y: 0.0, z: 1.0},
@@ -1196,13 +1195,6 @@ const app = {
     },
 
     loop: function() {
-        if (this.state.autoZoom && (this.state.mode === 0 || this.state.mode === 2)) {
-            const spd = parseFloat(document.getElementById('nb-zoom').value) * 0.005;
-            const zFactor = spd >= 0 ? (1 + spd) : 1 / (1 - spd);
-            this.state.left.z *= zFactor;
-            this.state.right.z *= zFactor;
-            if (this.state.mode === 2) this.nebCtx[1].reset();
-        }
 
         if(!this.state.saving) {
             if(this.state.mode === 0) { 
@@ -1519,20 +1511,9 @@ const ui = {
                 </select>
             </div>
 
-            <div class="control-group">
-                <label>Zoom Speed</label>
-                <div class="hybrid-input">
-                    <input type="range" id="${prefix}sl-zoom" min="-3" max="3" step="0.1" value="0">
-                    <input type="number" id="${prefix}nb-zoom" value="0" step="0.5" min="-10" max="10" style="width:60px;">
-                </div>
-            </div>
-
             <div class="control-group" id="${prefix}grp-overlays">
-                <label>Overlays & Modes</label>
+                <label>Overlays</label>
                 <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; padding-top:4px;">
-                    <label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:white;font-size:11px;font-weight:bold;">
-                        <input type="checkbox" id="${prefix}cb-autozoom" style="accent-color:var(--accent-color);width:14px;height:14px;"> AUTO-ZOOM
-                    </label>
                     <label id="${prefix}lbl-orbit" style="display:flex;align-items:center;gap:4px;cursor:pointer;color:var(--success-color);font-size:11px;font-weight:bold;">
                         <input type="checkbox" id="${prefix}cb-orbit" style="accent-color:var(--success-color);width:14px;height:14px;"> ORBITS
                     </label>
@@ -1594,7 +1575,6 @@ const ui = {
         
         syncCb('cb-orbit', 'showOrbit');
         syncCb('cb-anti', 'anti');
-        syncCb('cb-autozoom', 'autoZoom');
 
         const listIds = ['sel-preset','inp-eq','sel-pal','sel-atlas-mode'];
         listIds.forEach(id => {
@@ -2186,9 +2166,12 @@ const bif = (() => {
     function bindInput() {
         let pointerLocked = false;
 
-        // --- Pointer lock (FPS mode) ---
-        canvas.addEventListener('click', e => {
-            if (!pointerLocked) canvas.requestPointerLock();
+        // --- F key toggles FPS mode ---
+        document.addEventListener('keydown', e => {
+            if (e.code === 'KeyF' && app.state.mode === 3) {
+                if (!pointerLocked) canvas.requestPointerLock();
+                else document.exitPointerLock();
+            }
         });
 
         document.addEventListener('pointerlockchange', () => {
@@ -2197,15 +2180,15 @@ const bif = (() => {
             const escHint = document.getElementById('bif-esc-hint');
             if (hint) hint.textContent = pointerLocked
                 ? 'WASD to fly · Mouse to look · ESC to exit · Scroll to zoom'
-                : 'Click to enter fly mode · Drag to rotate · Right-drag to pan · Scroll to zoom';
+                : 'F — enter fly mode · Drag to rotate · Right-drag to pan · Scroll to zoom';
             if (escHint) escHint.style.display = pointerLocked ? 'block' : 'none';
         });
 
-        // --- Mouse look (only while pointer locked) ---
+        // --- Mouse look (FPS style: right=look right, up=look up) ---
         document.addEventListener('mousemove', e => {
             if (!pointerLocked) return;
-            CAM.th -= e.movementX * 0.003;
-            CAM.ph = Math.max(0.05, Math.min(Math.PI - 0.05, CAM.ph - e.movementY * 0.003));
+            CAM.th += e.movementX * 0.003;   // right = +th
+            CAM.ph = Math.max(0.05, Math.min(Math.PI - 0.05, CAM.ph + e.movementY * 0.003)); // down = +ph
             applyCam();
             if (app.state.showOrbit) updateDynamicOrbit();
         });
@@ -2507,17 +2490,19 @@ const bif = (() => {
         pan(dRight, dForward) {
             const spdEl = document.getElementById('bif-movespeed');
             const spd = spdEl ? parseFloat(spdEl.value) : 1.0;
-            const speed = 0.06 * spd;
+            const baseSpeed = 0.05 * Math.max(0.01, Math.abs(spd)) * Math.sign(spd || 1);
 
-            // W/S: zoom in/out by shrinking/growing CAM.r
+            // W=forward (zoom in), S=back (zoom out)
             if (dForward !== 0) {
-                CAM.r = Math.max(0.1, Math.min(200, CAM.r * (1 - dForward * speed)));
+                CAM.r = Math.max(0.1, Math.min(200, CAM.r * (1 - dForward * baseSpeed)));
             }
 
-            // A/D: strafe left/right (camera-relative horizontal)
+            // A=strafe left, D=strafe right (perpendicular to look direction)
             if (dRight !== 0) {
-                TARGET.x += Math.cos(CAM.th) * dRight * speed * CAM.r;
-                TARGET.z -= Math.sin(CAM.th) * dRight * speed * CAM.r;
+                const strafeSpeed = baseSpeed * CAM.r;
+                // Right strafe vector: perpendicular to forward in XZ plane
+                TARGET.x -= Math.sin(CAM.th) * dRight * strafeSpeed;
+                TARGET.z += Math.cos(CAM.th) * dRight * strafeSpeed;
             }
         },
 
