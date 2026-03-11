@@ -446,7 +446,7 @@
                     </div>
                 </div>
                 <div class="control-group">
-                    <label>Move Speed</label>
+                    <label>Zoom Speed</label>
                     <div class="hybrid-input">
                         <input type="range" id="bif-movespeed" min="-3" max="3" step="0.1" value="1">
                         <input type="number" id="bif-movespeed-n" value="1" min="-3" max="3" step="0.1">
@@ -2507,21 +2507,18 @@ const bif = (() => {
         pan(dRight, dForward) {
             const spdEl = document.getElementById('bif-movespeed');
             const spd = spdEl ? parseFloat(spdEl.value) : 1.0;
-            const speed = 0.08 * Math.abs(spd) * Math.sign(spd);
+            const speed = 0.06 * spd;
 
-            // Camera forward direction (where user is looking)
-            const fwdX = Math.sin(CAM.ph) * Math.sin(CAM.th);
-            const fwdY = Math.cos(CAM.ph);
-            const fwdZ = Math.sin(CAM.ph) * Math.cos(CAM.th);
+            // W/S: zoom in/out by shrinking/growing CAM.r
+            if (dForward !== 0) {
+                CAM.r = Math.max(0.1, Math.min(200, CAM.r * (1 - dForward * speed)));
+            }
 
-            // Camera right = forward cross up(0,1,0)
-            const rgtX =  Math.cos(CAM.th);
-            const rgtZ = -Math.sin(CAM.th);
-
-            // Move target in the direction camera is pointing
-            TARGET.x -= fwdX * dForward * speed + rgtX * dRight * speed;
-            TARGET.y -= fwdY * dForward * speed;
-            TARGET.z -= fwdZ * dForward * speed + rgtZ * dRight * speed;
+            // A/D: strafe left/right (camera-relative horizontal)
+            if (dRight !== 0) {
+                TARGET.x += Math.cos(CAM.th) * dRight * speed * CAM.r;
+                TARGET.z -= Math.sin(CAM.th) * dRight * speed * CAM.r;
+            }
         },
 
         getCamR() { return CAM.r; },
