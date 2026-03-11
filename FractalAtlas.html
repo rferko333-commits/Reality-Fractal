@@ -372,6 +372,7 @@
     <div id="bifurcation-view">
         <div id="bif-hint">Click to enter fly mode · Mouse to look · WASD to fly · ESC to exit · Scroll to zoom · Drag Seed to move orbits</div>
         <canvas id="bif-canvas"></canvas>
+        <div id="bif-esc-hint" style="display:none; position:absolute; top:12px; left:12px; background:rgba(0,0,0,0.55); color:#fff; font-size:12px; font-family:monospace; padding:5px 10px; border-radius:4px; pointer-events:none; z-index:10; letter-spacing:1px;">ESC — exit fly mode</div>
         <div id="bif-toolbar">
             <div class="ctrl-grid">
                 <div class="control-group" style="grid-column:span 2;max-width:440px;">
@@ -445,10 +446,10 @@
                     </div>
                 </div>
                 <div class="control-group">
-                    <label>Fly Speed</label>
+                    <label>Move Speed</label>
                     <div class="hybrid-input">
-                        <input type="range" id="bif-flyspeed" min="0" max="1" step="0.05" value="0.3">
-                        <input type="number" id="bif-flyspeed-n" value="0.3" min="0" max="1" step="0.05">
+                        <input type="range" id="bif-movespeed" min="-3" max="3" step="0.1" value="1">
+                        <input type="number" id="bif-movespeed-n" value="1" min="-3" max="3" step="0.1">
                     </div>
                 </div>
                 <div class="control-group">
@@ -2193,9 +2194,11 @@ const bif = (() => {
         document.addEventListener('pointerlockchange', () => {
             pointerLocked = document.pointerLockElement === canvas;
             const hint = document.getElementById('bif-hint');
+            const escHint = document.getElementById('bif-esc-hint');
             if (hint) hint.textContent = pointerLocked
                 ? 'WASD to fly · Mouse to look · ESC to exit · Scroll to zoom'
                 : 'Click to enter fly mode · Drag to rotate · Right-drag to pan · Scroll to zoom';
+            if (escHint) escHint.style.display = pointerLocked ? 'block' : 'none';
         });
 
         // --- Mouse look (only while pointer locked) ---
@@ -2391,11 +2394,11 @@ const bif = (() => {
         });
         
         const wuN = document.getElementById('bif-wu-n');
-        const flyspeedSl = document.getElementById('bif-flyspeed');
-        const flyspeedN  = document.getElementById('bif-flyspeed-n');
-        if (flyspeedSl && flyspeedN) {
-            flyspeedSl.addEventListener('input', () => { flyspeedN.value = flyspeedSl.value; });
-            flyspeedN.addEventListener('input',  () => { flyspeedSl.value = flyspeedN.value; });
+        const movespeedSl = document.getElementById('bif-movespeed');
+        const movespeedN  = document.getElementById('bif-movespeed-n');
+        if (movespeedSl && movespeedN) {
+            movespeedSl.addEventListener('input', () => { movespeedN.value = movespeedSl.value; });
+            movespeedN.addEventListener('input',  () => { movespeedSl.value = movespeedN.value; });
         }
         const opN = document.getElementById('bif-op-n');
         const resN = document.getElementById('bif-res-n');
@@ -2501,14 +2504,24 @@ const bif = (() => {
         
         getCanvas() { return canvas; },
 
-        pan(dx, dz) {
-            const cosT = Math.cos(CAM.th), sinT = Math.sin(CAM.th);
-            const flyEl = document.getElementById('bif-flyspeed');
-            const flySpd = flyEl ? parseFloat(flyEl.value) : 1.0;
-            const speed = CAM.r * 0.012 * flySpd;
-            // W/S = forward/back, A/D = strafe left/right (camera-relative)
-            TARGET.x -= (sinT * dz - cosT * dx) * speed;
-            TARGET.z -= (cosT * dz + sinT * dx) * speed;
+        pan(dRight, dForward) {
+            const spdEl = document.getElementById('bif-movespeed');
+            const spd = spdEl ? parseFloat(spdEl.value) : 1.0;
+            const speed = 0.08 * Math.abs(spd) * Math.sign(spd);
+
+            // Camera forward direction (where user is looking)
+            const fwdX = Math.sin(CAM.ph) * Math.sin(CAM.th);
+            const fwdY = Math.cos(CAM.ph);
+            const fwdZ = Math.sin(CAM.ph) * Math.cos(CAM.th);
+
+            // Camera right = forward cross up(0,1,0)
+            const rgtX =  Math.cos(CAM.th);
+            const rgtZ = -Math.sin(CAM.th);
+
+            // Move target in the direction camera is pointing
+            TARGET.x -= fwdX * dForward * speed + rgtX * dRight * speed;
+            TARGET.y -= fwdY * dForward * speed;
+            TARGET.z -= fwdZ * dForward * speed + rgtZ * dRight * speed;
         },
 
         getCamR() { return CAM.r; },
