@@ -1,5 +1,3 @@
---- START OF FILE FractalAtlas.html ---
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -468,6 +466,7 @@
         <div class="settings-content">
             <h3 class="settings-title" style="color:white;margin-bottom:20px;">Settings</h3>
             <div id="mobile-controls-target"></div>
+            <div id="bif-settings-target" style="display:none"></div>
         </div>
     </div>
 
@@ -1091,9 +1090,10 @@ const app = {
         anti: false,
         zHover: {x: 0, y: 0},
         c: {x: -0.76, y: 0.12},
-        left: {x: -0.5, y: 0.0, z: 1.0},
-        right: {x: 0.0, y: 0.0, z: 1.0},
+        left: {x:-0.5, y:0, z:0.38},
+        right: {x:0, y:0, z:0.38},
         p: { eqMode: 0, customPow: 2, iter: 300, grid: 10, atlasMode: 0, pal: 0, den: 1.5, r: 200, g: 100, b: 50 },
+        autoZoom: false,
         drag: false, dragPoint: false, active: null, last: {x:0, y:0}
     },
     glCtx: [], nebCtx: [],
@@ -1250,12 +1250,38 @@ const app = {
         const maxZ = Math.max(this.state.left.z, this.state.right.z);
         document.getElementById('zoom-warning').style.display = (maxZ > 5000000 && this.state.mode !== 1) ? 'block' : 'none';
         
+        // Auto-zoom tick — runs every frame, no user interaction needed
+        if (this.state.autoZoom && (this.state.mode === 0 || this.state.mode === 2)) {
+            const spd = parseFloat(document.getElementById('nb-zoom') && document.getElementById('nb-zoom').value || 0) * 0.005;
+            if (spd !== 0) {
+                const zFactor = spd > 0 ? (1 + spd) : 1 / (1 - spd);
+                this.state.left.z *= zFactor;
+                this.state.right.z *= zFactor;
+                this.updateParams();
+                this.nebCtx[0].reset();
+                if (this.state.mode === 2) this.nebCtx[1].reset();
+            }
+        }
+
         requestAnimationFrame(()=>this.loop());
     },
     
     setMode: function(m) {
         this.state.mode = m;
         const isBif = (m === 3);
+        // Swap settings panel for bif tab
+        document.getElementById('mobile-controls-target').style.display = (m === 3) ? 'none' : '';
+        document.getElementById('bif-settings-target').style.display   = (m === 3) ? '' : 'none';
+
+        // Hide AUTO-ZOOM on nebulae tab (mode 1) only
+        ['cb-autozoom','menu-cb-autozoom'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.closest('label').style.display = (m === 1) ? 'none' : '';
+        });
+
+        // Atlas right window = Mandelbrot center (-0.5); Julia/Nebula right = origin (0)
+        if (m === 2) this.state.right.x = -0.5;
+        else if (m === 0 || m === 1) this.state.right.x = 0;
 
         document.getElementById('bifurcation-view').classList.toggle('active', isBif);
         document.getElementById('main-wrapper').style.display = isBif ? 'none' : '';
@@ -1301,8 +1327,8 @@ const app = {
     },
 
     resetPos: function() {
-        this.state.left = {x:-0.5, y:0, z:1};
-        this.state.right = {x:0, y:0, z:1};
+        this.state.left = {x:-0.5, y:0, z:0.38};
+        this.state.right = {x: this.state.mode === 2 ? -0.5 : 0, y:0, z:0.38};
         this.triggerReset();
     },
 
@@ -1511,9 +1537,20 @@ const ui = {
                 </select>
             </div>
 
+            <div class="control-group">
+                <label>Zoom Speed</label>
+                <div class="hybrid-input">
+                    <input type="range" id="${prefix}sl-zoom" min="-3" max="3" step="0.1" value="0">
+                    <input type="number" id="${prefix}nb-zoom" value="0" step="0.1" min="-3" max="3" style="width:60px;">
+                </div>
+            </div>
+
             <div class="control-group" id="${prefix}grp-overlays">
-                <label>Overlays</label>
+                <label>Overlays & Modes</label>
                 <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; padding-top:4px;">
+                    <label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:white;font-size:11px;font-weight:bold;">
+                        <input type="checkbox" id="${prefix}cb-autozoom" style="accent-color:var(--accent-color);width:14px;height:14px;"> AUTO-ZOOM
+                    </label>
                     <label id="${prefix}lbl-orbit" style="display:flex;align-items:center;gap:4px;cursor:pointer;color:var(--success-color);font-size:11px;font-weight:bold;">
                         <input type="checkbox" id="${prefix}cb-orbit" style="accent-color:var(--success-color);width:14px;height:14px;"> ORBITS
                     </label>
@@ -1573,6 +1610,7 @@ const ui = {
             if (c2) c2.addEventListener('change', e => updateAll(e.target.checked));
         }
         
+        syncCb('cb-autozoom', 'autoZoom');
         syncCb('cb-orbit', 'showOrbit');
         syncCb('cb-anti', 'anti');
 
@@ -1833,7 +1871,7 @@ const bif = (() => {
     let raycaster = new THREE.Raycaster();
     let floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
-    const CAM = { th: 0.5, ph: 1.0, r: 22, px: 0, py: 0 };
+    const CAM = { th: 0.5, ph: 1.0, r: 12, px: 0, py: 0 };
     const TARGET = { x: -0.3, y: 0, z: 0 };
     
     let EQ = 0, CPOW = 2, PAL = 0, WARMUP = 100, ORBS = 50, GRID_RES = 0.5;
@@ -2410,12 +2448,151 @@ const bif = (() => {
         }
 
         if (reset) reset.addEventListener('click', () => {
-            CAM.th=0.5; CAM.ph=1.0; CAM.r=22; CAM.px=0; CAM.py=0;
+            CAM.th=0.5; CAM.ph=1.0; CAM.r=12; CAM.px=0; CAM.py=0;
             TARGET.x=-0.3; TARGET.y=0; TARGET.z=0;
             applyCam();
             if(app.state.showOrbit) updateDynamicOrbit();
         });
         if (reb) reb.addEventListener('click', rebuild);
+
+        // Populate settings panel mirror for bif tab
+        const bifSettingsTarget = document.getElementById('bif-settings-target');
+        if (bifSettingsTarget) {
+            bifSettingsTarget.innerHTML = `
+<div class="ctrl-grid" style="display:flex;flex-direction:column;gap:15px;">
+  <div class="control-group" style="grid-column:span 2;">
+    <label>Equation</label>
+    <div style="display:flex;gap:5px;">
+      <select id="bmenu-preset" style="flex:1;">
+        <option value="z^2+c">Mandelbrot (z²)</option>
+        <option value="z^3+c">Cubic (z³)</option>
+        <option value="z^4+c">Quartic (z⁴)</option>
+        <option value="z^5+c">Quintic (z⁵)</option>
+        <option value="abs(z)^2+c">Burning Ship</option>
+        <option value="conj(z)^2+c">Tricorn</option>
+        <option value="sin(z)+c">Sine</option>
+        <option value="cos(z)+c">Cosine</option>
+      </select>
+      <input type="text" id="bmenu-eq" value="z^2+c" style="flex:1;">
+      <button class="action-btn btn-primary" id="bmenu-apply" style="width:auto;padding:8px 12px;">APPLY</button>
+    </div>
+  </div>
+  <div class="control-group">
+    <label>Type</label>
+    <select id="bmenu-type">
+      <option value="0">Mandelbrot (c varies)</option>
+      <option value="1">Julia (z₀ varies)</option>
+    </select>
+  </div>
+  <div class="control-group">
+    <label>Palette</label>
+    <select id="bmenu-pal">
+      <option value="0">Magma</option>
+      <option value="1">Viridis</option>
+      <option value="2">Ice</option>
+      <option value="3">Electric</option>
+      <option value="4">Neon Sunrise</option>
+      <option value="5">Midnight Deep</option>
+      <option value="6">Aurora</option>
+      <option value="7">Cyberpunk</option>
+      <option value="8">Nebula Rainbow</option>
+    </select>
+  </div>
+  <div class="control-group">
+    <label>Grid Resolution</label>
+    <div class="hybrid-input">
+      <input type="range" id="bmenu-res" min="0.2" max="3.0" step="0.1" value="0.5">
+      <input type="number" id="bmenu-res-n" value="0.5" min="0.2" max="3.0" step="0.1">
+    </div>
+  </div>
+  <div class="control-group">
+    <label>Warmup Iterations</label>
+    <div class="hybrid-input">
+      <input type="range" id="bmenu-wu" min="50" max="600" value="100">
+      <input type="number" id="bmenu-wu-n" value="100" min="50" max="600">
+    </div>
+  </div>
+  <div class="control-group">
+    <label>Orbit Points</label>
+    <div class="hybrid-input">
+      <input type="range" id="bmenu-op" min="20" max="150" value="50">
+      <input type="number" id="bmenu-op-n" value="50" min="20" max="150">
+    </div>
+  </div>
+  <div class="control-group">
+    <label>Overlays</label>
+    <div style="display:flex;align-items:center;gap:15px;padding-top:4px;">
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;color:#aaa;">
+        <input type="checkbox" id="bmenu-plane" checked style="accent-color:var(--accent-color);width:14px;height:14px;"> Show Bifurcation Diagram
+      </label>
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;color:var(--success-color);font-weight:bold;">
+        <input type="checkbox" id="bmenu-orbit" style="accent-color:var(--success-color);width:14px;height:14px;"> Show Orbits
+      </label>
+    </div>
+  </div>
+  <div class="control-group">
+    <label>Zoom Speed</label>
+    <div class="hybrid-input">
+      <input type="range" id="bmenu-movespeed" min="-3" max="3" step="0.1" value="1">
+      <input type="number" id="bmenu-movespeed-n" value="1" min="-3" max="3" step="0.1">
+    </div>
+  </div>
+  <div class="control-group">
+    <div style="display:flex;gap:8px;">
+      <button class="action-btn" id="bmenu-reset" style="flex:1;">RESET VIEW</button>
+      <button class="action-btn btn-primary" id="bmenu-rebuild" style="flex:1;">REBUILD</button>
+    </div>
+  </div>
+</div>
+`;
+
+            // Helper: sync pair of elements bidirectionally with a main element
+            const syncTo = (mainId, menuId, evt='input') => {
+                const main = document.getElementById(mainId);
+                const menu = document.getElementById(menuId);
+                if (!main || !menu) return;
+                // Init menu value from main
+                menu.value = main.value;
+                if (main.type === 'checkbox') menu.checked = main.checked;
+                // Menu -> main
+                menu.addEventListener(evt, () => {
+                    if (main.type === 'checkbox') { main.checked = menu.checked; main.dispatchEvent(new Event('change')); }
+                    else { main.value = menu.value; main.dispatchEvent(new Event('input')); }
+                });
+                // Main -> menu (keep in sync when toolbar changes)
+                main.addEventListener(evt, () => {
+                    if (main.type === 'checkbox') menu.checked = main.checked;
+                    else menu.value = main.value;
+                });
+            };
+
+            syncTo('bif-preset',     'bmenu-preset',     'change');
+            syncTo('bif-eq',         'bmenu-eq',         'input');
+            syncTo('bif-type',       'bmenu-type',       'change');
+            syncTo('bif-pal',        'bmenu-pal',        'change');
+            syncTo('bif-res',        'bmenu-res');
+            syncTo('bif-res-n',      'bmenu-res-n');
+            syncTo('bif-wu',         'bmenu-wu');
+            syncTo('bif-wu-n',       'bmenu-wu-n');
+            syncTo('bif-op',         'bmenu-op');
+            syncTo('bif-op-n',       'bmenu-op-n');
+            syncTo('bif-plane',      'bmenu-plane',      'change');
+            syncTo('bif-orbit',      'bmenu-orbit',      'change');
+            syncTo('bif-movespeed',  'bmenu-movespeed');
+            syncTo('bif-movespeed-n','bmenu-movespeed-n');
+
+            // Apply button in menu triggers main apply
+            const bmApply = document.getElementById('bmenu-apply');
+            if (bmApply) bmApply.addEventListener('click', () => {
+                document.getElementById('bif-eq').value = document.getElementById('bmenu-eq').value;
+                document.getElementById('bif-apply').click();
+            });
+            // Reset/Rebuild buttons
+            const bmReset = document.getElementById('bmenu-reset');
+            if (bmReset) bmReset.addEventListener('click', () => document.getElementById('bif-reset').click());
+            const bmRebuild = document.getElementById('bmenu-rebuild');
+            if (bmRebuild) bmRebuild.addEventListener('click', () => document.getElementById('bif-rebuild').click());
+        }
     }
 
     return {
