@@ -199,6 +199,7 @@
             font-weight: 600;
             color: var(--amber);
             letter-spacing: 0.03em;
+            font-family: var(--font-body);
         }
 
         /* =========================================
@@ -327,14 +328,7 @@
             margin-bottom: 12px;
         }
 
-        .cog-note {
-            font-size: 0.82rem;
-            color: var(--text-dim);
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid rgba(26,188,156,0.15);
-            line-height: 1.65;
-        }
+        /* cog-note styles defined below in updated block */
 
         .insight-card {
             background: var(--card-alt);
@@ -661,6 +655,47 @@
         .shadow-ticks { visibility: hidden; }
         .shadow-ticks.visible { visibility: visible; }
 
+
+        /* =========================================
+           FULL REPORT CAPTURE (hidden, used for PNG export)
+        ========================================= */
+        #full-report-capture {
+            position: fixed;
+            top: -99999px;
+            left: 0;
+            width: 1400px;
+            background: #0d0d0d;
+            display: flex;
+            gap: 0;
+            z-index: -1;
+        }
+        #full-report-capture.capturing {
+            top: -99999px;
+            z-index: 9999;
+        }
+        .report-col {
+            flex: 1;
+            padding: 40px 36px;
+            min-width: 0;
+        }
+        .report-col-divider {
+            width: 1px;
+            background: #2a2a2a;
+            flex-shrink: 0;
+            margin: 40px 0;
+        }
+        .report-col-title {
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
         .hidden { display: none; }
 
         @media (max-width: 600px) {
@@ -680,7 +715,7 @@
     <div id="setup-section">
 
         <div class="intro-block">
-            This assessment maps your developmental profile across multiple <em>lines of intelligence</em>: distinct capacities like emotional maturity, moral reasoning, and spiritual awareness that each grow at their own pace. The framework is drawn from <strong>Integral Theory</strong> (Ken Wilber / AQAL), which identifies altitude levels from egocentric (Red) through worldcentric (Orange/Green) to integral (Teal/Turquoise).<br><br>
+            <strong>What is this?</strong> This assessment maps your developmental profile across multiple <em>lines of intelligence</em>: distinct capacities like emotional maturity, moral reasoning, and spiritual awareness that each grow at their own pace. The framework is drawn from <strong>Integral Theory</strong> (Ken Wilber / AQAL), which identifies altitude levels from egocentric (Red) through worldcentric (Orange/Green) to integral (Teal/Turquoise).<br><br>
             Your results form a <strong>psychograph</strong>: a radar chart showing where each line sits on the developmental spectrum. Because lines grow independently, most people are advanced in some areas and trailing in others. There is no "good" or "bad" result; the map is useful precisely because it shows where growth energy is most alive.<br><br>
         </div>
 
@@ -721,8 +756,8 @@
                 <div class="cog-title">Center of Gravity</div>
                 <div class="cog-value" id="cogResult">Calculating...</div>
                 <div class="cog-description" id="cogDescription"></div>
-                <div class="cog-note" id="cogNote"></div>
             </div>
+            <div class="cog-note" id="cogNote" style="margin-bottom:24px;"></div>
 
             <div id="insightContainer"></div>
 
@@ -840,7 +875,10 @@
 
         <hr class="section-divider">
 
-        <button class="btn btn-download" onclick="downloadResults()">Download Results as PNG</button>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-download" style="flex:1; margin-top:0;" onclick="downloadSimple()">Simple Report</button>
+            <button class="btn" style="flex:1; margin-top:0; background:var(--teal); color:#fff;" onclick="downloadFull()">Full Report</button>
+        </div>
         <button class="btn btn-retake" onclick="location.reload()">Retake Assessment</button>
 
         <p class="footer-note">
@@ -849,6 +887,13 @@
         </p>
     </div>
 
+</div>
+
+<!-- FULL REPORT CAPTURE (hidden, assembled by JS for PNG export) -->
+<div id="full-report-capture">
+    <div class="report-col" id="fr-left"></div>
+    <div class="report-col-divider"></div>
+    <div class="report-col" id="fr-right"></div>
 </div>
 
 <script>
@@ -1532,23 +1577,23 @@ const DEVELOPMENT_RECS = {
         "Practice staying present with someone whose emotional state you typically find overwhelming. Notice the impulse to fix, dismiss, or merge, and simply remain."
     ],
     "Moral": [
-        "Read moral philosophy from at least two competing traditions (e.g., Kantian deontology and Confucian virtue ethics). Notice where your instincts align and where they resist.",
+        "Take one ethical position you hold firmly and spend a week genuinely trying to find its flaws. Write down the most compelling counterargument you can construct.",
         "Identify a recent decision where your ethical reasoning and your emotional response pointed in opposite directions. Sit with the tension rather than resolving it quickly.",
         "Seek out moral feedback from someone whose ethical worldview you initially dismiss. Try to receive it without defending your position."
     ],
     "Interpersonal": [
         "Practice asking for and receiving feedback without explaining, justifying, or minimizing the other person's experience. Just listen and say thank you.",
         "Map your relational patterns: identify one person you systematically avoid emotional depth with and one you tend to merge with. Practice moving toward the first and staying distinct from the second.",
-        "Study Nonviolent Communication (Rosenberg) or Circling practice. Both are precision tools for deepening relational presence."
+        "Join a group practice that demands sustained relational presence: a men's or women's group, a therapy group, or a structured Circling practice. Theoretical knowledge of relational dynamics does not substitute for live contact."
     ],
     "Values": [
         "Map your stated values against how you actually spend your time and money over one week. Note the gaps without judgment, then ask what they reveal.",
-        "Read one serious thinker from a values tradition you find repellent (e.g., a serious traditionalist if you are pluralistic; a serious pragmatist if you are idealistic). Find the genuine insight they hold.",
+        "Have a genuine conversation with someone whose value system you find difficult to respect. Set a goal of identifying two things they understand that you do not. Resist the urge to educate them.",
         "Ask yourself: which of my current values are inherited and which have I consciously chosen? Distinguish them and examine each."
     ],
     "Self-Identity": [
         "Practice writing in the third person about yourself, as if you were a character in a novel. Note what becomes visible that first-person narration hides.",
-        "Study ego development research (Cook-Greuter, Kegan). Understanding the map can accelerate the territory, not by giving you an identity to perform, but by showing you the water you swim in.",
+        "Ask three people who know you well to describe a pattern in you that you are blind to. Sit with their answers for a week before responding or explaining.",
         "Identify one sub-personality you disavow (the critic, the pleaser, the rebel) and engage it in written dialogue. Ask it what it is protecting."
     ],
     "Kinesthetic": [
@@ -1558,8 +1603,8 @@ const DEVELOPMENT_RECS = {
     ],
     "Spiritual": [
         "Establish a daily contemplative practice of at least 10 minutes: not relaxation, but deliberate inquiry. Suitable entry points: breath awareness, open-focus meditation, or self-inquiry ('What is aware right now?').",
-        "Read across traditions: a Sufi text, a Zen collection, a Vedantic commentary, and a serious contemporary neuroscience perspective on consciousness. Notice where they converge.",
-        "Find and work with a teacher in a living transmission lineage, not just books. Maps are useful; territory requires direct guidance."
+        "Sit with one unanswerable question for 30 days without resolving it. Let it live in you rather than researching it. Notice what changes in how the question feels.",
+        "Find and work with a teacher in a living transmission lineage. Maps are useful; territory requires direct guidance."
     ],
     "Aesthetic": [
         "Spend 20 minutes per week with a single work of art (one painting, one piece of music, one poem) in sustained attention. Let the experience change across sessions.",
@@ -1568,7 +1613,7 @@ const DEVELOPMENT_RECS = {
     ],
     "Psychosexual": [
         "Bring honest curiosity to the parts of your sexuality that carry shame or confusion. Journaling in private, without reaching for a resolution, can begin to metabolize material that avoidance keeps frozen.",
-        "Study one serious text on relational depth or polarity (David Deida, John Welwood, or Marion Woodman depending on your orientation) and notice where it activates resistance in you.",
+        "Bring a specific charged relational dynamic into a therapeutic or coaching relationship rather than processing it alone. The material shows up differently in live relational contact than in private reflection.",
         "Practice disclosing one layer deeper than you normally would in an intimate relationship, then notice the somatic response: contraction, expansion, or numbness."
     ],
     "Needs": [
@@ -1582,7 +1627,7 @@ const DEVELOPMENT_RECS = {
         "Study your metaphors: keep a small log of the recurring metaphors you use about work, relationships, and self. The metaphors you live inside shape the reality you can perceive."
     ],
     "Ego Development": [
-        "Read Robert Kegan's 'In Over Our Heads' or Susanne Cook-Greuter's work on ego development stages. The act of seeing your current structure from the outside begins to loosen its grip.",
+        "Identify the single most defended assumption you hold about who you are and what you are capable of. Spend two weeks acting as if that assumption were false and recording what you notice.",
         "Identify one belief you currently hold as simply 'obvious' or 'how things are' and subject it to serious inquiry: Where did it come from? What would the world look like if it were false?",
         "Find a trusted peer or coach who will give you honest developmental feedback: not therapeutic support, but genuine perspective on where you may be operating from an earlier center of gravity than you believe."
     ]
@@ -1866,7 +1911,7 @@ function showResults() {
     cogBox.style.background   = `rgba(${cogColor.rgb}, 0.10)`;
     cogBox.style.borderColor  = `rgba(${cogColor.rgb}, 0.35)`;
     cogTitle.style.color      = cogColor.hex;
-    cogNote.style.borderTopColor = `rgba(${cogColor.rgb}, 0.20)`;
+    // cogNote is now outside the box; no border override needed
 
     // ---- INSIGHTS ----
     const insightContainer = document.getElementById('insightContainer');
@@ -2110,7 +2155,7 @@ function sendDataToBackend(rawResults, computedAverages) {
 // ==========================================
 // DOWNLOAD
 // ==========================================
-function downloadResults() {
+function downloadSimple() {
     const filename = prompt("Enter a name for your file:", "My_Integral_Profile");
     if (!filename) return;
     window.scrollTo(0, 0);
@@ -2122,6 +2167,86 @@ function downloadResults() {
         link.href     = canvas.toDataURL("image/png");
         link.click();
     });
+}
+
+function downloadFull() {
+    const filename = prompt("Enter a name for your file:", "My_Integral_Profile_Full");
+    if (!filename) return;
+
+    // --- Build left column: clone of results-capture ---
+    const frLeft  = document.getElementById('fr-left');
+    const frRight = document.getElementById('fr-right');
+
+    frLeft.innerHTML  = '';
+    frRight.innerHTML = '';
+
+    // Left: title + results capture clone
+    const leftTitle = document.createElement('div');
+    leftTitle.className = 'report-col-title';
+    leftTitle.textContent = 'Your Integral Psychograph';
+    frLeft.appendChild(leftTitle);
+
+    const captureClone = document.getElementById('results-capture').cloneNode(true);
+    // Remove chart canvas (can't clone canvas content) - redraw via image
+    frLeft.appendChild(captureClone);
+
+    // Right: interpretations + recommendations
+    const rightTitle = document.createElement('div');
+    rightTitle.className = 'report-col-title';
+    rightTitle.textContent = 'Personalized Insights & Growth Practices';
+    frRight.appendChild(rightTitle);
+
+    const interpClone = document.getElementById('interpContainer').cloneNode(true);
+    const interpHead  = document.createElement('div');
+    interpHead.style.cssText = 'font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:#666;font-weight:600;margin-bottom:12px;';
+    interpHead.textContent   = 'What Your Scores Mean';
+    frRight.appendChild(interpHead);
+    frRight.appendChild(interpClone);
+
+    const recsHead = document.createElement('div');
+    recsHead.style.cssText = 'font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:#666;font-weight:600;margin:24px 0 12px;';
+    recsHead.textContent   = 'Growth Edge Practices';
+    frRight.appendChild(recsHead);
+
+    const recsClone = document.getElementById('recsContainer').cloneNode(true);
+    frRight.appendChild(recsClone);
+
+    // Capture the radar chart as image and inject into left clone
+    // (canvas doesn't clone - use toDataURL from the live chart)
+    const liveCanvas = document.getElementById('radarChart');
+    const chartImg   = new Image();
+    chartImg.src     = liveCanvas.toDataURL('image/png');
+    chartImg.style.cssText = 'width:100%;border-radius:8px;margin:16px 0;';
+
+    // Replace the canvas placeholder in clone with img
+    const canvasInClone = captureClone.querySelector('canvas');
+    if (canvasInClone) {
+        canvasInClone.parentNode.replaceChild(chartImg, canvasInClone);
+    }
+
+    // Show and capture
+    const fr = document.getElementById('full-report-capture');
+    fr.style.top = '-99999px';
+    fr.style.position = 'fixed';
+
+    setTimeout(() => {
+        html2canvas(fr, {
+            backgroundColor: '#0d0d0d',
+            scale: 2,
+            useCORS: true,
+            width: 1400,
+            windowWidth: 1400
+        }).then(canvas => {
+            const link    = document.createElement('a');
+            link.download = filename + '.png';
+            link.href     = canvas.toDataURL('image/png');
+            link.click();
+
+            // Clean up
+            frLeft.innerHTML  = '';
+            frRight.innerHTML = '';
+        });
+    }, 120); // small delay for image load
 }
 </script>
 </body>
