@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
     <style>
         /* =========================================
-           DESIGN TOKENS
+           DESIGN TOKENS (Updated for Premium Aesthetic)
         ========================================= */
         :root {
             --accent:      #9966cc;
@@ -17,24 +17,26 @@
             --accent-rgb:  153,102,204;
 
             --success:     #3d9970;
-            --danger:      #c0392b;
-            --warning:     #c07c00;
+            --danger:      #e74c3c;
+            --warning:     #c8961a;
 
-            --bg:          #0d0d0d;
-            --card:        #161616;
-            --card-alt:    #1c1c1c;
-            --border:      #2a2a2a;
-            --border-mid:  #333333;
+            /* Matched to Hub's Ethereal Dark Mode */
+            --bg:          #060608; 
+            --card:        rgba(20, 20, 28, 0.65);
+            --card-alt:    rgba(14, 14, 22, 0.6);
+            --border:      rgba(85, 85, 112, 0.25);
+            --border-mid:  rgba(85, 85, 112, 0.4);
+            
             --text:        #e8e4dc;
             --text-dim:    #9a9690;
-            --text-muted:  #666260;
+            --text-muted:  #7a7670; /* Slightly lighter for readability */
 
             --font-display: 'Cinzel', Georgia, serif;
             --font-body:    'Raleway', sans-serif;
             --font-mono:    'Courier New', Courier, monospace;
             --radius:       10px;
-            --radius-sm:    6px;
-            --transition:   0.2s ease;
+            --radius-sm:    8px;
+            --transition:   0.3s ease; /* Smoother transitions */
         }
 
         *, *::before, *::after { box-sizing: border-box; }
@@ -47,7 +49,8 @@
             padding: 30px 20px 60px;
             line-height: 1.65;
             min-height: 100vh;
-            background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(var(--accent-rgb),0.07) 0%, transparent 70%);
+            /* Brightened the purple glow to match the other tools */
+            background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(var(--accent-rgb),0.20) 0%, transparent 70%);
         }
 
         .container {
@@ -101,10 +104,12 @@
         }
 
         /* =========================================
-           PANELS
+           PANELS (Glassmorphism Applied)
         ========================================= */
         .panel {
             background: var(--card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             padding: 30px 32px;
             border-radius: 14px;
             margin-bottom: 16px;
@@ -113,8 +118,8 @@
         }
 
         .panel-primary {
-            border-color: rgba(var(--accent-rgb), 0.3);
-            box-shadow: 0 0 0 1px rgba(var(--accent-rgb),0.08), 0 10px 40px rgba(0,0,0,0.4);
+            border-color: rgba(var(--accent-rgb), 0.35);
+            box-shadow: 0 0 25px rgba(var(--accent-rgb), 0.08), inset 0 0 15px rgba(var(--accent-rgb), 0.03), 0 10px 40px rgba(0,0,0,0.4);
         }
 
         /* =========================================
@@ -146,23 +151,7 @@
         }
 
         input[type=text],
-        input[type=number] {
-            padding: 8px 12px;
-            border-radius: var(--radius-sm);
-            background: var(--card-alt);
-            color: var(--text);
-            border: 1px solid var(--border-mid);
-            font-family: var(--font-body);
-            font-size: 0.9rem;
-            outline: none;
-            transition: border-color var(--transition);
-        }
-
-        input[type=text]:focus,
-        input[type=number]:focus {
-            border-color: rgba(var(--accent-rgb), 0.5);
-        }
-
+        input[type=number],
         select {
             padding: 9px 12px;
             border-radius: var(--radius-sm);
@@ -172,16 +161,25 @@
             font-family: var(--font-body);
             font-size: 0.88rem;
             outline: none;
+            transition: all var(--transition);
+        }
+
+        select {
             cursor: pointer;
             width: 100%;
             max-width: 320px;
-            transition: border-color var(--transition);
         }
 
-        select:focus { border-color: rgba(var(--accent-rgb), 0.5); }
+        input[type=text]:focus,
+        input[type=number]:focus,
+        select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.25);
+            background: rgba(14, 14, 22, 0.8);
+        }
 
         /* =========================================
-           BUTTONS
+           SLEEPING NEON BUTTONS 
         ========================================= */
         button {
             font-family: var(--font-body);
@@ -189,87 +187,108 @@
             font-weight: 600;
             letter-spacing: 0.06em;
             padding: 10px 18px;
-            border: none;
             border-radius: var(--radius-sm);
             cursor: pointer;
-            transition: var(--transition);
+            background: transparent;
+            transition: all var(--transition);
+            border: 1px solid transparent;
         }
 
         button:disabled {
             opacity: 0.35;
             cursor: not-allowed;
+            box-shadow: none !important;
+            border-color: var(--border-mid) !important;
+            color: var(--text-muted) !important;
+            background: transparent !important;
         }
 
-        /* Primary (accent purple) */
+        /* Primary (Purple Theme Glow) */
         .btn-accent {
-            background: var(--accent);
-            color: #fff;
+            border-color: rgba(var(--accent-rgb), 0.4);
+            color: var(--accent);
+            box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.15), inset 0 0 5px rgba(var(--accent-rgb), 0.1);
         }
-        .btn-accent:hover:not(:disabled) { background: var(--accent-dim); }
+        .btn-accent:hover:not(:disabled) { 
+            background: rgba(var(--accent-rgb), 0.15);
+            color: #fff;
+            box-shadow: 0 0 18px rgba(var(--accent-rgb), 0.5), inset 0 0 10px rgba(var(--accent-rgb), 0.2);
+        }
 
-        /* Record */
+        /* Record (Red Glow) */
         .btn-record {
-            background: var(--danger);
-            color: #fff;
+            border-color: rgba(231, 76, 60, 0.4);
+            color: var(--danger);
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.15), inset 0 0 5px rgba(231, 76, 60, 0.1);
         }
-        .btn-record:hover:not(:disabled) { filter: brightness(1.15); }
+        .btn-record:hover:not(:disabled) { 
+            background: rgba(231, 76, 60, 0.12);
+            color: #ff7968;
+            box-shadow: 0 0 18px rgba(231, 76, 60, 0.5), inset 0 0 10px rgba(231, 76, 60, 0.2);
+        }
 
-        /* Test */
+        /* Test (Amber Glow) */
         .btn-test {
-            background: rgba(192,124,0,0.18);
-            color: #c8961a;
-            border: 1px solid rgba(192,124,0,0.3);
+            border-color: rgba(200, 150, 26, 0.4);
+            color: var(--warning);
+            box-shadow: 0 0 10px rgba(200, 150, 26, 0.15), inset 0 0 5px rgba(200, 150, 26, 0.1);
         }
-        .btn-test:hover { background: rgba(192,124,0,0.28); }
+        .btn-test:hover:not(:disabled) { 
+            background: rgba(200, 150, 26, 0.12);
+            color: #e6b741;
+            box-shadow: 0 0 18px rgba(200, 150, 26, 0.5), inset 0 0 10px rgba(200, 150, 26, 0.2);
+        }
 
-        /* Stop / neutral */
-        .btn-stop {
-            background: var(--card-alt);
+        /* Play / Success (Green Glow) */
+        .btn-play, .btn-success {
+            border-color: rgba(61, 153, 112, 0.4);
+            color: var(--success);
+            box-shadow: 0 0 10px rgba(61, 153, 112, 0.15), inset 0 0 5px rgba(61, 153, 112, 0.1);
+        }
+        .btn-play:hover:not(:disabled), .btn-success:hover:not(:disabled) { 
+            background: rgba(61, 153, 112, 0.12);
+            color: #5cf2b0;
+            box-shadow: 0 0 18px rgba(61, 153, 112, 0.5), inset 0 0 10px rgba(61, 153, 112, 0.2);
+        }
+
+        /* Stop / Neutral / Small Utilities */
+        .btn-stop, .btn-sm {
+            border-color: var(--border-mid);
             color: var(--text-dim);
-            border: 1px solid var(--border-mid);
+            background: rgba(255, 255, 255, 0.02);
         }
-        .btn-stop:hover { border-color: var(--text-dim); color: var(--text); }
-
-        /* Play (success green) */
-        .btn-play {
-            background: rgba(61,153,112,0.18);
-            color: #3d9970;
-            border: 1px solid rgba(61,153,112,0.3);
+        .btn-stop:hover:not(:disabled), .btn-sm:hover:not(:disabled) { 
+            border-color: var(--text); 
+            color: var(--text); 
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
         }
-        .btn-play:hover { background: rgba(61,153,112,0.28); }
 
-        /* Small utility */
         .btn-sm {
             font-size: 0.75rem;
             padding: 7px 12px;
-            background: var(--card-alt);
-            color: var(--text-dim);
-            border: 1px solid var(--border-mid);
         }
-        .btn-sm:hover { border-color: var(--text-dim); color: var(--text); }
 
-        /* Success (render) */
-        .btn-success {
-            background: var(--success);
-            color: #fff;
-        }
-        .btn-success:hover:not(:disabled) { filter: brightness(1.1); }
-
-        /* Danger text */
+        /* Danger text utility */
         .btn-danger-text {
             background: transparent;
-            color: var(--danger);
+            color: var(--text-muted);
             padding: 4px 8px;
             font-size: 0.8rem;
         }
+        .btn-danger-text:hover {
+            color: var(--danger);
+            text-shadow: 0 0 8px rgba(231, 76, 60, 0.5);
+        }
 
         /* =========================================
-           METER
+           METER (Now Purple Themed)
         ========================================= */
         .meter-container {
             width: 100%;
             height: 4px;
-            background: var(--border);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
             border-radius: 999px;
             overflow: hidden;
             margin-top: 10px;
@@ -278,13 +297,15 @@
         .meter-fill {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, var(--success), #7fc);
+            /* Purple to light pink gradient */
+            background: linear-gradient(90deg, var(--accent), #d288ff);
             transition: width 0.05s;
             border-radius: 999px;
+            box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.5);
         }
 
         /* =========================================
-           CLIP LIST
+           CLIP LIST & MODULES
         ========================================= */
         .clip-list { list-style: none; padding: 0; margin: 0; }
 
@@ -298,23 +319,24 @@
             gap: 10px;
             border: 1px solid var(--border);
             flex-wrap: wrap;
-            transition: border-color var(--transition);
+            transition: all var(--transition);
         }
 
         .clip-item.playing {
-            border-color: rgba(61,153,112,0.5);
-            box-shadow: 0 0 0 1px rgba(61,153,112,0.15);
+            border-color: rgba(61,153,112,0.6);
+            box-shadow: 0 0 15px rgba(61,153,112,0.15), inset 0 0 5px rgba(61,153,112,0.1);
         }
 
         .clip-name {
             flex-grow: 1;
-            background: transparent;
-            border: none;
-            color: var(--text);
+            background: transparent !important;
+            border: none !important;
+            color: var(--text) !important;
             font-family: var(--font-body);
             font-size: 0.9rem;
             min-width: 150px;
             outline: none;
+            box-shadow: none !important;
         }
 
         /* =========================================
@@ -327,11 +349,17 @@
             font-size: 0.78rem;
             font-weight: 600;
             color: var(--text-dim);
-            background: var(--border);
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
             padding: 5px 10px;
             border-radius: var(--radius-sm);
             cursor: pointer;
             letter-spacing: 0.06em;
+            transition: var(--transition);
+        }
+        .checkbox-wrapper:hover {
+            border-color: var(--border-mid);
+            color: var(--text);
         }
 
         .checkbox-wrapper input { accent-color: var(--accent); cursor: pointer; }
@@ -358,14 +386,16 @@
             border-bottom: 1px solid var(--border);
             font-size: 0.88rem;
             color: var(--text-dim);
+            transition: all var(--transition);
         }
 
         .seq-item:last-child { border-bottom: none; }
 
         .seq-active {
-            background: rgba(var(--accent-rgb), 0.08);
+            background: rgba(var(--accent-rgb), 0.12);
             border-left: 3px solid var(--accent);
             color: var(--text);
+            box-shadow: inset 10px 0 20px rgba(var(--accent-rgb), 0.1);
         }
 
         .seq-controls {
@@ -385,6 +415,7 @@
             color: var(--success);
             min-height: 1.4em;
             margin-top: 8px;
+            text-shadow: 0 0 8px rgba(61,153,112,0.4);
         }
 
         /* =========================================
@@ -420,6 +451,11 @@
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
             padding: 18px 16px;
+            transition: all var(--transition);
+        }
+        .guide-card:hover {
+            border-color: rgba(var(--accent-rgb), 0.3);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 0 15px rgba(var(--accent-rgb), 0.05);
         }
 
         .guide-card-title {
@@ -430,24 +466,12 @@
             color: var(--accent);
             font-weight: 600;
             margin-bottom: 14px;
+            text-shadow: 0 0 8px rgba(var(--accent-rgb), 0.3);
         }
 
-        .guide-entry {
-            margin-bottom: 10px;
-        }
-
-        .guide-entry-head {
-            font-size: 0.82rem;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 2px;
-        }
-
-        .guide-entry-body {
-            font-size: 0.77rem;
-            color: var(--text-muted);
-            line-height: 1.55;
-        }
+        .guide-entry { margin-bottom: 10px; }
+        .guide-entry-head { font-size: 0.82rem; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+        .guide-entry-body { font-size: 0.77rem; color: var(--text-muted); line-height: 1.55; }
 
         /* =========================================
            MASTER / RENDER GRID
@@ -491,6 +515,7 @@
             font-size: 0.88rem;
             color: var(--danger);
             opacity: 0;
+            text-shadow: 0 0 8px rgba(231, 76, 60, 0.4);
         }
 
         .render-status {
@@ -498,6 +523,7 @@
             color: var(--accent);
             margin-top: 6px;
             min-height: 1.2em;
+            text-shadow: 0 0 8px rgba(var(--accent-rgb), 0.4);
         }
 
         .device-row {
@@ -511,9 +537,6 @@
             margin-bottom: 14px;
             flex-wrap: wrap;
         }
-
-        .blink { animation: blinker 1s linear infinite; }
-        @keyframes blinker { 50% { opacity: 0; } }
 
         @media (max-width: 640px) {
             .panel { padding: 22px 18px; }
@@ -622,12 +645,12 @@
             <input type="number" id="seqTarget" value="4" style="width:58px;" min="0" max="55">
             <span class="ctrl-label" style="width:auto; font-size:0.78rem; font-weight:600; letter-spacing:0.06em; color:var(--text-dim); margin-left:8px;">Mins</span>
             <input type="number" id="seqMins" value="10" style="width:58px;" min="1">
-            <button onclick="addSequenceStep()" style="margin-left:auto; background:var(--accent); color:#fff; font-size:0.78rem; padding:8px 14px;">+ Add Stage</button>
+            <button onclick="addSequenceStep()" class="btn-accent" style="margin-left:auto; font-size:0.78rem; padding:8px 14px;">+ Add Stage</button>
         </div>
 
         <ul id="sequenceList" class="seq-list" style="display:none;"></ul>
         <div id="seqStatus" class="seq-status"></div>
-        <button id="btnStartSeq" onclick="toggleSequence()" style="width:100%; margin-top:10px; background:var(--accent); color:#fff; display:none;">&#9654; Preview Sequence (Live)</button>
+        <button id="btnStartSeq" onclick="toggleSequence()" class="btn-accent" style="width:100%; margin-top:10px; display:none;">&#9654; Preview Sequence (Live)</button>
     </div>
 
     <!-- 3. ATMOSPHERE -->
@@ -672,7 +695,7 @@
 
         <div class="master-grid">
             <div>
-                <button id="btnEnvToggle" onclick="toggleEnvironment()" style="width:100%; padding:16px; background:var(--accent); color:#fff;">&#9654; Preview Mix</button>
+                <button id="btnEnvToggle" onclick="toggleEnvironment()" class="btn-accent" style="width:100%; padding:16px;">&#9654; Preview Mix</button>
                 <p style="font-size:0.78rem; color:var(--text-muted); margin-top:8px;">Check levels before rendering</p>
             </div>
             <div>
@@ -687,7 +710,7 @@
                     </div>
                 </div>
 
-                <div class="checkbox-wrapper" style="margin-bottom:12px; background:transparent; border:1px solid var(--border); padding:8px 12px; border-radius:var(--radius-sm);">
+                <div class="checkbox-wrapper" style="margin-bottom:12px; padding:8px 12px;">
                     <input type="checkbox" id="lowQuality">
                     <label for="lowQuality" style="font-size:0.82rem; color:var(--text-dim);">Lower Quality (smaller file)</label>
                 </div>
@@ -817,14 +840,14 @@
     let isEnvPlaying = false; 
 
     // Recorder Vars
-    let mediaRecorder, micChunks = [];
+    let mediaRecorder, micChunks =[];
     let isRecordingMic = false, isTestMicOn = false;
     let testMicNode, testMicGain, recStartTime, micInterval;
     let analyser, dataArray, activeStream = null;
-    let clips = [], clipIdCounter = 1;
+    let clips =[], clipIdCounter = 1;
 
     // Sequencer
-    let sequenceSteps = [];
+    let sequenceSteps =[];
     let isSeqRunning = false, seqInterval, startHz = 0;
 
     function initAudio() {
@@ -882,7 +905,7 @@
             clearInterval(seqInterval);
             isSeqRunning = false;
             btn.innerText = "▶ Preview Sequence (Live)";
-            btn.style.background = "var(--accent)";
+            btn.style.background = "";
             document.getElementById('seqStatus').innerText = "";
             document.querySelectorAll('.seq-item').forEach(el => el.classList.remove('seq-active'));
         } else {
@@ -924,6 +947,7 @@
             runStep();
             btn.innerText = "⏹ Stop Sequence";
             btn.style.background = "#64748b";
+            btn.style.color = "#fff";
         }
     }
     function updateBeatFreq(hz) {
@@ -1091,7 +1115,7 @@
             length = len * numOfChan * 2 + 44,
             buffer = new ArrayBuffer(length),
             view = new DataView(buffer),
-            channels = [], i, sample, offset = 0, pos = 0;
+            channels =[], i, sample, offset = 0, pos = 0;
         
         setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157); setUint32(0x20746d66); setUint32(16); setUint16(1); setUint16(numOfChan);
         setUint32(abuffer.sampleRate); setUint32(abuffer.sampleRate * 2 * numOfChan); setUint16(numOfChan * 2); setUint16(16); setUint32(0x61746164); setUint32(length - pos - 4);
@@ -1125,13 +1149,15 @@
             isEnvPlaying = false;
             if(isSeqRunning) toggleSequence();
             btn.innerText = "▶ Preview Mix";
-            btn.style.background = "var(--accent)";
+            btn.style.background = "";
+            btn.style.color = "";
         } else {
             isEnvPlaying = true;
             updateBinaural(true); 
             startAtmosphere();
             btn.innerText = "⏹ Stop Mix";
             btn.style.background = "#64748b";
+            btn.style.color = "#fff";
         }
     }
     
@@ -1198,11 +1224,11 @@
     // Recorder
     async function scanDevices() { initAudio(); const s = document.getElementById('micSelect'); s.innerHTML = "<option>Scanning...</option>"; try { const t = await navigator.mediaDevices.getUserMedia({ audio: true }); t.getTracks().forEach(track => track.stop()); const d = await navigator.mediaDevices.enumerateDevices(); s.innerHTML = ""; const i = d.filter(x => x.kind === 'audioinput'); i.forEach((dev, idx) => { const o = document.createElement('option'); o.value = dev.deviceId; o.text = dev.label || `Mic ${idx + 1}`; s.appendChild(o); }); if(i.length===0) s.innerHTML = "<option value=''>Default Mic</option>"; } catch(e) { s.innerHTML = "<option value=''>Permission Denied</option>"; alert("Allow mic."); } }
     async function getStream() { const id = document.getElementById('micSelect').value; try { return await navigator.mediaDevices.getUserMedia({ audio: { deviceId: id ? { exact: id } : undefined } }); } catch (e) { return await navigator.mediaDevices.getUserMedia({ audio: true }); } }
-    btnRecMic.onclick = async () => { initAudio(); try { if(activeStream) activeStream.getTracks().forEach(t=>t.stop()); activeStream = await getStream(); mediaRecorder = new MediaRecorder(activeStream); micChunks = []; const src = audioCtx.createMediaStreamSource(activeStream); if(!analyser) analyser = audioCtx.createAnalyser(); src.connect(analyser); visualizeMic(); mediaRecorder.ondataavailable = e => micChunks.push(e.data); mediaRecorder.onstop = async () => { const b = new Blob(micChunks, { type: 'audio/webm' }); const ab = await b.arrayBuffer(); const audBuf = await audioCtx.decodeAudioData(ab); applySafetyFade(audBuf); addClipToList(audBuf); if(activeStream) { activeStream.getTracks().forEach(t=>t.stop()); activeStream = null; } micMeter.style.width = '0%'; }; mediaRecorder.start(); isRecordingMic = true; recStartTime = Date.now(); btnRecMic.disabled = true; btnStopMic.disabled = false; document.getElementById('recTime').style.opacity = 1; micInterval = setInterval(updateRecTimer, 1000); } catch (e) { alert(e.message); } };
+    btnRecMic.onclick = async () => { initAudio(); try { if(activeStream) activeStream.getTracks().forEach(t=>t.stop()); activeStream = await getStream(); mediaRecorder = new MediaRecorder(activeStream); micChunks =[]; const src = audioCtx.createMediaStreamSource(activeStream); if(!analyser) analyser = audioCtx.createAnalyser(); src.connect(analyser); visualizeMic(); mediaRecorder.ondataavailable = e => micChunks.push(e.data); mediaRecorder.onstop = async () => { const b = new Blob(micChunks, { type: 'audio/webm' }); const ab = await b.arrayBuffer(); const audBuf = await audioCtx.decodeAudioData(ab); applySafetyFade(audBuf); addClipToList(audBuf); if(activeStream) { activeStream.getTracks().forEach(t=>t.stop()); activeStream = null; } micMeter.style.width = '0%'; }; mediaRecorder.start(); isRecordingMic = true; recStartTime = Date.now(); btnRecMic.disabled = true; btnStopMic.disabled = false; document.getElementById('recTime').style.opacity = 1; micInterval = setInterval(updateRecTimer, 1000); } catch (e) { alert(e.message); } };
     btnStopMic.onclick = () => { if(isRecordingMic) { mediaRecorder.stop(); isRecordingMic = false; btnRecMic.disabled = false; btnStopMic.disabled = true; clearInterval(micInterval); document.getElementById('recTime').style.opacity = 0; } };
     function updateRecTimer() { const e = Math.floor((Date.now() - recStartTime) / 1000); document.getElementById('recTime').innerText = `${Math.floor(e/60)}:${(e%60).toString().padStart(2,'0')}`; }
     function visualizeMic() { if(!isRecordingMic && !isTestMicOn) return; requestAnimationFrame(visualizeMic); dataArray = new Uint8Array(analyser.frequencyBinCount); analyser.getByteFrequencyData(dataArray); let sum = 0; for(let i=0; i<dataArray.length; i++) sum += dataArray[i]; micMeter.style.width = Math.min(100, (sum / dataArray.length) * 2) + "%"; }
-    btnTestMic.addEventListener('mousedown', async () => { initAudio(); if(activeStream) activeStream.getTracks().forEach(t=>t.stop()); activeStream = await getStream(); testMicNode = audioCtx.createMediaStreamSource(activeStream); testMicGain = audioCtx.createGain(); testMicNode.connect(testMicGain).connect(masterGain); if(!analyser) analyser = audioCtx.createAnalyser(); testMicNode.connect(analyser); visualizeMic(); isTestMicOn = true; btnTestMic.style.background = "rgba(61,153,112,0.3)"; });
+    btnTestMic.addEventListener('mousedown', async () => { initAudio(); if(activeStream) activeStream.getTracks().forEach(t=>t.stop()); activeStream = await getStream(); testMicNode = audioCtx.createMediaStreamSource(activeStream); testMicGain = audioCtx.createGain(); testMicNode.connect(testMicGain).connect(masterGain); if(!analyser) analyser = audioCtx.createAnalyser(); testMicNode.connect(analyser); visualizeMic(); isTestMicOn = true; btnTestMic.style.background = "rgba(200, 150, 26, 0.25)"; });
     btnTestMic.addEventListener('mouseup', () => { if(isTestMicOn) { testMicNode.disconnect(); testMicGain.disconnect(); if(activeStream) activeStream.getTracks().forEach(t=>t.stop()); isTestMicOn = false; btnTestMic.style.background = ""; micMeter.style.width = '0%'; } });
     function addClipToList(buffer) { document.getElementById('emptyListMsg').style.display = 'none'; const id = clipIdCounter++; clips.push({ id, buffer, name: `Affirmation ${id}`, isPlaying: false, gainVal: 1.0, isAngelic: false }); renderClipList(); }
     function renderClipList() { const l = document.getElementById('clipList'); l.innerHTML = ""; clips.forEach(c => { const li = document.createElement('li'); li.className = `clip-item ${c.isPlaying ? 'playing' : ''}`; li.innerHTML = `<button onclick="toggleClip(${c.id})" class="${c.isPlaying ? 'btn-stop' : 'btn-play'}">${c.isPlaying ? 'Stop' : 'Loop'}</button><input type="text" class="clip-name" value="${c.name}" onchange="updateClipName(${c.id}, this.value)"><div class="checkbox-wrapper"><input type="checkbox" ${c.isAngelic ? 'checked' : ''} onchange="toggleAngelic(${c.id}, this.checked)">Angelic</div><input type="range" max="1.5" step="0.1" value="${c.gainVal}" oninput="updateClipVolume(${c.id}, this.value)" style="width:60px"><button onclick="deleteClip(${c.id})" class="btn-danger-text">&#10006;</button>`; l.appendChild(li); }); }
