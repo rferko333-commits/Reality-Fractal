@@ -587,6 +587,17 @@
             <div class="progress-fill" id="progressBar"></div>
         </div>
 
+        <div id="quizFraming" style="
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-style: italic;
+            line-height: 1.75;
+            margin-bottom: 22px;
+            padding: 14px 18px;
+            border-left: 3px solid var(--border-mid);
+            background: var(--card-alt);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        ">These questions are asking about your instinct, not your considered opinions. Answer what you feel first, not what you think upon reflection.</div>
         <div class="question-text" id="questionText"></div>
 
         <div class="slider-section">
@@ -953,6 +964,9 @@ function nextQuestion() {
     if (!sliderTouched) return;
     savedAnswers[currentIndex] = parseInt(document.getElementById('responseSlider').value);
     currentIndex++;
+    // Hide framing note after first question
+    const framing = document.getElementById('quizFraming');
+    if (framing) framing.style.display = 'none';
     if (currentIndex >= shuffledQuestions.length) {
         showResults();
     } else {
