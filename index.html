@@ -241,26 +241,29 @@
             display: flex; align-items: center; justify-content: center; padding: 13px 16px; border-radius: 10px;
             text-decoration: none; color: var(--text); font-size: 0.7rem; letter-spacing: 1.5px; text-transform: uppercase;
             transition: all 0.3s ease; 
-            background: rgba(14,14,22,0.85); /* Dark Ethereal background */
+            
+            /* The base dark background stays highly opaque (92%) */
+            background: rgba(14, 14, 22, 0.92); 
             backdrop-filter: blur(4px);
             border: 1px solid var(--link-border); 
-            /* Start with a standard drop shadow, no inner glow */
             box-shadow: 0 4px 14px rgba(0,0,0,0.4), inset 0 0 0 transparent;
         }
         
         .btn-link:hover { 
             transform: translateY(-2px); 
             border-color: var(--link-color); 
-            background: var(--link-bg-hover);
-            /* Outer glow + Inner glow */
+            color: #ffffff; /* Text turns pure white for maximum readability */
+            
+            /* Stacks a colored "gel" over the dark background so it stays dark! */
+            background: linear-gradient(var(--link-tint), var(--link-tint)), rgba(14, 14, 22, 0.92);
             box-shadow: 0 0 16px var(--link-glow-outer), inset 0 0 16px var(--link-glow-inner);
         }
 
-        /* App Guide (Neutral/Silver) */
+        /* App Guide */
         .btn-guide { 
-            --link-border: rgba(200, 200, 210, 0.2); 
+            --link-border: rgba(200, 200, 210, 0.25); 
             --link-color: rgba(200, 200, 210, 0.8); 
-            --link-bg-hover: rgba(200, 200, 210, 0.05); /* 5% white tint */
+            --link-tint: rgba(200, 200, 210, 0.12); /* 12% white gel */
             --link-glow-outer: rgba(200, 200, 210, 0.2);
             --link-glow-inner: rgba(200, 200, 210, 0.1);
         }
@@ -269,7 +272,7 @@
         .btn-substack { 
             --link-border: rgba(249, 115, 22, 0.35); 
             --link-color: rgba(249, 115, 22, 1); 
-            --link-bg-hover: rgba(249, 115, 22, 0.08); /* 8% orange tint */
+            --link-tint: rgba(249, 115, 22, 0.15); /* 15% orange gel */
             --link-glow-outer: rgba(249, 115, 22, 0.4);
             --link-glow-inner: rgba(249, 115, 22, 0.25);
         }
@@ -278,7 +281,7 @@
         .btn-discord  { 
             --link-border: rgba(88, 101, 242, 0.35); 
             --link-color: rgba(88, 101, 242, 1); 
-            --link-bg-hover: rgba(88, 101, 242, 0.08); /* 8% blurple tint */
+            --link-tint: rgba(88, 101, 242, 0.18); /* 18% blurple gel */
             --link-glow-outer: rgba(88, 101, 242, 0.4);
             --link-glow-inner: rgba(88, 101, 242, 0.25);
         }
@@ -287,7 +290,7 @@
         .btn-donate   { 
             --link-border: rgba(16, 185, 129, 0.35); 
             --link-color: rgba(16, 185, 129, 1); 
-            --link-bg-hover: rgba(16, 185, 129, 0.08); /* 8% green tint */
+            --link-tint: rgba(16, 185, 129, 0.15); /* 15% green gel */
             --link-glow-outer: rgba(16, 185, 129, 0.4);
             --link-glow-inner: rgba(16, 185, 129, 0.25);
         }
