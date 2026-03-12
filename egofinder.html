@@ -1220,26 +1220,27 @@ function handleParticipation() {
     }
 }
 
-function sendDataToBackend() {
-    // Collect normalized archetype scores from last run
-    const payload = {
-        timestamp: new Date().toISOString(),
-        scores: window._lastScores || {}
-    };
-    console.log("Participation payload ready:", payload);
-    // ---------------------------------------------------------
-    // TO CONNECT TO GOOGLE SHEETS:
-    // 1. Create a Google Sheet with Apps Script Web App.
-    // 2. Paste your deployment URL below and uncomment.
-    // ---------------------------------------------------------
-    /*
-    fetch('YOUR_GOOGLE_APPS_SCRIPT_URL', {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    });
-    */
+function sendDataToBackend(scores) {
+  const payload = {
+    source: 'Ego Finder',
+    scores: scores,
+    timestamp: new Date().toISOString()
+  };
+
+  fetch('https://script.google.com/macros/s/AKfycbwNmgd07eoaTSvQrE4VHtNImIC9SR7IhzALUooQ-na7rYq_egAWuHoI89Lz9zQmrWhy/exec', {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(() => {
+    const el = document.getElementById('participationStatus');
+    if (el) el.innerText = 'Scores submitted successfully. Thank you.';
+  }).catch(err => {
+    console.error('Submission error:', err);
+    const el = document.getElementById('participationStatus');
+    if (el) el.innerText = 'Submission failed. Please try again later.';
+  });
+}
 }
 </script>
 </body>
