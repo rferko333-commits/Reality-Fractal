@@ -57,7 +57,25 @@
                 transform: rotate(180deg);
             }
         }
+/* The Animation Keyframes */
+@keyframes entranceFadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
+/* Apply to cards and links, starting them invisible */
+.app-card, .external-links {
+    opacity: 0;
+    animation: entranceFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Stagger the timing so they flow beautifully from top to bottom */
+#card-atlas    { animation-delay: 0.1s; }
+#card-integral { animation-delay: 0.2s; }
+#card-ego      { animation-delay: 0.3s; }
+#card-language { animation-delay: 0.4s; }
+#card-manifest { animation-delay: 0.5s; }
+.external-links { animation-delay: 0.65s; }
         /* ─── HEADER ─── */
         header {
             position: relative; z-index: 100;
