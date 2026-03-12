@@ -2120,9 +2120,9 @@ function handleParticipation() {
             status.innerText   = 'Already submitted. No duplicate sent.';
             return;
         }
-        status.style.color = 'var(--accent)';
+        status.style.color = 'var(--teal)';
         status.innerText   = 'Submitting your anonymized scores...';
-        sendDataToBackend(window._lastScores);
+        sendDataToBackend(window._lastAverages);
         window._dataSubmitted = true;
     } else {
         status.style.color = 'var(--text-muted)';
@@ -2131,25 +2131,26 @@ function handleParticipation() {
 }
 
 function sendDataToBackend(scores) {
-  const payload = {
-    source: 'Integral Locator',
-    scores: scores,
-    timestamp: new Date().toISOString()
-  };
+    if (!scores) return;
+    const payload = {
+        source: 'Integral Locator',
+        scores: scores,
+        timestamp: new Date().toISOString()
+    };
 
-  fetch('https://script.google.com/macros/s/AKfycbyWU-ETAzzwUwDXnzDL3xWd2o7scVjKO6Su3IqCXvW160YgnfY-ko9xBC0XXC6jbwpq/exec', {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  }).then(() => {
-    const el = document.getElementById('participationStatus');
-    if (el) el.innerText = 'Scores submitted successfully. Thank you.';
-  }).catch(err => {
-    console.error('Submission error:', err);
-    const el = document.getElementById('participationStatus');
-    if (el) el.innerText = 'Submission failed. Please try again later.';
-  });
+    fetch('https://script.google.com/macros/s/AKfycbyWU-ETAzzwUwDXnzDL3xWd2o7scVjKO6Su3IqCXvW160YgnfY-ko9xBC0XXC6jbwpq/exec', {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    }).then(() => {
+        const el = document.getElementById('participationStatus');
+        if (el) el.innerText = 'Scores submitted successfully. Thank you.';
+    }).catch(err => {
+        console.error('Submission error:', err);
+        const el = document.getElementById('participationStatus');
+        if (el) el.innerText = 'Submission failed. Please try again later.';
+    });
 }
 
 // ==========================================
