@@ -232,20 +232,65 @@
         }
 
         /* ─── LINKS ─── */
-        .external-links { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 400px; padding-bottom: 20px; }
+        .external-links { 
+            display: flex; flex-direction: column; gap: 12px; 
+            width: 100%; max-width: 400px; padding-bottom: 20px; 
+        }
+        
         .btn-link {
             display: flex; align-items: center; justify-content: center; padding: 13px 16px; border-radius: 10px;
             text-decoration: none; color: var(--text); font-size: 0.7rem; letter-spacing: 1.5px; text-transform: uppercase;
-            transition: all 0.3s ease; background: rgba(14,14,22,0.85); backdrop-filter: blur(4px);
-            border: 1px solid var(--link-c, #333); box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+            transition: all 0.3s ease; 
+            background: rgba(14,14,22,0.85); /* Dark Ethereal background */
+            backdrop-filter: blur(4px);
+            border: 1px solid var(--link-border); 
+            /* Start with a standard drop shadow, no inner glow */
+            box-shadow: 0 4px 14px rgba(0,0,0,0.4), inset 0 0 0 transparent;
         }
+        
         .btn-link:hover { 
-            transform: translateY(-2px); box-shadow: 0 0 16px var(--link-glow, rgba(255,255,255,0.1)); border-color: var(--link-border-hover, #666);
+            transform: translateY(-2px); 
+            border-color: var(--link-color); 
+            background: var(--link-bg-hover);
+            /* Outer glow + Inner glow */
+            box-shadow: 0 0 16px var(--link-glow-outer), inset 0 0 16px var(--link-glow-inner);
         }
-        .btn-guide    { --link-c: #333; --link-glow: rgba(255,255,255,0.1); --link-border-hover: #777; }
-        .btn-substack { --link-c: rgba(249,115,22,0.4); --link-glow: rgba(249,115,22,0.25); --link-border-hover: var(--c-substack); }
-        .btn-discord  { --link-c: rgba(88,101,242,0.4); --link-glow: rgba(88,101,242,0.25); --link-border-hover: var(--c-discord); }
-        .btn-donate   { --link-c: rgba(16,185,129,0.4); --link-glow: rgba(16,185,129,0.25); --link-border-hover: var(--c-donate); }
+
+        /* App Guide (Neutral/Silver) */
+        .btn-guide { 
+            --link-border: rgba(200, 200, 210, 0.2); 
+            --link-color: rgba(200, 200, 210, 0.8); 
+            --link-bg-hover: rgba(200, 200, 210, 0.05); /* 5% white tint */
+            --link-glow-outer: rgba(200, 200, 210, 0.2);
+            --link-glow-inner: rgba(200, 200, 210, 0.1);
+        }
+        
+        /* Substack (Orange) */
+        .btn-substack { 
+            --link-border: rgba(249, 115, 22, 0.35); 
+            --link-color: rgba(249, 115, 22, 1); 
+            --link-bg-hover: rgba(249, 115, 22, 0.08); /* 8% orange tint */
+            --link-glow-outer: rgba(249, 115, 22, 0.4);
+            --link-glow-inner: rgba(249, 115, 22, 0.25);
+        }
+        
+        /* Discord (Blurple) */
+        .btn-discord  { 
+            --link-border: rgba(88, 101, 242, 0.35); 
+            --link-color: rgba(88, 101, 242, 1); 
+            --link-bg-hover: rgba(88, 101, 242, 0.08); /* 8% blurple tint */
+            --link-glow-outer: rgba(88, 101, 242, 0.4);
+            --link-glow-inner: rgba(88, 101, 242, 0.25);
+        }
+        
+        /* Donate (Green) */
+        .btn-donate   { 
+            --link-border: rgba(16, 185, 129, 0.35); 
+            --link-color: rgba(16, 185, 129, 1); 
+            --link-bg-hover: rgba(16, 185, 129, 0.08); /* 8% green tint */
+            --link-glow-outer: rgba(16, 185, 129, 0.4);
+            --link-glow-inner: rgba(16, 185, 129, 0.25);
+        }
 
         .donate-note {
             font-family: 'Cormorant Garamond', serif; text-align: center; font-size: 0.9rem;
