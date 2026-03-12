@@ -121,12 +121,12 @@
         .card-front { background: rgba(14,14,22,0.92); }
         .card-back  { background: rgba(9,9,18,0.94); transform: rotateY(180deg); }
 
-        /* front base border */
-        .app-card[data-color="atlas"]    .card-front { border-color: #162850; }
-        .app-card[data-color="integral"] .card-front { border-color: #0a2a22; }
-        .app-card[data-color="ego"]      .card-front { border-color: #3a0a0a; }
-        .app-card[data-color="language"] .card-front { border-color: #2e2010; }
-        .app-card[data-color="manifest"] .card-front { border-color: #22174a; }
+        /* front base border - "Sleeping Neon" state (Approx 35% opacity) */
+        .app-card[data-color="atlas"]    .card-front { border-color: rgba(59, 130, 246, 0.35); }
+        .app-card[data-color="integral"] .card-front { border-color: rgba(26, 188, 156, 0.35); }
+        .app-card[data-color="ego"]      .card-front { border-color: rgba(255, 45, 45, 0.35); }
+        .app-card[data-color="language"] .card-front { border-color: rgba(184, 146, 42, 0.45); } /* Gold needs slightly more opacity to pop against black */
+        .app-card[data-color="manifest"] .card-front { border-color: rgba(153, 102, 204, 0.35); }
 
         /* back border glow */
         .app-card[data-color="atlas"]    .card-back { border-color: var(--c-atlas); box-shadow: 0 0 20px rgba(59,130,246,0.1); }
