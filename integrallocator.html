@@ -2124,32 +2124,26 @@ function handleParticipation() {
     }
 }
 
-function sendDataToBackend(rawResults, computedAverages) {
-    const payload = {
-        timestamp: new Date().toISOString(),
-        averages:  computedAverages   // anonymized: no raw per-question data sent
-    };
+function sendDataToBackend(scores) {
+  const payload = {
+    source: 'Integral Locator',
+    scores: scores,
+    timestamp: new Date().toISOString()
+  };
 
-    console.log("Participation payload ready:", payload);
-
-    // ---------------------------------------------------------
-    // TO CONNECT TO GOOGLE SHEETS:
-    // 1. Create a Google Sheet with Apps Script Web App.
-    // 2. Paste your deployment URL below and uncomment.
-    // ---------------------------------------------------------
-    
-    fetch('https://script.google.com/macros/s/AKfycbwNmgd07eoaTSvQrE4VHtNImIC9SR7IhzALUooQ-na7rYq_egAWuHoI89Lz9zQmrWhy/exec', {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    }).then(() => {
-        document.getElementById('participationStatus').innerText = 'Scores submitted successfully. Thank you.';
-    }).catch(err => {
-        console.error("Submission error:", err);
-        document.getElementById('participationStatus').innerText = 'Submission failed. Please try again later.';
-    });
-    
+  fetch('https://script.google.com/macros/s/AKfycbwNmgd07eoaTSvQrE4VHtNImIC9SR7IhzALUooQ-na7rYq_egAWuHoI89Lz9zQmrWhy/exec', {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(() => {
+    const el = document.getElementById('participationStatus');
+    if (el) el.innerText = 'Scores submitted successfully. Thank you.';
+  }).catch(err => {
+    console.error('Submission error:', err);
+    const el = document.getElementById('participationStatus');
+    if (el) el.innerText = 'Submission failed. Please try again later.';
+  });
 }
 
 // ==========================================
