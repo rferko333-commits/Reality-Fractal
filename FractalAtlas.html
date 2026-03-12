@@ -10,7 +10,7 @@
             --bg-color: #050505;
             --panel-bg: #121212;
             --border-color: #333;
-            --accent-color: #00d2ff;
+            --accent-color: #3b82f6; /* Matched to Hub Blue */
             --text-color: #e0e0e0;
             --text-dim: #888;
             --danger-color: #ff4444;
@@ -118,7 +118,7 @@
             background: var(--accent-color);
             color: #000;
             border-color: var(--accent-color);
-            box-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
+            /* Glow removed as requested */
         }
 
         .icon-btn {
@@ -282,7 +282,7 @@
         .manual-select { background: #333; color: white; border: 1px solid #555; padding: 8px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; margin-left: 5px; margin-right: 10px; -webkit-appearance: none; appearance: none; }
         .manual-select:hover { background: #444; }
         .btn-primary { background: var(--accent-color); color: black; border: none; }
-        .btn-primary:hover { background: #33eebb; }
+        .btn-primary:hover { background: #60a5fa; }
         .btn-primary:disabled { background: #555; color: #888; cursor: not-allowed; }
 
         .hidden { display: none !important; }
@@ -830,7 +830,7 @@ const GL_CORE = {
         const cam = isRight ? state.right : state.left;
         
         u('u_res', [cvs.width, cvs.height]);
-        u('u_offset', [cam.x, cam.y]);
+        u('u_offset',[cam.x, cam.y]);
         u('u_zoom', cam.z);
         u('u_c', [state.c.x, state.c.y]);
         u('u_iter', state.p.iter);
@@ -1099,7 +1099,7 @@ const app = {
     glCtx: [], nebCtx: [],
 
     init: function() {
-        this.glCtx = [GL_CORE.setup('gl-left'), GL_CORE.setup('gl-right')];
+        this.glCtx =[GL_CORE.setup('gl-left'), GL_CORE.setup('gl-right')];
         this.nebCtx = [new NebulaRenderer('cpu-left'), new NebulaRenderer('cpu-right')];
         ui.init();
         this.compile();
@@ -1157,7 +1157,7 @@ const app = {
         const vh = 1.0 / cam.z; const vw = (w/h) * vh;
         const minX = cam.x - vw/2; const minY = cam.y - vh/2;
         
-        const toPx = (x, y) => [ ((x - minX)/vw)*w, h - ((y - minY)/vh)*h ];
+        const toPx = (x, y) =>[ ((x - minX)/vw)*w, h - ((y - minY)/vh)*h ];
 
         let zx = z0x, zy = z0y;
         const eqm = this.state.p.eqMode;
@@ -1571,10 +1571,10 @@ const ui = {
         document.getElementById('bottom-controls').innerHTML = this.buildControls();
         document.getElementById('mobile-controls-target').innerHTML = this.buildControls('menu-');
         
-        const coreIds = ['iter','red','grn','blu','den','grid','zoom'];
+        const coreIds =['iter','red','grn','blu','den','grid','zoom'];
         
         const syncHybrid = (idBase) => {
-            const els = [
+            const els =[
                 document.getElementById(`sl-${idBase}`), document.getElementById(`nb-${idBase}`),
                 document.getElementById(`menu-sl-${idBase}`), document.getElementById(`menu-nb-${idBase}`)
             ].filter(e => e !== null);
@@ -1941,33 +1941,33 @@ const bif = (() => {
     }
 
     function lp(a, b, t) { return a + (b - a) * t; }
-    function cosPal(t, c, d) { return [ 0.5 + 0.5 * Math.cos(6.28318 * (c[0] * t + d[0])), 0.5 + 0.5 * Math.cos(6.28318 * (c[1] * t + d[1])), 0.5 + 0.5 * Math.cos(6.28318 * (c[2] * t + d[2])) ]; }
+    function cosPal(t, c, d) { return[ 0.5 + 0.5 * Math.cos(6.28318 * (c[0] * t + d[0])), 0.5 + 0.5 * Math.cos(6.28318 * (c[1] * t + d[1])), 0.5 + 0.5 * Math.cos(6.28318 * (c[2] * t + d[2])) ]; }
 
     function pal(t, id) {
         t = Math.max(0, Math.min(1, t));
         if (id === 0) {
-            if(t<.33) return [lp(0,.8,t/.33), lp(0,.1,t/.33), lp(0,.1,t/.33)];
-            if(t<.66) { const f=(t-.33)/.33; return [lp(.8,.9,f), lp(.1,.6,f), .1]; }
-            { const f=(t-.66)/.34; return [lp(.9,1,f), lp(.6,1,f), lp(.1,1,f)]; }
+            if(t<.33) return[lp(0,.8,t/.33), lp(0,.1,t/.33), lp(0,.1,t/.33)];
+            if(t<.66) { const f=(t-.33)/.33; return[lp(.8,.9,f), lp(.1,.6,f), .1]; }
+            { const f=(t-.66)/.34; return[lp(.9,1,f), lp(.6,1,f), lp(.1,1,f)]; }
         }
         if (id === 1) { 
-            if(t<.33) { const f=t/.33; return [lp(.26,.18,f), lp(0,.34,f), lp(.33,.56,f)]; }
-            if(t<.66) { const f=(t-.33)/.33; return [lp(.18,.15,f), lp(.34,.68,f), lp(.56,.38,f)]; }
-            { const f=(t-.66)/.34; return [lp(.15,.99,f), lp(.68,.9,f), lp(.38,.14,f)]; }
+            if(t<.33) { const f=t/.33; return[lp(.26,.18,f), lp(0,.34,f), lp(.33,.56,f)]; }
+            if(t<.66) { const f=(t-.33)/.33; return[lp(.18,.15,f), lp(.34,.68,f), lp(.56,.38,f)]; }
+            { const f=(t-.66)/.34; return[lp(.15,.99,f), lp(.68,.9,f), lp(.38,.14,f)]; }
         }
         if (id === 2) { 
-            if(t<.5) return [0, lp(.1,.8,t*2), lp(.3,1,t*2)];
-            { const f=(t-.5)*2; return [f, lp(.8,1,f), 1]; }
+            if(t<.5) return[0, lp(.1,.8,t*2), lp(.3,1,t*2)];
+            { const f=(t-.5)*2; return[f, lp(.8,1,f), 1]; }
         }
         
-        if (id === 3) return cosPal(t, [2.0, 2.0, 2.0], [0.5, 0.20, 0.25]);
-        if (id === 4) return cosPal(t, [1.0, 1.0, 1.0], [0.26, 0.41, 0.55]);
-        if (id === 5) return cosPal(t, [1.0, 1.0, 1.0], [0.0, 0.10, 0.20]);
-        if (id === 6) return cosPal(t, [1.0, 1.0, 1.0], [0.3, 0.20, 0.20]);
-        if (id === 7) return cosPal(t, [1.0, 0.7, 0.4], [0.0, 0.15, 0.20]);
-        if (id === 8) return cosPal(t, [1.0, 1.0, 1.0], [0.0, 0.33, 0.67]);
+        if (id === 3) return cosPal(t, [2.0, 2.0, 2.0],[0.5, 0.20, 0.25]);
+        if (id === 4) return cosPal(t, [1.0, 1.0, 1.0],[0.26, 0.41, 0.55]);
+        if (id === 5) return cosPal(t, [1.0, 1.0, 1.0],[0.0, 0.10, 0.20]);
+        if (id === 6) return cosPal(t, [1.0, 1.0, 1.0],[0.3, 0.20, 0.20]);
+        if (id === 7) return cosPal(t, [1.0, 0.7, 0.4],[0.0, 0.15, 0.20]);
+        if (id === 8) return cosPal(t, [1.0, 1.0, 1.0],[0.0, 0.33, 0.67]);
         
-        return cosPal(t, [1.0, 1.0, 1.0], [0.0, 0.33, 0.67]); 
+        return cosPal(t,[1.0, 1.0, 1.0],[0.0, 0.33, 0.67]); 
     }
 
     const CR_MIN=-2.6, CR_MAX=1.4, CI_MIN=-1.6, CI_MAX=1.6;
@@ -2049,7 +2049,7 @@ const bif = (() => {
         const b = isJulia ? {x0: -2.2, x1: 2.2} : {x0: -2.6, x1: 1.4};
         const dCR = (b.x1 - b.x0) / (N - 1);
         
-        const pos = [], col = [];
+        const pos = [], col =[];
         const cFixedX = app.state.c.x;
         const cFixedY = app.state.c.y;
 
@@ -2107,7 +2107,7 @@ const bif = (() => {
         let lxText = isJulia ? 'Real(z₀)' : 'Real(c)';
         let lzText = isJulia ? 'Imaginary(z₀)' : 'Imaginary(c)';
         
-        labelX = mkLabel(lxText, [2.5, 0, 0], '#00d2ff');
+        labelX = mkLabel(lxText,[2.5, 0, 0], '#3b82f6');
         labelZ = mkLabel(lzText, [0, 0, 2.5], '#ff8844');
         
         scene.add(labelX); 
@@ -2299,7 +2299,7 @@ const bif = (() => {
             if (app.state.showOrbit) updateDynamicOrbit();
         }, { passive: false });
 
-        let td = 0, tt = [];
+        let td = 0, tt =[];
         canvas.addEventListener('touchstart', e => {
             e.preventDefault();
             tt = Array.from(e.touches);
@@ -2630,9 +2630,9 @@ const bif = (() => {
             };
             scene.add(mkAx([-3.0, 0, 0], [3.0, 0, 0]));
             scene.add(mkAx([0, -2.8, 0], [0, 2.8, 0]));
-            scene.add(mkAx([0, 0, -3.0], [0, 0, 3.0]));
+            scene.add(mkAx([0, 0, -3.0],[0, 0, 3.0]));
             
-            let labelY = mkLabel('Real(z)', [0, 3.1, 0], '#dddddd');
+            let labelY = mkLabel('Real(z)',[0, 3.1, 0], '#dddddd');
             scene.add(labelY);
             updateLabels(); 
 
