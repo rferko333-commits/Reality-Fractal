@@ -1212,8 +1212,8 @@ function handleParticipation() {
     const status  = document.getElementById('participationStatus');
     if (checked) {
         status.style.color = 'var(--accent)';
-        status.innerText   = 'Thank you. Your anonymized scores have been queued for submission.';
-        sendDataToBackend();
+        status.innerText   = 'Thank you. Submitting your anonymized scores...';
+        sendDataToBackend(window._lastScores);
     } else {
         status.style.color = 'var(--text-muted)';
         status.innerText   = 'Your data will not be submitted.';
@@ -1221,25 +1221,25 @@ function handleParticipation() {
 }
 
 function sendDataToBackend(scores) {
-  const payload = {
-    source: 'Ego Finder',
-    scores: scores,
-    timestamp: new Date().toISOString()
-  };
-
-  fetch('https://script.google.com/macros/s/AKfycbwNmgd07eoaTSvQrE4VHtNImIC9SR7IhzALUooQ-na7rYq_egAWuHoI89Lz9zQmrWhy/exec', {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  }).then(() => {
-    const el = document.getElementById('participationStatus');
-    if (el) el.innerText = 'Scores submitted successfully. Thank you.';
-  }).catch(err => {
-    console.error('Submission error:', err);
-    const el = document.getElementById('participationStatus');
-    if (el) el.innerText = 'Submission failed. Please try again later.';
-  });
+    if (!scores) return;
+    const payload = {
+        source: 'Ego Finder',
+        scores: scores,
+        timestamp: new Date().toISOString()
+    };
+    fetch('https://script.google.com/macros/s/AKfycbwNmgd07eoaTSvQrE4VHtNImIC9SR7IhzALUooQ-na7rYq_egAWuHoI89Lz9zQmrWhy/exec', {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    }).then(() => {
+        const el = document.getElementById('participationStatus');
+        if (el) el.innerText = 'Scores submitted successfully. Thank you.';
+    }).catch(err => {
+        console.error('Submission error:', err);
+        const el = document.getElementById('participationStatus');
+        if (el) el.innerText = 'Submission failed. Please try again later.';
+    });
 }
 
 </script>
