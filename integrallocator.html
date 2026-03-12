@@ -2137,8 +2137,8 @@ function sendDataToBackend(rawResults, computedAverages) {
     // 1. Create a Google Sheet with Apps Script Web App.
     // 2. Paste your deployment URL below and uncomment.
     // ---------------------------------------------------------
-    /*
-    fetch('YOUR_GOOGLE_APPS_SCRIPT_URL', {
+    
+    fetch('https://script.google.com/macros/s/AKfycbwNmgd07eoaTSvQrE4VHtNImIC9SR7IhzALUooQ-na7rYq_egAWuHoI89Lz9zQmrWhy/exec', {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
@@ -2149,7 +2149,7 @@ function sendDataToBackend(rawResults, computedAverages) {
         console.error("Submission error:", err);
         document.getElementById('participationStatus').innerText = 'Submission failed. Please try again later.';
     });
-    */
+    
 }
 
 // ==========================================
