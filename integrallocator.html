@@ -2115,9 +2115,15 @@ function handleParticipation() {
     const status  = document.getElementById('participationStatus');
 
     if (checked) {
-        status.style.color = 'var(--teal)';
-        status.innerText   = 'Thank you. Your anonymized scores have been queued for submission.';
-        sendDataToBackend(window._lastResults, window._lastAverages);
+        if (window._dataSubmitted) {
+            status.style.color = 'var(--text-muted)';
+            status.innerText   = 'Already submitted. No duplicate sent.';
+            return;
+        }
+        status.style.color = 'var(--accent)';
+        status.innerText   = 'Submitting your anonymized scores...';
+        sendDataToBackend(window._lastScores);
+        window._dataSubmitted = true;
     } else {
         status.style.color = 'var(--text-muted)';
         status.innerText   = 'Your data will not be submitted.';
@@ -2131,7 +2137,7 @@ function sendDataToBackend(scores) {
     timestamp: new Date().toISOString()
   };
 
-  fetch('https://script.google.com/macros/s/AKfycbwNmgd07eoaTSvQrE4VHtNImIC9SR7IhzALUooQ-na7rYq_egAWuHoI89Lz9zQmrWhy/exec', {
+  fetch('https://script.google.com/macros/s/AKfycbyWU-ETAzzwUwDXnzDL3xWd2o7scVjKO6Su3IqCXvW160YgnfY-ko9xBC0XXC6jbwpq/exec', {
     method: 'POST',
     mode: 'no-cors',
     headers: { 'Content-Type': 'application/json' },
