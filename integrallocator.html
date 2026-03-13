@@ -1828,9 +1828,8 @@ function showResults() {
     let totalSum   = 0;
     let totalCount = 0;
 
-    const barContainer = document.getElementById('barContainer');
-    barContainer.innerHTML = '';
-
+    // Collect all line data first so we can sort before rendering
+    const lineData = [];
     Object.keys(results).forEach(line => {
         const scores = results[line];
         if (scores.length > 0) {
@@ -1839,46 +1838,58 @@ function showResults() {
             const maxScore = Math.max(...scores);
             totalSum   += scores.reduce((a, b) => a + b, 0);
             totalCount += scores.length;
-            labels.push(line);
-            averages.push(avg);
             const colorIndex = Math.min(Math.floor(avg) - 1, 5);
             const color      = COLOR_MAP[Math.max(0, colorIndex)];
-            colors.push(color);
-
-            const avgPct = (avg / 6) * 100;
-            const minPct = ((minScore - 0.5) / 6) * 100;
-            const maxPct = (maxScore / 6) * 100;
-            const rangeWidth = maxPct - minPct;
-
-            // Shadow label (only show if meaningful spread)
-            let shadowHTML = '';
-            if (maxScore - minScore >= 2) {
-                const shadowName  = LEVEL_NAMES[Math.max(0, minScore - 1)];
-                const peakName    = LEVEL_NAMES[Math.min(5, maxScore - 1)];
-                shadowHTML = `<div class="shadow-label">
-                    <span class="pull">Shadow pull: ${shadowName}</span>
-                    &nbsp;·&nbsp;
-                    <span class="peak">Peak glimpse: ${peakName}</span>
-                </div>`;
-            }
-
-            barContainer.innerHTML += `
-                <div class="level-bar-row" style="flex-wrap:wrap; align-items:center;">
-                    <div class="level-label">${line}</div>
-                    <div class="level-track-wrap" style="flex:1;">
-                        <div class="level-range-bar">
-                            <div class="range-span" style="left:${minPct}%; width:${rangeWidth}%;"></div>
-                            <div class="range-avg-fill" style="width:${avgPct}%; background-color:${color};"></div>
-                            <div class="shadow-ticks">
-                                <div class="range-min-tick" style="left:${minPct}%;"></div>
-                                <div class="range-max-tick" style="left:${Math.min(maxPct, 99)}%;"></div>
-                            </div>
-                        </div>
-                        <div class="shadow-rows">${shadowHTML}</div>
-                    </div>
-                    <div class="level-score" style="margin-left:14px;">${avg.toFixed(1)}</div>
-                </div>`;
+            lineData.push({ line, avg, minScore, maxScore, color });
         }
+    });
+
+    // Sort highest to lowest so radar 12-o'clock = top scorer
+    lineData.sort((a, b) => b.avg - a.avg);
+
+    lineData.forEach(({ line, avg, color }) => {
+        labels.push(line);
+        averages.push(avg);
+        colors.push(color);
+    });
+
+    // Build bars in sorted order
+    const barContainer = document.getElementById('barContainer');
+    barContainer.innerHTML = '';
+
+    lineData.forEach(({ line, avg, minScore, maxScore, color }) => {
+        const avgPct     = (avg / 6) * 100;
+        const minPct     = ((minScore - 0.5) / 6) * 100;
+        const maxPct     = (maxScore / 6) * 100;
+        const rangeWidth = maxPct - minPct;
+
+        let shadowHTML = '';
+        if (maxScore - minScore >= 2) {
+            const shadowName  = LEVEL_NAMES[Math.max(0, minScore - 1)];
+            const peakName    = LEVEL_NAMES[Math.min(5, maxScore - 1)];
+            shadowHTML = `<div class="shadow-label">
+                <span class="pull">Shadow pull: ${shadowName}</span>
+                &nbsp;·&nbsp;
+                <span class="peak">Peak glimpse: ${peakName}</span>
+            </div>`;
+        }
+
+        barContainer.innerHTML += `
+            <div class="level-bar-row" style="flex-wrap:wrap; align-items:center;">
+                <div class="level-label">${line}</div>
+                <div class="level-track-wrap" style="flex:1;">
+                    <div class="level-range-bar">
+                        <div class="range-span" style="left:${minPct}%; width:${rangeWidth}%;"></div>
+                        <div class="range-avg-fill" style="width:${avgPct}%; background-color:${color};"></div>
+                        <div class="shadow-ticks">
+                            <div class="range-min-tick" style="left:${minPct}%;"></div>
+                            <div class="range-max-tick" style="left:${Math.min(maxPct, 99)}%;"></div>
+                        </div>
+                    </div>
+                    <div class="shadow-rows">${shadowHTML}</div>
+                </div>
+                <div class="level-score" style="margin-left:14px;">${avg.toFixed(1)}</div>
+            </div>`;
     });
 
     // ---- CENTER OF GRAVITY ----
