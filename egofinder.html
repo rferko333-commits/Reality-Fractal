@@ -564,6 +564,42 @@
             line-height: 1.65;
         }
 
+        /* =========================================
+           FULL REPORT CAPTURE
+        ========================================= */
+        #full-report-capture {
+            position: fixed;
+            top: -99999px;
+            left: 0;
+            width: 1400px;
+            background: #0d0d0d;
+            display: flex;
+            gap: 0;
+            z-index: -1;
+        }
+        .report-col {
+            flex: 1;
+            padding: 40px 36px;
+            min-width: 0;
+        }
+        .report-col-divider {
+            width: 1px;
+            background: #2a2a2a;
+            flex-shrink: 0;
+            margin: 40px 0;
+        }
+        .report-col-title {
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
         @media (max-width: 600px) {
             .container { padding: 30px 22px 28px; }
             h1 { font-size: 1.5rem; }
@@ -682,7 +718,10 @@
         </div>
 
         <hr class="section-divider">
-        <button class="btn btn-save" onclick="saveResults()">Save Results as PNG</button>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-save" style="flex:1; margin-top:0;" onclick="saveResults()">Save Results as PNG</button>
+            <button class="btn" style="flex:1; margin-top:0; background:var(--accent); color:#fff;" onclick="downloadFull()">Full Report</button>
+        </div>
         <button class="btn btn-retake" onclick="location.reload()">Retake Assessment</button>
 
         <p class="footer-note">
@@ -692,6 +731,14 @@
     </div>
 
 </div>
+
+<!-- FULL REPORT CAPTURE (hidden, assembled by JS for PNG export) -->
+<div id="full-report-capture">
+    <div class="report-col" id="fr-left"></div>
+    <div class="report-col-divider"></div>
+    <div class="report-col" id="fr-right"></div>
+</div>
+
 <script>
 // ==========================================
 // ARCHETYPE DATA
@@ -1186,7 +1233,7 @@ function toggleAccordion(bodyId, arrowId) {
 }
 
 // ==========================================
-// SAVE
+// SAVE (simple)
 // ==========================================
 function saveResults() {
     const filename = prompt("Enter a name for your file:", "My_Ego_Profile");
@@ -1205,36 +1252,115 @@ function saveResults() {
 }
 
 // ==========================================
+// FULL REPORT
+// ==========================================
+function downloadFull() {
+    const filename = prompt("Enter a name for your file:", "My_Ego_Profile_Full");
+    if (!filename) return;
+
+    const frLeft  = document.getElementById('fr-left');
+    const frRight = document.getElementById('fr-right');
+    frLeft.innerHTML  = '';
+    frRight.innerHTML = '';
+
+    // Left column: ego profile capture
+    const leftTitle = document.createElement('div');
+    leftTitle.className = 'report-col-title';
+    leftTitle.textContent = 'Your Ego Profile';
+    frLeft.appendChild(leftTitle);
+
+    const captureClone = document.getElementById('results-capture').cloneNode(true);
+    frLeft.appendChild(captureClone);
+
+    // Replace canvas with static image, constrained to prevent bleed
+    const liveCanvas = document.getElementById('radarChart');
+    const chartImg   = new Image();
+    chartImg.src     = liveCanvas.toDataURL('image/png');
+
+    const canvasInClone = captureClone.querySelector('canvas');
+    if (canvasInClone) {
+        const chartContainer = canvasInClone.closest('.chart-container');
+        if (chartContainer) {
+            chartContainer.style.cssText = 'position:relative;height:420px;overflow:hidden;width:100%;';
+        }
+        chartImg.style.cssText = 'width:100%;height:420px;object-fit:contain;border-radius:8px;display:block;';
+        canvasInClone.parentNode.replaceChild(chartImg, canvasInClone);
+    }
+
+    // Right column: pattern breaks + archetype descriptions
+    const rightTitle = document.createElement('div');
+    rightTitle.className = 'report-col-title';
+    rightTitle.textContent = 'Pattern Breaks & Archetype Guide';
+    frRight.appendChild(rightTitle);
+
+    const pbHead = document.createElement('div');
+    pbHead.style.cssText = 'font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:#666;font-weight:600;margin-bottom:12px;';
+    pbHead.textContent = 'Pattern Break Exercises';
+    frRight.appendChild(pbHead);
+
+    const pbClone = document.getElementById('pbContainer').cloneNode(true);
+    frRight.appendChild(pbClone);
+
+    const legendHead = document.createElement('div');
+    legendHead.style.cssText = 'font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:#666;font-weight:600;margin:24px 0 12px;';
+    legendHead.textContent = 'Archetype Descriptions';
+    frRight.appendChild(legendHead);
+
+    const legendClone = document.getElementById('legendGrid').cloneNode(true);
+    frRight.appendChild(legendClone);
+
+    const fr = document.getElementById('full-report-capture');
+    fr.style.top      = '-99999px';
+    fr.style.position = 'fixed';
+
+    function doCapture() {
+        html2canvas(fr, {
+            backgroundColor: '#0d0d0d',
+            scale: 2,
+            useCORS: true,
+            width: 1400,
+            windowWidth: 1400
+        }).then(canvas => {
+            const link    = document.createElement('a');
+            link.download = filename + '.png';
+            link.href     = canvas.toDataURL('image/png');
+            link.click();
+            frLeft.innerHTML  = '';
+            frRight.innerHTML = '';
+        });
+    }
+
+    if (chartImg.complete) {
+        setTimeout(doCapture, 80);
+    } else {
+        chartImg.onload = () => setTimeout(doCapture, 80);
+    }
+}
+
+// ==========================================
 // PARTICIPATION
 // ==========================================
 function handleParticipation() {
     const checked = document.getElementById('participateCheck').checked;
     const status  = document.getElementById('participationStatus');
-
     if (checked) {
-        if (window._dataSubmitted) {
-            status.style.color = 'var(--text-muted)';
-            status.innerText   = 'Already submitted.';
-            return;
-        }
         status.style.color = 'var(--accent)';
-        status.innerText   = 'Submitting your anonymized scores...';
-        sendDataToBackend(window._lastScores);
-        window._dataSubmitted = true;
+        status.innerText   = 'Thank you. Your anonymized scores have been queued for submission.';
+        sendDataToBackend();
     } else {
         status.style.color = 'var(--text-muted)';
         status.innerText   = 'Your data will not be submitted.';
     }
 }
 
-function sendDataToBackend(scores) {
-    if (!scores) return;
+function sendDataToBackend() {
     const payload = {
         source: 'Ego Finder',
-        scores: scores,
+        scores: window._lastScores || {},
         timestamp: new Date().toISOString()
     };
-    fetch('https://script.google.com/macros/s/AKfycbyWU-ETAzzwUwDXnzDL3xWd2o7scVjKO6Su3IqCXvW160YgnfY-ko9xBC0XXC6jbwpq/exec', {
+
+    fetch('YOUR_GOOGLE_APPS_SCRIPT_URL', {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
@@ -1248,7 +1374,6 @@ function sendDataToBackend(scores) {
         if (el) el.innerText = 'Submission failed. Please try again later.';
     });
 }
-
 </script>
 </body>
 </html>
