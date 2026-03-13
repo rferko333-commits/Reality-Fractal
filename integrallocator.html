@@ -715,8 +715,8 @@
     <div id="setup-section">
 
         <div class="intro-block">
-            This assessment maps your developmental profile across multiple <em>lines of intelligence</em>: distinct capacities like emotional maturity, moral reasoning, and spiritual awareness that each grow at their own pace. The framework is drawn from <strong>Integral Theory</strong> (Ken Wilber / AQAL), which identifies altitude levels from egocentric (Red) through worldcentric (Orange/Green) to integral (Teal/Turquoise).<br><br>
-            Your results form a <strong>psychograph</strong>: a radar chart showing where each line sits on the developmental spectrum. Because lines grow independently, most people are advanced in some areas and trailing in others. There is no "good" or "bad" result; the map is useful precisely because it shows where your personal growth potential is the greatest.<br><br>
+            <strong>What is this?</strong> This assessment maps your developmental profile across multiple <em>lines of intelligence</em>: distinct capacities like emotional maturity, moral reasoning, and spiritual awareness that each grow at their own pace. The framework is drawn from <strong>Integral Theory</strong> (Ken Wilber / AQAL), which identifies altitude levels from egocentric (Red) through worldcentric (Orange/Green) to integral (Teal/Turquoise).<br><br>
+            Your results form a <strong>psychograph</strong>: a radar chart showing where each line sits on the developmental spectrum. Because lines grow independently, most people are advanced in some areas and trailing in others. There is no "good" or "bad" result; the map is useful precisely because it shows where growth energy is most alive.<br><br>
         </div>
 
         <div class="section-label">Select Lines to Assess <span style="font-weight:400; font-size:0.8em; text-transform:none; letter-spacing:0;">(click to toggle)</span></div>
@@ -2117,7 +2117,7 @@ function handleParticipation() {
     if (checked) {
         if (window._dataSubmitted) {
             status.style.color = 'var(--text-muted)';
-            status.innerText   = 'Already submitted.';
+            status.innerText   = 'Already submitted. No duplicate sent.';
             return;
         }
         status.style.color = 'var(--teal)';
@@ -2188,8 +2188,11 @@ function downloadFull() {
     frLeft.appendChild(leftTitle);
 
     const captureClone = document.getElementById('results-capture').cloneNode(true);
-    // Remove chart canvas (can't clone canvas content) - redraw via image
     frLeft.appendChild(captureClone);
+
+    // Force shadow profiles always visible in full report
+    captureClone.querySelectorAll('.shadow-rows').forEach(el => el.classList.add('visible'));
+    captureClone.querySelectorAll('.shadow-ticks').forEach(el => el.classList.add('visible'));
 
     // Right: interpretations + recommendations
     const rightTitle = document.createElement('div');
@@ -2197,11 +2200,12 @@ function downloadFull() {
     rightTitle.textContent = 'Personalized Insights & Growth Practices';
     frRight.appendChild(rightTitle);
 
-    const interpClone = document.getElementById('interpContainer').cloneNode(true);
     const interpHead  = document.createElement('div');
     interpHead.style.cssText = 'font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:#666;font-weight:600;margin-bottom:12px;';
     interpHead.textContent   = 'What Your Scores Mean';
     frRight.appendChild(interpHead);
+
+    const interpClone = document.getElementById('interpContainer').cloneNode(true);
     frRight.appendChild(interpClone);
 
     const recsHead = document.createElement('div');
@@ -2212,25 +2216,27 @@ function downloadFull() {
     const recsClone = document.getElementById('recsContainer').cloneNode(true);
     frRight.appendChild(recsClone);
 
-    // Capture the radar chart as image and inject into left clone
-    // (canvas doesn't clone - use toDataURL from the live chart)
+    // Replace canvas with static image — fix bleed into bars
     const liveCanvas = document.getElementById('radarChart');
     const chartImg   = new Image();
     chartImg.src     = liveCanvas.toDataURL('image/png');
-    chartImg.style.cssText = 'width:100%;border-radius:8px;margin:16px 0;';
 
-    // Replace the canvas placeholder in clone with img
     const canvasInClone = captureClone.querySelector('canvas');
     if (canvasInClone) {
+        // Constrain the chart container so image cannot overflow into bars
+        const chartContainer = canvasInClone.closest('.chart-container');
+        if (chartContainer) {
+            chartContainer.style.cssText = 'position:relative;height:380px;overflow:hidden;width:100%;';
+        }
+        chartImg.style.cssText = 'width:100%;height:380px;object-fit:contain;border-radius:8px;display:block;';
         canvasInClone.parentNode.replaceChild(chartImg, canvasInClone);
     }
 
-    // Show and capture
     const fr = document.getElementById('full-report-capture');
-    fr.style.top = '-99999px';
+    fr.style.top      = '-99999px';
     fr.style.position = 'fixed';
 
-    setTimeout(() => {
+    function doCapture() {
         html2canvas(fr, {
             backgroundColor: '#0d0d0d',
             scale: 2,
@@ -2242,12 +2248,17 @@ function downloadFull() {
             link.download = filename + '.png';
             link.href     = canvas.toDataURL('image/png');
             link.click();
-
-            // Clean up
             frLeft.innerHTML  = '';
             frRight.innerHTML = '';
         });
-    }, 120); // small delay for image load
+    }
+
+    // Wait for image to fully load before capturing
+    if (chartImg.complete) {
+        setTimeout(doCapture, 80);
+    } else {
+        chartImg.onload = () => setTimeout(doCapture, 80);
+    }
 }
 </script>
 </body>
