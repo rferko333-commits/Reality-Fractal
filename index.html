@@ -42,8 +42,10 @@
         body::before {
             content: '';
             position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            /* Center the element so it rotates perfectly in place */
+            top: 50%; left: 50%;
+            width: 100vw; height: 100vh;
+            transform: translate(-50%, -50%);
             z-index: 0;
             background-image: url('Buddhabrotl.png');
             background-repeat: no-repeat;
@@ -54,8 +56,11 @@
 
         @media (orientation: portrait) {
             body::before {
-                background-image: url('Buddhabrotl.png');
-                transform: rotate(90deg);
+                /* Swap width and height for portrait, creating a landscape box */
+                width: 100vh;
+                height: 100vw;
+                /* Translate to center, then rotate 90 degrees to fit the screen */
+                transform: translate(-50%, -50%) rotate(90deg);
             }
         }
 /* The Animation Keyframes */
