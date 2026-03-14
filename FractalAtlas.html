@@ -520,6 +520,7 @@
                 <select id="save-res" onchange="ui.checkSaveMode()">
                     <option value="1">Screen Size (Fast)</option>
                     <option value="2">HD (1920 x 1080)</option>
+                    <option value="3">1440p (2560 x 1440)</option>
                     <option value="4">4K (3840 x 2160)</option>
                     <option value="8">8K (7680 x 4320)</option>
                     <option value="custom">Custom Input...</option>
@@ -1342,6 +1343,7 @@ const app = {
         let targetW = window.innerWidth, targetH = window.innerHeight;
 
         if(resChoice === '2') { targetW=1920; targetH=1080; }
+        else if(resChoice === '3') { targetW=2560; targetH=1440; } // 1440p Target
         else if(resChoice === '4') { targetW=3840; targetH=2160; }
         else if(resChoice === '8') { targetW=7680; targetH=4320; }
         else if(resChoice === 'custom') { 
@@ -1363,7 +1365,7 @@ const app = {
 
         const view = document.getElementById('save-view').value;
         const isRight = (view === 'right');
-        const useCpuEngine = (this.state.mode === 1) || (this.state.mode === 2 && isRight);
+        const useCpuEngine = (this.state.mode === 1) || (this.state.mode === 2 && isRight); 
         
         if(useCpuEngine) {
             if (resChoice !== '1') {
@@ -1371,48 +1373,219 @@ const app = {
                 const ctx = isRight ? this.nebCtx[1] : this.nebCtx[0];
                 const oldW = ctx.cvs.width, oldH = ctx.cvs.height;
                 
-                ctx.cvs.width = targetW; ctx.cvs.height = targetH;
-                ctx.reset();
-                
-                let samples = parseFloat(document.getElementById('save-samples').value) || 10;
-                let batchCount = Math.floor((samples * 1000000) / 30000);
-                if (batchCount < 1) batchCount = 1;
+                let samplesMillions = parseFloat(document.getElementById('save-samples').value) || 10;
+                let totalSamples = samplesMillions * 1000000;
 
                 const btn = document.getElementById('save-btn-text');
                 btn.innerText = "0%";
                 btn.disabled = true;
 
-                let currentBatch = 0;
+                const cam = isRight ? this.state.right : this.state.left;
+                const vh = 1.0 / cam.z;
+                const vw = (targetW/targetH) * vh;
+                const minX = cam.x - vw/2;
+                const minY = cam.y - vh/2;
                 
-                const renderStep = () => {
-                    const stepSize = Math.min(20, batchCount - currentBatch);
-                    for(let i=0; i<stepSize; i++) ctx.renderBatch(this.state, isRight);
-                    currentBatch += stepSize;
-                    
-                    btn.innerText = Math.floor((currentBatch / batchCount) * 100) + "%";
+                const isNebulaAtlas = (this.state.mode === 2 && isRight);
+                const isAnti = this.state.anti && this.state.mode === 1;
 
-                    if(currentBatch < batchCount) {
-                        requestAnimationFrame(renderStep);
-                    } else {
-                        const a = document.createElement('a');
-                        a.download = `${fName}.png`;
-                        a.href = stampSignature(ctx.cvs).toDataURL('image/png');
-                        a.click();
-                        
-                        ctx.cvs.width = oldW; ctx.cvs.height = oldH;
-                        this.state.saving = false;
-                        btn.innerText = "Download";
-                        btn.disabled = false;
-                        ui.toggleModal(false);
-                        ui.showSharePrompt();
-                        this.triggerReset();
-                    }
-                };
+                // Maximize processor load: Will forcefully use at least 24 threads 
+                // to completely saturate your 24-core processor.
+                const numThreads = Math.max(navigator.hardwareConcurrency || 24, 24);
+                const samplesPerThread = Math.ceil(totalSamples / numThreads);
                 
-                requestAnimationFrame(renderStep);
+                const workerCode = `
+                self.onmessage = function(e) {
+                    const { w, h, cam, minX, minY, vw, vh, p, state, isRight, isNebulaAtlas, isAnti, totalSamples } = e.data;
+                    const hist = new Float32Array(w * h * 3);
+                    const max_i = p.iter, eqm = p.eqMode, cp = p.customPow, grid = p.grid;
+                    const trX = new Float32Array(max_i), trY = new Float32Array(max_i);
+
+                    let ptsProcessed = 0;
+                    let lastReport = performance.now();
+
+                    for (let i = 0; i < totalSamples; i++) {
+                        ptsProcessed++;
+                        let cr, ci, zx, zy, cellX, cellY;
+                        
+                        if (isNebulaAtlas) {
+                            let asp = w/h;
+                            let uvX = (Math.random() - 0.5) * asp; let uvY = (Math.random() - 0.5); 
+                            let worldX = cam.x + uvX * (1.0/cam.z); let worldY = cam.y + uvY * (1.0/cam.z);
+                            let tileSize = 4.0 / grid;
+                            cellX = Math.floor(worldX / tileSize); cellY = Math.floor(worldY / tileSize);
+                            cr = (cellX + 0.5) * tileSize; ci = (cellY + 0.5) * tileSize;
+                            if (p.atlasMode === 1) { zx = (Math.random() - 0.5) * 0.01; zy = (Math.random() - 0.5) * 0.01; } 
+                            else { zx = (Math.random() - 0.5) * 3.0; zy = (Math.random() - 0.5) * 3.0; }
+                        } else {
+                            let sr = cam.x + (Math.random()-0.5) * vw * 1.5; let si = cam.y + (Math.random()-0.5) * vh * 1.5;
+                            cr = isRight ? state.c.x : sr; ci = isRight ? state.c.y : si;
+                            zx = isRight ? sr : 0.0; zy = isRight ? si : 0.0;
+                        }
+                        
+                        let step = 0, esc = false, d_min = 1000.0;
+                        
+                        while(step < max_i) {
+                            trX[step] = zx; trY[step] = zy;
+                            let nx, ny;
+                            if(eqm === 0) { nx = zx*zx-zy*zy+cr; ny = 2.0*zx*zy+ci; } 
+                            else if(eqm === 1) { nx = zx*zx*zx - 3.0*zx*zy*zy + cr; ny = 3.0*zx*zx*zy - zy*zy*zy + ci; } 
+                            else if(eqm === 2) { nx = zx*zx*zx*zx - 6.0*zx*zx*zy*zy + zy*zy*zy*zy + cr; ny = 4.0*zx*zx*zx*zy - 4.0*zx*zy*zy*zy + ci; } 
+                            else if(eqm === 3) { let r2=zx*zx+zy*zy; let r4=r2*r2; let r5=r4*Math.sqrt(r2); let a=Math.atan2(zy,zx)*5.0; nx=r5*Math.cos(a)+cr; ny=r5*Math.sin(a)+ci; } 
+                            else if(eqm === 4) { nx = zx*zx-zy*zy+cr; ny = 2.0*Math.abs(zx*zy)+ci; } 
+                            else if(eqm === 5) { nx = zx*zx-zy*zy+cr; ny = -2.0*zx*zy+ci; } 
+                            else if(eqm === 6) { let ey=Math.exp(zy), e_y=Math.exp(-zy); nx=Math.sin(zx)*(ey+e_y)/2+cr; ny=Math.cos(zx)*(ey-e_y)/2+ci; } 
+                            else if(eqm === 7) { let ey=Math.exp(zy), e_y=Math.exp(-zy); nx=Math.cos(zx)*(ey+e_y)/2+cr; ny=-Math.sin(zx)*(ey-e_y)/2+ci; } 
+                            else if(eqm === 8) { let r=Math.sqrt(zx*zx+zy*zy); let a=Math.atan2(zy,zx); let rn=Math.pow(r,cp); nx=rn*Math.cos(a*cp)+cr; ny=rn*Math.sin(a*cp)+ci; } 
+                            else if(eqm === 11) { let ax = Math.abs(zx), ay = Math.abs(zy); let r = Math.sqrt(ax*ax + ay*ay); let a = Math.atan2(ay,ax); let rn = Math.pow(r,cp); nx = rn*Math.cos(a*cp)+cr; ny = rn*Math.sin(a*cp)+ci; } 
+                            else if(eqm === 12) { let cy = -zy; let r = Math.sqrt(zx*zx + cy*cy); let a = Math.atan2(cy,zx); let rn = Math.pow(r,cp); nx = rn*Math.cos(a*cp)+cr; ny = rn*Math.sin(a*cp)+ci; }
+                            else if(eqm === 9) { if (zx > 0.0) { nx = zx*zx-zy*zy+cr; ny = 2.0*zx*zy+ci; } else { nx = zx*zx*zx - 3.0*zx*zy*zy + cr; ny = 3.0*zx*zx*zy - zy*zy*zy + ci; } }
+                            else if(eqm === 10) { let px = 3.14159 * zx, py = 3.14159 * zy; let ey = Math.exp(py), e_y = Math.exp(-py); let cx = Math.cos(px)*(ey+e_y)/2.0; let cy = -Math.sin(px)*(ey-e_y)/2.0; nx = 0.25 * (2.0 + 7.0 * (zx - cx)) + cr; ny = 0.25 * (7.0 * (zy - cy)) + ci; }
+                            else { nx = zx*zx-zy*zy+cr; ny = 2.0*zx*zy+ci; } 
+                            
+                            zx = nx; zy = ny;
+                            let m = zx*zx + zy*zy;
+                            if(m < d_min) d_min = m;
+                            if(m > 100.0) { esc = true; break; }
+                            step++;
+                        }
+                        
+                        let shouldPlot = isAnti ? (!esc && step === max_i) : (esc && step > 0);
+                        if(shouldPlot) {
+                            let glow = isAnti ? 0.02 : 1.0; 
+                            for(let s=0; s<step; s++) {
+                                let px, py;
+                                if (isNebulaAtlas && p.atlasMode === 0) {
+                                    let tileSize = 4.0 / grid;
+                                    let wx = (cellX + 0.5) * tileSize + (trX[s] / 3.0) * tileSize;
+                                    let wy = (cellY + 0.5) * tileSize + (trY[s] / 3.0) * tileSize;
+                                    px = Math.floor((wx - minX) / vw * w);
+                                    py = Math.floor((wy - minY) / vh * h);
+                                } else {
+                                    px = Math.floor((trX[s] - minX) / vw * w);
+                                    py = Math.floor((trY[s] - minY) / vh * h);
+                                }
+                                if(px>=0 && px<w && py>=0 && py<h) {
+                                    let idx = ((h - 1 - py) * w + px) * 3; 
+                                    // FIXED: Changed this.hist to hist
+                                    if(step > p.r) hist[idx] += glow; 
+                                    if(step > p.g) hist[idx+1] += glow; 
+                                    if(step > p.b) hist[idx+2] += glow; 
+                                }
+                            }
+                        }
+
+                        if (i % 20000 === 0 && performance.now() - lastReport > 200) {
+                            self.postMessage({ type: 'progress', count: ptsProcessed });
+                            ptsProcessed = 0;
+                            lastReport = performance.now();
+                        }
+                    }
+                    self.postMessage({ type: 'progress', count: ptsProcessed });
+                    self.postMessage({ type: 'done', hist: hist.buffer }, [hist.buffer]);
+                };
+                `;
+
+                const blob = new Blob([workerCode], { type: 'application/javascript' });
+                const workerURL = URL.createObjectURL(blob);
+                
+                let completedWorkers = 0;
+                let totalProcessed = 0;
+                const finalHist = new Float32Array(targetW * targetH * 3);
+                
+                const selfApp = this;
+
+                for (let t = 0; t < numThreads; t++) {
+                    const worker = new Worker(workerURL);
+                    worker.postMessage({
+                        w: targetW, h: targetH, cam: cam, minX: minX, minY: minY, vw: vw, vh: vh,
+                        p: selfApp.state.p, state: selfApp.state, isRight: isRight, 
+                        isNebulaAtlas: isNebulaAtlas, isAnti: isAnti, totalSamples: samplesPerThread
+                    });
+
+                    worker.onmessage = (e) => {
+                        if (e.data.type === 'progress') {
+                            totalProcessed += e.data.count;
+                            btn.innerText = Math.min(99, Math.floor((totalProcessed / totalSamples) * 100)) + "%";
+                        } else if (e.data.type === 'done') {
+                            const wHist = new Float32Array(e.data.hist);
+                            for(let i = 0; i < finalHist.length; i++) finalHist[i] += wHist[i];
+                            
+                            completedWorkers++;
+                            if (completedWorkers === numThreads) {
+                                URL.revokeObjectURL(workerURL);
+                                
+                                const baseGain = isRight ? 20.0 : 800.0;
+                                const areaCorrection = (targetW * targetH) / Math.max(1, oldW * oldH);
+                                const scale = (selfApp.state.p.den * baseGain * areaCorrection) / Math.max(1, totalSamples / 30000);
+                                const norm = 1.0 / (Math.log1p(baseGain) || 1.0);
+                                
+                                const tempCanvas = document.createElement('canvas');
+                                tempCanvas.width = targetW; tempCanvas.height = targetH;
+                                const tempCtx = tempCanvas.getContext('2d');
+                                
+                                const imgData = tempCtx.createImageData(targetW, targetH);
+                                const data = imgData.data;
+                                const p = selfApp.state.p;
+                                const grid = p.grid;
+
+                                let j = 0;
+                                for(let i=0; i<finalHist.length; i+=3) {
+                                    let r = Math.log1p(finalHist[i] * scale) * norm;
+                                    let g = Math.log1p(finalHist[i+1] * scale) * norm;
+                                    let b = Math.log1p(finalHist[i+2] * scale) * norm;
+                                    
+                                    let isGrid = false;
+                                    if (isNebulaAtlas) {
+                                        let tileSize = 4.0 / grid;
+                                        let pxPerTile = tileSize * cam.z * targetH;
+                                        if(pxPerTile > 15.0) {
+                                            let py = Math.floor((i/3)/targetW);
+                                            let px = (i/3) % targetW;
+                                            let wx = minX + (px/targetW) * vw;
+                                            let wy = minY + ((targetH-1-py)/targetH) * vh;
+                                            let gx = wx / tileSize, gy = wy / tileSize;
+                                            let fx = gx - Math.floor(gx), fy = gy - Math.floor(gy);
+                                            let pxSizeX = vw / targetW / tileSize, pxSizeY = vh / targetH / tileSize;
+                                            if (fx < pxSizeX || fx > 1.0 - pxSizeX || fy < pxSizeY || fy > 1.0 - pxSizeY) isGrid = true;
+                                        }
+                                    }
+
+                                    if (isGrid) {
+                                        data[j++] = 30; data[j++] = 30; data[j++] = 30; data[j++] = 255;
+                                    } else {
+                                        data[j++] = Math.min(255, Math.pow(r, 1.2) * 255);
+                                        data[j++] = Math.min(255, Math.pow(g, 1.2) * 255);
+                                        data[j++] = Math.min(255, Math.pow(b, 1.2) * 255);
+                                        data[j++] = 255;
+                                    }
+                                }
+                                
+                                tempCtx.putImageData(imgData, 0, 0);
+
+                                const a = document.createElement('a');
+                                a.download = `${fName}.png`;
+                                a.href = stampSignature(tempCanvas).toDataURL('image/png');
+                                a.click();
+                                
+                                selfApp.state.saving = false;
+                                btn.innerText = "Download";
+                                btn.disabled = false;
+                                ui.toggleModal(false);
+                                ui.showSharePrompt();
+                                selfApp.triggerReset();
+                            }
+                        }  
+                    };
+                }
                 return; 
             } else {
-                let targetCvs = isRight ? this.nebCtx[1].cvs : this.nebCtx[0].cvs;
+                let targetRenderer = isRight ? this.nebCtx[1] : this.nebCtx[0];
+                let targetCvs = targetRenderer.cvs;
+                
+                // Repaint the clean image data to remove UI elements (white dot and orbits) right before save
+                targetRenderer.ctx.putImageData(targetRenderer.imgData, 0, 0);
+
                 const a = document.createElement('a');
                 a.download = `${fName}.png`;
                 a.href = stampSignature(targetCvs).toDataURL('image/png');
@@ -1431,8 +1604,10 @@ const app = {
             a.href = stampSignature(ctx.cvs).toDataURL('image/png');
             a.click();
             
-            ctx.cvs.width = ctx.cvs.clientWidth * (window.devicePixelRatio||1);
-            ctx.cvs.height = ctx.cvs.clientHeight * (window.devicePixelRatio||1);
+            ctx.cvs.width = ow; 
+            ctx.cvs.height = oh; 
+            ctx.gl.viewport(0, 0, ow, oh);
+            
             this.state.saving = false;
             ui.toggleModal(false);
         }
