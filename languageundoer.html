@@ -576,6 +576,34 @@
         { regex: /\b(I will always|I will never|I'll always|I'll never|I regret|I'll regret|I'll never forgive|I can never forgive|it will always|it will never|nothing will ever change|things never change|it never gets better)\b/gi,
           insight: "Time is being used as a weapon against the present moment." },
 
+        { regex: /\b(if I could just|if only I could|as soon as I|once I have|provided that I|only then will|unless I get|if I had just)\b/gi,
+          insight: "The mind is making the present moment a 'waiting room' for a future that doesn't exist." },
+
+        // 1. The "If-Then" & Conditional Trap (The Waiting Room)
+        { regex: /\b(if only|as soon as|when I finally|then I can|just need to|the only way to|if things were|if I could just)\b/gi,
+          insight: "Placing salvation in the future ensures peace never arrives in the present. The condition is an illusion." },
+
+        // 2. Futility & Meaninglessness (The "Why Bother" trap)
+        { regex: /\b(pointless|useless|meaningless|bullshit|what's the point|why bother|doesn't matter|does not matter|matters|give up|done trying|what is the point)\b/gi,
+          insight: "The mind demands a purpose to justify its existence. What if existence requires no justification at all?" },
+
+        // 3. Raw Resistance & Profanity (The "Heat" of the vent)
+        // (This catches the "fucking", "fuck", "damn", "stupid" to neutralize the anger)
+        { regex: /\b(fuck|fucking|fucked|shit|shitty|damn|dammit|stupid|idiot|sucks|sucking|crap|garbage)\b/gi,
+          insight: "Pure resistance expressing itself. The word is just sound; the feeling is just temporary energy passing through." },
+
+        // 4. Time, Sunk Cost, & Exhaustion (The "Wasted" trap)
+        { regex: /\b(wasted|waste of|lost time|ruined my|ruined|too late|exhausted|tired of|fed up|can't take it anymore|done with this|over it)\b/gi,
+          insight: "Time is a conceptual measurement. You cannot 'lose' or 'waste' what is always happening exactly Now." },
+
+        // 5. Unfairness & The "Ought To Be" (Victimization logic)
+        { regex: /\b(unfair|not fair|deserve|deserved|robbed|cheated|lied to|supposed to be|should have been)\b/gi,
+          insight: "The mind compares what IS to an imaginary alternate reality, and suffers the difference." },
+
+        // 6. Catastrophizing (The "End of the World" trap)
+        { regex: /\b(everything is ruined|it's over|never going to work|doomed|disaster|worst thing|ruined everything)\b/gi,
+          insight: "A prediction masquerading as a fact. The present moment is actually entirely safe." },
+
         // Comparative self-diminishment
         { regex: /\b(not good enough|not smart enough|not strong enough|not worthy|unworthy|don't deserve|I don't deserve|I never deserved|less than|beneath|inferior to|I am less|I was less)\b/gi,
           insight: "A comparison is being used to construct a smaller self." },
@@ -589,6 +617,14 @@
         // Other-reference
         { regex: /\b(you|your|he|him|his|she|her|they|them|we|our|us|people|person|others)\b/gi,
           insight: "Defining 'them' constructs the boundary of 'me'." },
+
+        // Time units (To catch "wasted a *month*")
+        { regex: /\b(years|months|month|weeks|days|hours|minutes|decades|lifetime)\b/gi,
+          insight: "It is always now." },
+
+        // Defeatist Glue
+        { regex: /\b(guess|suppose|probably|maybe|literally|actually|basically)\b/gi,
+          insight: "Filler words the mind uses to make its assumptions sound like absolute truth." },
 
         // Emotions
         { regex: /\b(happy|sad|angry|anger|rage|upset|frustrated|anxious|anxiety|depressed|depression|excited|bored|lonely|afraid|scared|joy|grief|guilty|guilt|shame|ashamed|jealous|envy|disgusted|surprised|hurt|heartbroken|devastated|overwhelmed|numb|empty)\b/gi,
