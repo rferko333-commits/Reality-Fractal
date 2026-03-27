@@ -986,8 +986,39 @@
         const sampleRate = lowQuality ? 22050 : 44100;
         
         const offlineCtx = new OfflineAudioContext(2, sampleRate * durationSecs, sampleRate);
-        
-        // 1. Binaural
+
+        // ─── MASTER BUS ───────────────────────────────────────────────────────────
+        // All sources feed into masterBus → limiter → destination.
+        //
+        // masterBus handles the file-edge fade: a 2-second linear ramp up at the
+        // start and a matching ramp down at the end. This means the rendered WAV
+        // begins and ends at silence, so there is no discontinuity when the file
+        // loops or is played back-to-back.
+        //
+        // The limiter (DynamicsCompressorNode configured for hard limiting) sits
+        // after the master bus and before the output. No matter how the user sets
+        // individual volume sliders, the combined signal cannot exceed -1 dBFS.
+        // The limiter is transparent at normal levels; it only catches peaks.
+        const FADE_DUR = 2.0; // seconds — long enough to be inaudible as a fade
+
+        const masterBus = offlineCtx.createGain();
+        masterBus.gain.setValueAtTime(0, 0);
+        masterBus.gain.linearRampToValueAtTime(1, FADE_DUR);
+        masterBus.gain.setValueAtTime(1, Math.max(FADE_DUR, durationSecs - FADE_DUR));
+        masterBus.gain.linearRampToValueAtTime(0, durationSecs);
+
+        const limiter = offlineCtx.createDynamicsCompressor();
+        limiter.threshold.value = -1;   // start limiting at -1 dBFS
+        limiter.knee.value      =  0;   // hard knee — no soft transition zone
+        limiter.ratio.value     = 20;   // 20:1 ratio = effectively brick-wall
+        limiter.attack.value    = 0.001; // 1 ms — catches transients instantly
+        limiter.release.value   = 0.1;  // 100 ms release
+
+        masterBus.connect(limiter);
+        limiter.connect(offlineCtx.destination);
+        // ─────────────────────────────────────────────────────────────────────────
+
+        // 1. Binaural — connect to masterBus
         const baseFreq = parseFloat(document.getElementById('baseFreq').value);
         let currentBeat = parseFloat(document.getElementById('beatFreq').value);
         const oL = offlineCtx.createOscillator();
@@ -995,9 +1026,9 @@
         const pL = offlineCtx.createStereoPanner(); pL.pan.value = -1;
         const pR = offlineCtx.createStereoPanner(); pR.pan.value = 1;
         const gBin = offlineCtx.createGain();
-        gBin.gain.value = document.getElementById('volBinaural').value;
+        gBin.gain.value = parseFloat(document.getElementById('volBinaural').value);
         oL.connect(pL).connect(gBin); oR.connect(pR).connect(gBin);
-        gBin.connect(offlineCtx.destination);
+        gBin.connect(masterBus); // ← masterBus, not destination
         oL.frequency.value = baseFreq;
         
         let timeCursor = 0;
@@ -1014,11 +1045,13 @@
         }
         oL.start(); oR.start();
 
-        // 2. Atmosphere
+        // 2. Atmosphere — connect to masterBus
         const noiseType = document.getElementById('noiseType').value;
         const noiseVol = document.getElementById('volNoise').value;
         if(noiseVol > 0) {
-            const bufSize = sampleRate * 2;
+            // 30-second buffer so loop seams occur rarely (~every 30 s).
+            // The buffer edges are crossfaded so those seams are seamless.
+            const bufSize = sampleRate * 30;
             const noiseBuf = offlineCtx.createBuffer(1, bufSize, sampleRate);
             const data = noiseBuf.getChannelData(0);
             
@@ -1027,7 +1060,6 @@
 
             for (let i = 0; i < bufSize; i++) {
                 let white = Math.random() * 2 - 1;
-                
                 if(noiseType === 'brown' || noiseType === 'deep_brown') {
                      data[i] = (lastOut + (0.02 * white)) / 1.02; 
                      lastOut = data[i]; 
@@ -1036,26 +1068,37 @@
                      b0 = 0.99886*b0+white*0.0555179; b1 = 0.99332*b1+white*0.0750759; b2 = 0.96900*b2+white*0.1538520; b3 = 0.86650*b3+white*0.3104856; b4 = 0.55000*b4+white*0.5329522; b5 = -0.7616*b5-white*0.0168981; data[i]=b0+b1+b2+b3+b4+b5+b6+white*0.5362; data[i]*=0.11; b6=white*0.115926;
                 }
             }
+
+            // Crossfade buffer edges so the loop point is seamless.
+            const xfadeLen = Math.floor(sampleRate * 0.05); // 50 ms
+            for (let i = 0; i < xfadeLen; i++) {
+                const t = i / xfadeLen;
+                data[i] *= t;
+                data[bufSize - 1 - i] *= t;
+            }
+
             const noiseSrc = offlineCtx.createBufferSource();
             noiseSrc.buffer = noiseBuf; noiseSrc.loop = true;
-            const noiseGain = offlineCtx.createGain(); noiseGain.gain.value = noiseVol;
+            const noiseGain = offlineCtx.createGain();
+            noiseGain.gain.value = parseFloat(noiseVol);
+
             if(noiseType === 'ocean') {
                 const filt = offlineCtx.createBiquadFilter(); filt.type='lowpass'; filt.frequency.value=400;
                 const waveGain = offlineCtx.createGain();
                 const lfo = offlineCtx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.15;
                 const lfoAmp = offlineCtx.createGain(); lfoAmp.gain.value=0.8;
                 lfo.connect(lfoAmp).connect(waveGain.gain);
-                noiseSrc.connect(filt).connect(waveGain).connect(noiseGain).connect(offlineCtx.destination);
+                noiseSrc.connect(filt).connect(waveGain).connect(noiseGain).connect(masterBus); // ← masterBus
                 lfo.start();
             } else if (noiseType === 'deep_brown') {
                 const filt = offlineCtx.createBiquadFilter(); filt.type='lowpass'; filt.frequency.value=150;
                 const boost = offlineCtx.createGain(); boost.gain.value = 2.5; 
-                noiseSrc.connect(filt).connect(boost).connect(noiseGain).connect(offlineCtx.destination);
-            } else { noiseSrc.connect(noiseGain).connect(offlineCtx.destination); }
+                noiseSrc.connect(filt).connect(boost).connect(noiseGain).connect(masterBus); // ← masterBus
+            } else { noiseSrc.connect(noiseGain).connect(masterBus); } // ← masterBus
             noiseSrc.start();
         }
 
-        // 3. VOICE CHAIN
+        // 3. VOICE CHAIN — connect to masterBus
         if(clips.length > 0) {
             let totalFrames = 0;
             clips.forEach(c => totalFrames += Math.floor(c.buffer.duration * sampleRate));
@@ -1074,7 +1117,7 @@
                          }
                          const g = offlineCtx.createGain();
                          g.gain.value = c.gainVal;
-                         node.connect(g).connect(offlineCtx.destination);
+                         node.connect(g).connect(masterBus); // ← masterBus
                          src.start(currentTime);
                          currentTime += c.buffer.duration;
                      }
@@ -1082,12 +1125,13 @@
             }
         }
 
-        // 4. Custom Audio
+        // 4. Custom Audio — connect to masterBus
         if(customBuffer) {
             const custSrc = offlineCtx.createBufferSource();
             custSrc.buffer = customBuffer; custSrc.loop = true;
             const custG = offlineCtx.createGain(); custG.gain.value = document.getElementById('volCustom').value;
-            custSrc.connect(custG).connect(offlineCtx.destination); custSrc.start();
+            custSrc.connect(custG).connect(masterBus); // ← masterBus
+            custSrc.start();
         }
 
         // RENDER
@@ -1206,6 +1250,8 @@
     document.getElementById('volNoise').oninput = function() { if(atmosGain) atmosGain.gain.value = this.value; }
     document.getElementById('baseSlider').oninput = function() { document.getElementById('baseFreq').value = this.value; if(isEnvPlaying) updateBinaural(); };
     document.getElementById('beatSlider').oninput = function() { document.getElementById('beatFreq').value = this.value; if(isEnvPlaying) updateBinaural(); };
+    document.getElementById('baseFreq').oninput = function() { document.getElementById('baseSlider').value = this.value; if(isEnvPlaying) updateBinaural(); };
+    document.getElementById('beatFreq').oninput = function() { document.getElementById('beatSlider').value = this.value; if(isEnvPlaying) updateBinaural(); };
     document.getElementById('volBinaural').oninput = function() { if(gainBinaural) gainBinaural.gain.value = this.value; };
     function updateBinaural(forceStart = false) {
         if(!isEnvPlaying && !forceStart) return; 
